@@ -22,21 +22,21 @@
       id: 'dusk',
       name: '黄昏放学档',
       time: '17:30',
-      sceneImg: 'assets/cafe/bg_sunset.webp',
-      tint: 'linear-gradient(180deg, rgba(68, 32, 14, 0.30) 0%, rgba(30, 19, 12, 0.62) 100%)',
+      sceneImg: 'assets/cafe/props/bg_first_person_counter.webp',
+      tint: 'linear-gradient(180deg, rgba(160, 74, 24, 0.26) 0%, rgba(30, 19, 12, 0.55) 100%)',
       weatherIcon: '🌇',
-      weatherText: '暮色微风 · 放学铃声刚落 · 室内暖意 96%',
-      rainDensity: 26,
+      weatherText: '暮色微风 · 放学铃声刚落 · 第一人称吧台视角',
+      rainDensity: 22,
       bokehColors: ['rgba(255, 179, 71, 0.28)', 'rgba(255, 125, 80, 0.24)', 'rgba(245, 215, 140, 0.22)']
     },
     rain: {
       id: 'rain',
       name: '雨夜自习档',
       time: '20:00',
-      sceneImg: 'assets/cafe/bg_rain_night.webp',
-      tint: 'linear-gradient(180deg, rgba(16, 22, 28, 0.36) 0%, rgba(30, 19, 12, 0.65) 100%)',
+      sceneImg: 'assets/cafe/props/bg_first_person_counter.webp',
+      tint: 'linear-gradient(180deg, rgba(16, 28, 38, 0.30) 0%, rgba(28, 17, 11, 0.58) 100%)',
       weatherIcon: '🌧️',
-      weatherText: '窗外细雨淅沥 · 胡桃木吧台暖意 98%',
+      weatherText: '窗外细雨淅沥 · 第一人称胡桃木吧台视角',
       rainDensity: 68,
       bokehColors: ['rgba(255, 185, 90, 0.26)', 'rgba(120, 195, 220, 0.20)', 'rgba(212, 140, 70, 0.25)']
     },
@@ -44,22 +44,23 @@
       id: 'late',
       name: '打烊微醺档',
       time: '22:30',
-      sceneImg: 'assets/cafe/bg_midnight.webp',
-      tint: 'linear-gradient(180deg, rgba(18, 11, 22, 0.42) 0%, rgba(28, 16, 10, 0.72) 100%)',
+      sceneImg: 'assets/cafe/props/bg_first_person_counter.webp',
+      tint: 'linear-gradient(180deg, rgba(32, 14, 42, 0.38) 0%, rgba(24, 13, 9, 0.68) 100%)',
       weatherIcon: '🌙',
-      weatherText: '夜深雨歇 · 钨丝灯琥珀微醺 · 暖意 100%',
-      rainDensity: 40,
+      weatherText: '夜深雨歇 · 钨丝灯琥珀微醺 · 第一人称吧台视角',
+      rainDensity: 36,
       bokehColors: ['rgba(255, 179, 71, 0.30)', 'rgba(195, 120, 210, 0.18)', 'rgba(240, 160, 85, 0.25)']
     }
   };
 
-  // ==================== 2. 精选基底 (6款) & 辅料风味 (7款) ====================
+  // ==================== 2. 精选基底 (6款实体手冲壶/茶碗) & 辅料风味 (7款实体糖浆泵瓶/顶料罐) ====================
   const BASES = [
     {
       id: 'espresso',
       name: '深烘意式浓缩',
       nameEn: 'Espresso',
       icon: '☕',
+      propImg: 'assets/cafe/props/prop_base_espresso.webp',
       color: '#3B1E0E',
       cremaColor: '#B87338',
       tags: ['浓郁', '苦韵', '提神'],
@@ -71,6 +72,7 @@
       name: '宇治一番抹茶',
       nameEn: 'Matcha',
       icon: '🍵',
+      propImg: 'assets/cafe/props/prop_base_matcha.webp',
       color: '#4A7C59',
       cremaColor: '#76A882',
       tags: ['茶香', '清雅', '回甘'],
@@ -82,6 +84,7 @@
       name: '大吉岭红茶',
       nameEn: 'Black Tea',
       icon: '🫖',
+      propImg: 'assets/cafe/props/prop_base_black_tea.webp',
       color: '#8C3B1E',
       cremaColor: '#C86D44',
       tags: ['茶香', '醇厚', '温润'],
@@ -93,6 +96,7 @@
       name: '法式可可',
       nameEn: 'French Cocoa',
       icon: '🍫',
+      propImg: 'assets/cafe/props/prop_base_cocoa.webp',
       color: '#522B18',
       cremaColor: '#9E6240',
       tags: ['丝滑', '治愈', '浓醇'],
@@ -104,6 +108,7 @@
       name: '清爽气泡苏打',
       nameEn: 'Sparkling Soda',
       icon: '🫧',
+      propImg: 'assets/cafe/props/prop_base_sparkling.webp',
       color: '#5BA4B8',
       cremaColor: '#A8DCE8',
       tags: ['清爽', '微泡', '解乏'],
@@ -115,6 +120,7 @@
       name: '北海道鲜牛乳',
       nameEn: 'Hokkaido Milk',
       icon: '🥛',
+      propImg: 'assets/cafe/props/prop_base_warm_milk.webp',
       color: '#EBD8C0',
       cremaColor: '#FFF6EB',
       tags: ['奶香', '温柔', '安神'],
@@ -128,6 +134,7 @@
       id: 'caramel',
       name: '焦糖糖浆',
       icon: '🍯',
+      propImg: 'assets/cafe/props/prop_addon_caramel.webp',
       color: '#D48C46',
       tags: ['焦糖', '温柔', '甜香'],
       desc: '铜锅慢熬琥珀焦糖，带来温暖微甜的尾韵'
@@ -136,6 +143,7 @@
       id: 'honey',
       name: '野生蜂蜜',
       icon: '🐝',
+      propImg: 'assets/cafe/props/prop_addon_honey.webp',
       color: '#F2B84B',
       tags: ['清甜', '润泽', '花香'],
       desc: '金合欢百花蜜，温润甘甜不刺喉'
@@ -144,6 +152,7 @@
       id: 'raspberry',
       name: '覆盆子果露',
       icon: '🍓',
+      propImg: 'assets/cafe/props/prop_addon_raspberry.webp',
       color: '#D9536F',
       tags: ['莓果', '草莓', '酸甜'],
       desc: '树莓与红颜草莓慢熬果露，色泽绯红明艳'
@@ -152,6 +161,7 @@
       id: 'mint',
       name: '清凉薄荷',
       icon: '🌿',
+      propImg: 'assets/cafe/props/prop_addon_mint.webp',
       color: '#58B08C',
       tags: ['清凉', '醒脑', '草本'],
       desc: '现摘留兰香嫩叶轻拍入杯，沁人心脾'
@@ -160,6 +170,7 @@
       id: 'cheese_foam',
       name: '海盐芝士奶盖',
       icon: '🧀',
+      propImg: 'assets/cafe/props/prop_addon_cheese_foam.webp',
       color: '#F5E6D3',
       tags: ['咸甜', '醇厚', '绵密'],
       desc: '冲绳海盐配马斯卡彭芝士打发，咸甜交织'
@@ -168,6 +179,7 @@
       id: 'vanilla_cream',
       name: '香草奶油顶',
       icon: '🍦',
+      propImg: 'assets/cafe/props/prop_addon_vanilla_cream.webp',
       color: '#FFF8EE',
       tags: ['奶油', '双倍甜蜜', '华丽'],
       desc: '马达加斯加香草籽鲜奶油雪顶，幸福感拉满'
@@ -176,6 +188,7 @@
       id: 'cinnamon',
       name: '肉桂粉',
       icon: '🍂',
+      propImg: 'assets/cafe/props/prop_addon_cinnamon.webp',
       color: '#9C5227',
       tags: ['木质香', '暖身', '辛香'],
       desc: '斯里兰卡锡兰肉桂轻筛，雨夜的灵魂香气'
@@ -2103,7 +2116,99 @@
     if (nightChoices) nightChoices.classList.add('hidden');
   }
 
-  // 渲染 Step 1 基底与辅料网格
+  // 第一人称实体道具倾倒与落冰动态特效
+  let pourFxTimer = null;
+  function triggerPourAnimation(propImg, liquidColor) {
+    const flyBox = document.getElementById('flying-pour-prop');
+    const flyImg = document.getElementById('flying-pour-img');
+    const stream = document.getElementById('pour-liquid-stream');
+    const vessel = document.getElementById('live-cup-vessel');
+    if (!flyBox || !flyImg || !stream) return;
+
+    if (pourFxTimer) clearTimeout(pourFxTimer);
+    flyImg.src = propImg;
+    stream.style.background = `linear-gradient(180deg, ${liquidColor} 0%, rgba(255,255,255,0.45) 50%, ${liquidColor} 100%)`;
+    stream.style.boxShadow = `0 0 14px ${liquidColor}`;
+
+    flyBox.classList.remove('hidden', 'pouring-now');
+    stream.classList.remove('hidden', 'streaming-now');
+    void flyBox.offsetWidth;
+    flyBox.classList.add('pouring-now');
+    stream.classList.add('streaming-now');
+
+    if (vessel) {
+      vessel.classList.remove('cup-splash-bounce');
+      void vessel.offsetWidth;
+      vessel.classList.add('cup-splash-bounce');
+    }
+
+    pourFxTimer = setTimeout(() => {
+      flyBox.classList.add('hidden');
+      flyBox.classList.remove('pouring-now');
+      stream.classList.add('hidden');
+      stream.classList.remove('streaming-now');
+    }, 680);
+  }
+
+  let iceFxTimer = null;
+  function triggerIceScoopAnimation() {
+    const iceFx = document.getElementById('falling-ice-fx');
+    const vessel = document.getElementById('live-cup-vessel');
+    if (!iceFx) return;
+    if (iceFxTimer) clearTimeout(iceFxTimer);
+    iceFx.classList.remove('hidden', 'dropping-now');
+    void iceFx.offsetWidth;
+    iceFx.classList.add('dropping-now');
+    if (vessel) {
+      vessel.classList.remove('cup-splash-bounce');
+      void vessel.offsetWidth;
+      vessel.classList.add('cup-splash-bounce');
+    }
+    iceFxTimer = setTimeout(() => {
+      iceFx.classList.add('hidden');
+      iceFx.classList.remove('dropping-now');
+    }, 650);
+  }
+
+  function applyBaseSelection(id) {
+    const bObj = BASES.find((x) => x.id === id);
+    if (!bObj) return;
+    state.cup.base = id;
+    if (bObj.sfx === 'grind') audio.playGrindSound();
+    else if (bObj.sfx === 'steam') audio.playSteamSound();
+    else if (bObj.sfx === 'ice') audio.playIceClinkSound();
+    else audio.playPourSound();
+
+    triggerPourAnimation(bObj.propImg, bObj.cremaColor || bObj.color);
+    renderStep1Ingredients();
+    updateLiveChalkboardPreview();
+    latteArtController.resetBaseCrema();
+  }
+
+  function applyAddonSelection(id, forceAddOnly = false) {
+    const aObj = ADDONS.find((x) => x.id === id);
+    if (!aObj) return;
+    const existingIdx = state.cup.addons.indexOf(id);
+    if (existingIdx !== -1 && !forceAddOnly) {
+      state.cup.addons.splice(existingIdx, 1);
+      audio.playStirClinkSound();
+    } else if (existingIdx === -1) {
+      if (state.cup.addons.length >= 3) {
+        showToast('🍯 杯中最多可加入 3 段辅料/顶料，再次点击已加辅料瓶可撤回');
+        return;
+      }
+      state.cup.addons.push(id);
+      audio.playPourSound();
+      triggerPourAnimation(aObj.propImg, aObj.color);
+    } else {
+      audio.playPourSound();
+      triggerPourAnimation(aObj.propImg, aObj.color);
+    }
+    renderStep1Ingredients();
+    updateLiveChalkboardPreview();
+  }
+
+  // 渲染第一人称吧台上的 6 款基底壶与 7 款糖浆按压瓶/顶料罐实体道具
   function renderStep1Ingredients() {
     const baseGrid = document.getElementById('base-grid');
     const addonGrid = document.getElementById('addon-grid');
@@ -2112,13 +2217,22 @@
     baseGrid.innerHTML = BASES.map((b) => {
       const isSelected = state.cup.base === b.id;
       return `
-        <button class="ing-card ${isSelected ? 'selected' : ''}" data-base-id="${b.id}">
-          <div class="ing-swatch-icon" style="background:${b.color};">${b.icon}</div>
+        <button
+          type="button"
+          class="ing-card pov-prop-item ${isSelected ? 'selected' : ''}"
+          data-base-id="${b.id}"
+          draggable="true"
+          title="点击或拖向中央杯子倾倒【${b.name}】：${b.desc}"
+        >
+          <div class="pov-prop-thumb-wrap">
+            <img class="pov-prop-img" src="${b.propImg}" alt="${b.name}" draggable="false" />
+            <span class="prop-color-dot" style="background:${b.color};"></span>
+          </div>
           <div class="ing-meta">
             <span class="ing-name">${b.name}</span>
-            <span class="ing-tags">${b.tags.join(' · ')}</span>
+            <span class="ing-tags">${b.tags.slice(0, 2).join('·')}</span>
           </div>
-          ${isSelected ? '<span class="ing-slot-badge">基底</span>' : ''}
+          ${isSelected ? '<span class="ing-slot-badge">当前基底</span>' : ''}
         </button>
       `;
     }).join('');
@@ -2128,11 +2242,20 @@
       const idx = state.cup.addons.indexOf(a.id);
       const isSelected = idx !== -1;
       return `
-        <button class="ing-card ${isSelected ? 'selected' : ''}" data-addon-id="${a.id}">
-          <div class="ing-swatch-icon" style="background:${a.color};">${a.icon}</div>
+        <button
+          type="button"
+          class="ing-card pov-prop-item ${isSelected ? 'selected' : ''}"
+          data-addon-id="${a.id}"
+          draggable="true"
+          title="点击或拖向中央杯子加入【${a.name}】：${a.desc}"
+        >
+          <div class="pov-prop-thumb-wrap">
+            <img class="pov-prop-img" src="${a.propImg}" alt="${a.name}" draggable="false" />
+            <span class="prop-color-dot" style="background:${a.color};"></span>
+          </div>
           <div class="ing-meta">
             <span class="ing-name">${a.name}</span>
-            <span class="ing-tags">${a.tags.join(' · ')}</span>
+            <span class="ing-tags">${a.tags.slice(0, 2).join('·')}</span>
           </div>
           ${isSelected ? `<span class="ing-slot-badge">${slotNames[idx]}</span>` : ''}
         </button>
@@ -2140,44 +2263,26 @@
     }).join('');
 
     const counterHint = document.getElementById('addon-counter-hint');
-    if (counterHint) counterHint.textContent = `已选 ${state.cup.addons.length} / 3 项`;
+    if (counterHint) counterHint.textContent = `已加 ${state.cup.addons.length} / 3 项 (再次点击可撤回)`;
 
     document.getElementById('btn-temp-hot').classList.toggle('active', state.cup.temp === 'hot');
     document.getElementById('btn-temp-iced').classList.toggle('active', state.cup.temp === 'iced');
 
     baseGrid.querySelectorAll('[data-base-id]').forEach((btn) => {
       btn.addEventListener('click', () => {
-        const id = btn.dataset.baseId;
-        state.cup.base = id;
-        const bObj = BASES.find((x) => x.id === id);
-        if (bObj && bObj.sfx === 'grind') audio.playGrindSound();
-        else if (bObj && bObj.sfx === 'steam') audio.playSteamSound();
-        else if (bObj && bObj.sfx === 'ice') audio.playIceClinkSound();
-        else audio.playPourSound();
-
-        renderStep1Ingredients();
-        updateLiveChalkboardPreview();
-        latteArtController.resetBaseCrema();
+        applyBaseSelection(btn.dataset.baseId);
+      });
+      btn.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', `base:${btn.dataset.baseId}`);
       });
     });
 
     addonGrid.querySelectorAll('[data-addon-id]').forEach((btn) => {
       btn.addEventListener('click', () => {
-        const id = btn.dataset.addonId;
-        const existingIdx = state.cup.addons.indexOf(id);
-        if (existingIdx !== -1) {
-          state.cup.addons.splice(existingIdx, 1);
-          audio.playStirClinkSound();
-        } else {
-          if (state.cup.addons.length >= 3) {
-            showToast('🍯 最多可加入 3 段辅料/顶料，再次点击已选辅料可移除');
-            return;
-          }
-          state.cup.addons.push(id);
-          audio.playPourSound();
-        }
-        renderStep1Ingredients();
-        updateLiveChalkboardPreview();
+        applyAddonSelection(btn.dataset.addonId, false);
+      });
+      btn.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', `addon:${btn.dataset.addonId}`);
       });
     });
   }
@@ -2259,13 +2364,27 @@
       layerTopping.style.background = addonObjs[2] ? addonObjs[2].color : 'transparent';
     }
 
-    // 冰块与热气显隐
+    // 冰块、热气与杯具真实立绘显隐
     const isIced = state.cup.temp === 'iced';
+    const cupPropBg = document.getElementById('live-cup-prop-bg');
+    if (cupPropBg) {
+      cupPropBg.src = isIced
+        ? 'assets/cafe/props/prop_cup_iced.webp'
+        : 'assets/cafe/props/prop_cup_hot.webp';
+    }
+    const liveVessel = document.getElementById('live-cup-vessel');
+    if (liveVessel) liveVessel.dataset.temp = state.cup.temp;
     document.getElementById('vessel-ice-cubes').classList.toggle('hidden', !isIced);
     document.getElementById('vessel-steam-wisps').classList.toggle('hidden', isIced);
     document.getElementById('vessel-temp-tag').textContent = isIced
-      ? '🧊 4°C 冰爽特调'
-      : '🔥 65°C 暖心热饮';
+      ? '🧊 4°C 冰爽玻璃杯'
+      : '🔥 65°C 暖心陶瓷杯';
+
+    const stencilEmojiMap = { paw: '🐾', heart: '💛', sakura: '🌸', moon: '🌙', swan: '🦢' };
+    const topArtEl = document.getElementById('served-cup-art');
+    if (topArtEl) {
+      topArtEl.textContent = stencilEmojiMap[state.cup.stencilUsed] || baseObj.icon;
+    }
 
     // 实时预测与当前客人点单契合度
     const order = getCurrentOrder();
@@ -2293,12 +2412,16 @@
       `当前风味画像：【${Array.from(new Set(allTags)).slice(0, 6).join(' · ')}】`;
   }
 
-  // ==================== 10. Step 2 黄金萃取节奏条控制 ====================
+  // ==================== 10. 第一人称意式咖啡机高压黄金萃取控制 ====================
   function startExtractionMeter() {
     if (state.brewingActive) return;
     state.brewingActive = true;
     const holdBtn = document.getElementById('btn-brew-hold');
+    const streamEl = document.getElementById('machine-espresso-stream');
+    const textEl = document.getElementById('brew-btn-text');
     if (holdBtn) holdBtn.classList.add('brewing');
+    if (streamEl) streamEl.classList.add('active');
+    if (textEl) textEl.textContent = '🔥 黄金温区松手锁定！';
     audio.playSteamSound();
 
     const tick = () => {
@@ -2322,7 +2445,11 @@
     state.brewingActive = false;
     if (state.brewAnimFrame) cancelAnimationFrame(state.brewAnimFrame);
     const holdBtn = document.getElementById('btn-brew-hold');
+    const streamEl = document.getElementById('machine-espresso-stream');
+    const textEl = document.getElementById('brew-btn-text');
     if (holdBtn) holdBtn.classList.remove('brewing');
+    if (streamEl) streamEl.classList.remove('active');
+    if (textEl) textEl.textContent = '☕ 点击/按住萃取';
 
     const pos = Math.round(state.cup.extractPos);
     if (pos >= 62 && pos <= 78) {
@@ -2825,19 +2952,33 @@
     document.getElementById('btn-to-step-2').addEventListener('click', () => switchWorkbenchStep(2));
     document.getElementById('btn-to-step-3').addEventListener('click', () => switchWorkbenchStep(3));
 
-    // 5. Step 1 温度与清空
+    // 5. 第一人称杯具温度、黄铜冰桶铲冰与清空
     document.getElementById('btn-temp-hot').addEventListener('click', () => {
       state.cup.temp = 'hot';
       audio.playSteamSound();
       renderStep1Ingredients();
       updateLiveChalkboardPreview();
+      showToast('🔥 已换上手作暖白陶瓷热饮杯 (65°C)');
     });
     document.getElementById('btn-temp-iced').addEventListener('click', () => {
       state.cup.temp = 'iced';
       audio.playIceClinkSound();
+      triggerIceScoopAnimation();
       renderStep1Ingredients();
       updateLiveChalkboardPreview();
+      showToast('🧊 已换上高透棱纹冰饮玻璃杯 (4°C)');
     });
+    const iceBucketBtn = document.getElementById('btn-ice-bucket-scoop');
+    if (iceBucketBtn) {
+      iceBucketBtn.addEventListener('click', () => {
+        state.cup.temp = 'iced';
+        audio.playIceClinkSound();
+        triggerIceScoopAnimation();
+        renderStep1Ingredients();
+        updateLiveChalkboardPreview();
+        showToast('🥄 哗啦！从黄铜冰桶铲入晶莹冰块，饮品已冰镇！');
+      });
+    }
     document.getElementById('btn-reset-ingredients').addEventListener('click', () => {
       state.cup.addons = [];
       state.cup.extractBonus = 0;
@@ -2848,8 +2989,86 @@
       updateLiveChalkboardPreview();
       updateExtractionUI();
       latteArtController.resetBaseCrema();
-      showToast('🗑️ 已清空杯中辅料，可重新调配');
+      showToast('🗑️ 已将杯中液体倒进吧台水槽，拿取新杯重新调制');
     });
+
+    // 第一人称拖拽投料 (Drag & Drop Props onto Center Prep Mat)
+    const centerDropzone = document.getElementById('center-prep-dropzone');
+    if (centerDropzone) {
+      centerDropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        centerDropzone.classList.add('drag-over-cup');
+      });
+      centerDropzone.addEventListener('dragleave', () => {
+        centerDropzone.classList.remove('drag-over-cup');
+      });
+      centerDropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        centerDropzone.classList.remove('drag-over-cup');
+        const payload = e.dataTransfer.getData('text/plain') || '';
+        if (payload.startsWith('base:')) {
+          applyBaseSelection(payload.slice(5));
+        } else if (payload.startsWith('addon:')) {
+          applyAddonSelection(payload.slice(6), true);
+        }
+      });
+    }
+
+    // 第一人称拖拽成品杯直接递给吧台对面的女主 (Drag Cup to Customer to Serve)
+    const draggableCup = document.getElementById('center-draggable-cup');
+    const heroineBox = document.getElementById('heroine-stage-box');
+    if (draggableCup && heroineBox) {
+      draggableCup.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', 'serve:cup');
+        heroineBox.classList.add('awaiting-serve-drop');
+      });
+      draggableCup.addEventListener('dragend', () => {
+        heroineBox.classList.remove('awaiting-serve-drop', 'hover-serve-drop');
+      });
+      heroineBox.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        heroineBox.classList.add('hover-serve-drop');
+      });
+      heroineBox.addEventListener('dragleave', () => {
+        heroineBox.classList.remove('hover-serve-drop');
+      });
+      heroineBox.addEventListener('drop', (e) => {
+        e.preventDefault();
+        heroineBox.classList.remove('awaiting-serve-drop', 'hover-serve-drop');
+        const payload = e.dataTransfer.getData('text/plain') || '';
+        if (payload === 'serve:cup') {
+          serveDrinkToHeroine();
+        }
+      });
+    }
+
+    // 俯视杯口拉花放大镜弹窗开关
+    const openLatteLoupe = () => {
+      const m = document.getElementById('modal-latte-loupe');
+      if (m) m.classList.remove('hidden');
+      audio.playSteamSound();
+    };
+    const closeLatteLoupe = () => {
+      const m = document.getElementById('modal-latte-loupe');
+      if (m) m.classList.add('hidden');
+      updateLiveChalkboardPreview();
+    };
+    const openLoupeBtn = document.getElementById('btn-open-latte-loupe');
+    const topLatteBadge = document.getElementById('cup-top-latte-badge');
+    const closeLoupeBtn = document.getElementById('btn-close-latte-loupe');
+    const doneLatteBtn = document.getElementById('btn-done-latte-only');
+    const serveFromLatteBtn = document.getElementById('btn-serve-from-latte');
+
+    if (openLoupeBtn) openLoupeBtn.addEventListener('click', openLatteLoupe);
+    if (topLatteBadge) topLatteBadge.addEventListener('click', openLatteLoupe);
+    if (closeLoupeBtn) closeLoupeBtn.addEventListener('click', closeLatteLoupe);
+    if (doneLatteBtn) doneLatteBtn.addEventListener('click', closeLatteLoupe);
+    if (serveFromLatteBtn) {
+      serveFromLatteBtn.addEventListener('click', () => {
+        closeLatteLoupe();
+        serveDrinkToHeroine();
+      });
+    }
 
     // 6. Step 2 萃取按钮（同时支持按住松开 & 点击启动/点击停止）
     const brewHoldBtn = document.getElementById('btn-brew-hold');
