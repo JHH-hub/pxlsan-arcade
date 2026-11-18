@@ -22,7 +22,7 @@
       id: 'dusk',
       name: '白天晴朗档',
       time: '11:30',
-      sceneImg: 'assets/cafe/props/bg_pov_day.webp?v=5',
+      sceneImg: 'assets/cafe/props/bg_pov_day.webp?v=6',
       tint: 'linear-gradient(180deg, rgba(255, 245, 220, 0.06) 0%, rgba(40, 24, 14, 0.14) 100%)',
       weatherIcon: '☀️',
       weatherText: '晴空暖阳 · 街角绿树微风 · 第一人称吧台视角',
@@ -33,7 +33,7 @@
       id: 'rain',
       name: '下午夕阳档',
       time: '17:30',
-      sceneImg: 'assets/cafe/props/bg_pov_sunset.webp?v=5',
+      sceneImg: 'assets/cafe/props/bg_pov_sunset.webp?v=6',
       tint: 'linear-gradient(180deg, rgba(255, 140, 60, 0.08) 0%, rgba(35, 18, 10, 0.18) 100%)',
       weatherIcon: '🌇',
       weatherText: '放学夕阳余晖 · 金色霞光洒满木吧台',
@@ -44,7 +44,7 @@
       id: 'late',
       name: '晚上雨夜档',
       time: '21:30',
-      sceneImg: 'assets/cafe/props/bg_first_person_counter.webp?v=5',
+      sceneImg: 'assets/cafe/props/bg_first_person_counter.webp?v=6',
       tint: 'linear-gradient(180deg, rgba(16, 28, 38, 0.15) 0%, rgba(24, 13, 9, 0.25) 100%)',
       weatherIcon: '🌧️',
       weatherText: '窗外细雨淅沥 · 钨丝灯琥珀微醺 · 深夜吧台',
@@ -2665,27 +2665,37 @@
       Boolean(addonObjs[2])
     );
 
-    // 实时渲染玻璃杯液体分层颜色与高度
+    // 实时渲染杯子旁边的竖向分层容量进度条颜色与高度
     const layerBase = document.getElementById('layer-base');
     const layerPrimary = document.getElementById('layer-primary');
     const layerSecondary = document.getElementById('layer-secondary');
     const layerTopping = document.getElementById('layer-topping');
+    const capPctEl = document.getElementById('cup-capacity-pct');
+
+    const baseH = addonObjs.length === 0 ? 55 : addonObjs.length === 1 ? 52 : addonObjs.length === 2 ? 48 : 44;
+    const p1H = addonObjs[0] ? (addonObjs.length === 1 ? 30 : 20) : 0;
+    const p2H = addonObjs[1] ? 20 : 0;
+    const p3H = addonObjs[2] ? 16 : 0;
+    const totalPct = Math.min(100, baseH + p1H + p2H + p3H);
 
     if (layerBase) {
-      layerBase.style.height = addonObjs.length ? '44%' : '78%';
+      layerBase.style.height = `${baseH}%`;
       layerBase.style.background = baseObj.color;
     }
     if (layerPrimary) {
-      layerPrimary.style.height = addonObjs[0] ? '18%' : '0%';
+      layerPrimary.style.height = `${p1H}%`;
       layerPrimary.style.background = addonObjs[0] ? addonObjs[0].color : 'transparent';
     }
     if (layerSecondary) {
-      layerSecondary.style.height = addonObjs[1] ? '16%' : '0%';
+      layerSecondary.style.height = `${p2H}%`;
       layerSecondary.style.background = addonObjs[1] ? addonObjs[1].color : 'transparent';
     }
     if (layerTopping) {
-      layerTopping.style.height = addonObjs[2] ? '16%' : '0%';
+      layerTopping.style.height = `${p3H}%`;
       layerTopping.style.background = addonObjs[2] ? addonObjs[2].color : 'transparent';
+    }
+    if (capPctEl) {
+      capPctEl.textContent = `${totalPct}%`;
     }
 
     // 冰块、热气与杯具真实立绘显隐

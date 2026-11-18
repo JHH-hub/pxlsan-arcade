@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>放学以后的深夜咖啡馆 · 第一人称咖啡师料理台 (Pxlsan Midnight Cafe)</title>
   <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
-  <link rel="stylesheet" href="src/arcade/midnight-cafe.css?v=5" />
+  <link rel="stylesheet" href="src/arcade/midnight-cafe.css?v=6" />
 </head>
 <body class="pov-cafe-body">
   <!-- 暖钨丝灯环境光晕与暗角层 -->
@@ -104,7 +104,7 @@
       <img
         id="scene-backdrop-img"
         class="scene-backdrop-img"
-        src="assets/cafe/props/bg_pov_sunset.webp?v=5"
+        src="assets/cafe/props/bg_pov_sunset.webp?v=6"
         alt="第一人称深夜咖啡馆吧台全景"
       />
       <div class="window-tint-layer" id="window-tint-layer"></div>
@@ -363,45 +363,56 @@
               <span>🧊</span><span>🧊</span><span>🧊</span>
             </div>
 
-            <!-- 中央主饮品杯 (支持拖拽直接递给上方女主！) -->
-            <div
-              class="center-interactive-cup-wrap"
-              id="center-draggable-cup"
-              draggable="true"
-              title="做好后可向上拖拽直接递给客人，或点击右侧铜铃奉茶"
-            >
-              <!-- 真实杯具立绘底衬 + 透明液体分层视窗 -->
-              <div class="live-cup-vessel" id="live-cup-vessel" data-temp="hot">
-                <img
-                  id="live-cup-prop-bg"
-                  class="live-cup-prop-bg"
-                  src="assets/cafe/props/prop_cup_hot.webp"
-                  alt="当前杯具"
-                />
-                <!-- 杯口热气 -->
-                <div class="vessel-steam-wisps" id="vessel-steam-wisps">
-                  <span>♨</span><span>♨</span><span>♨</span>
-                </div>
-                <!-- 杯顶圆面实时拉花缩略预览 -->
-                <div class="cup-top-latte-badge" id="cup-top-latte-badge" title="点击打开奶泡拉花放大镜">
-                  <span id="served-cup-art">☕</span>
-                </div>
-                <!-- 杯身四层液体实时染色液位 -->
-                <div class="vessel-inner">
-                  <div class="vessel-layer layer-topping" id="layer-topping"></div>
-                  <div class="vessel-layer layer-secondary" id="layer-secondary"></div>
-                  <div class="vessel-layer layer-primary" id="layer-primary"></div>
-                  <div class="vessel-layer layer-base" id="layer-base"></div>
-                  <!-- 冰块层 -->
+            <!-- 中央主饮品杯 + 右侧独立分层容量进度条 (不在陶瓷杯上叠矩形框！) -->
+            <div class="cup-and-side-meter-group">
+              <div
+                class="center-interactive-cup-wrap"
+                id="center-draggable-cup"
+                title="按住左键可将做好的饮品直接向上递给客人，或点击右侧铜铃奉茶"
+              >
+                <div class="live-cup-vessel" id="live-cup-vessel" data-temp="hot">
+                  <img
+                    id="live-cup-prop-bg"
+                    class="live-cup-prop-bg"
+                    src="assets/cafe/props/prop_cup_hot.webp"
+                    alt="当前杯具"
+                  />
+                  <!-- 杯口热气 -->
+                  <div class="vessel-steam-wisps" id="vessel-steam-wisps">
+                    <span>♨</span><span>♨</span><span>♨</span>
+                  </div>
+                  <!-- 冰块标识 (冰饮时浮现于杯口) -->
                   <div class="vessel-ice-cubes hidden" id="vessel-ice-cubes">
                     <span class="ice-cube">🧊</span>
                     <span class="ice-cube">🧊</span>
-                    <span class="ice-cube">🧊</span>
+                  </div>
+                  <!-- 杯顶圆面实时拉花徽章 -->
+                  <div class="cup-top-latte-badge" id="cup-top-latte-badge" title="点击打开奶泡拉花放大镜">
+                    <span id="served-cup-art">☕</span>
                   </div>
                 </div>
-                <div class="vessel-handle"></div>
+                <span class="vessel-temp-tag" id="vessel-temp-tag">🔥 65°C 暖心陶瓷杯</span>
               </div>
-              <span class="vessel-temp-tag" id="vessel-temp-tag">🔥 65°C 暖心热饮</span>
+
+              <!-- 独立在杯子旁边的竖向分层容量进度条 -->
+              <div class="side-capacity-meter" title="杯中当前饮品容量与风味分层进度条">
+                <div class="capacity-meter-head">容量</div>
+                <div class="capacity-tube-wrap">
+                  <div class="capacity-ticks">
+                    <span>100</span>
+                    <span>75</span>
+                    <span>50</span>
+                    <span>25</span>
+                  </div>
+                  <div class="vessel-inner capacity-progress-tube">
+                    <div class="vessel-layer layer-topping" id="layer-topping"></div>
+                    <div class="vessel-layer layer-secondary" id="layer-secondary"></div>
+                    <div class="vessel-layer layer-primary" id="layer-primary"></div>
+                    <div class="vessel-layer layer-base" id="layer-base"></div>
+                  </div>
+                </div>
+                <strong class="capacity-pct-text" id="cup-capacity-pct">55%</strong>
+              </div>
             </div>
 
             <!-- 杯垫右侧：拉花钢杯道具 + 推杯奉茶铜铃 -->
@@ -669,7 +680,7 @@
     <span class="hand-held-prop-label" id="hand-held-prop-label">大吉岭红茶</span>
   </div>
 
-  <script src="src/arcade/spine-rig-player.js?v=5"></script>
-  <script src="src/arcade/midnight-cafe.js?v=5"></script>
+  <script src="src/arcade/spine-rig-player.js?v=6"></script>
+  <script src="src/arcade/midnight-cafe.js?v=6"></script>
 </body>
 </html>
