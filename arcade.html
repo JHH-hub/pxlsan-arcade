@@ -1,13 +1,12 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0d0b18" />
-  <title>像素离散·放学后的街机厅 & 创意馆 (Pxlsan Arcade Hub)</title>
-  <meta name="description" content="像素离散 Pxlsan 统一街机与创意工坊大厅：一键畅玩 AI 炼丹工坊、放学以后的深夜咖啡馆、次元节拍糖果风暴、换装主舞台、日常小城与美术风格实验室。" />
+  <title>像素离散·独立街机厅 &amp; 创意馆 (Pxlsan Arcade Hub)</title>
+  <meta name="description" content="像素离散 Pxlsan 独立街机与创意工坊大厅：一键畅玩 AI 炼丹工坊、放学以后的深夜咖啡馆、次元节拍糖果风暴与美术风格实验室。" />
   <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
-  <script src="site-routing.js" defer></script>
   <style>
     :root {
       --bg-deep: #080911;
@@ -790,6 +789,72 @@
         grid-template-columns: 1fr;
       }
     }
+
+    /* ================= 极简清爽启动器重构 (去除繁琐仪表盘与重复入口) ================= */
+    .arcade-bg-grid,
+    .topbar-links,
+    .brand-pill,
+    .brand-text p,
+    .hero-banner,
+    .career-wall-section,
+    .section-heading,
+    .portal-badge-top,
+    .portal-tags,
+    .portal-card.style-core {
+      display: none !important;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 20%, #1f1b33 0%, #12101c 75%);
+    }
+
+    .hub-topbar {
+      max-width: 1280px;
+      margin: 0 auto;
+      background: transparent;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 20px 28px;
+    }
+
+    .hub-container {
+      max-width: 1280px;
+      padding: 36px 28px;
+    }
+
+    .portal-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px;
+      margin-bottom: 36px;
+    }
+
+    .portal-card {
+      background: rgba(28, 25, 44, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 22px;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.4);
+    }
+
+    .portal-cover {
+      height: 230px;
+    }
+
+    .portal-title {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    .portal-desc {
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: rgba(255, 255, 255, 0.72);
+      margin-bottom: 18px;
+    }
+
+    .portal-enter-btn {
+      border-radius: 999px;
+      padding: 12px 20px;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
@@ -801,21 +866,20 @@
       <div class="brand-icon">🕹️</div>
       <div class="brand-text">
         <h1>
-          像素离散·放学后的街机厅 &amp; 创意馆
-          <span class="brand-pill">PXLSAN ARCADE HUB</span>
+          像素离散·独立街机厅 &amp; 创意馆
+          <span class="brand-pill">PXLSAN STANDALONE ARCADE</span>
         </h1>
-        <p>三款全新二次元街机小游戏 + 换装主剧场 + 日常小城 + 实时 UI 样机实验室一站式总控门户</p>
+        <p>三款原创二次元街机小游戏 + 18张炼丹神图馆 + 18款特调手账 + 9套实时 UI 样机实验室一站式总控门户</p>
       </div>
     </div>
 
     <nav class="topbar-links" aria-label="快捷入口">
-      <a href="tag-alchemist.html" class="nav-chip primary">🎴 炼丹工坊</a>
-      <a href="midnight-cafe.html" class="nav-chip primary">☕ 深夜咖啡馆</a>
-      <a href="neon-beat.html" class="nav-chip primary">🎵 次元节拍</a>
-      <a href="city.html" class="nav-chip">🌆 返回小城</a>
-      <a href="dressup.html" class="nav-chip">👗 换装剧场</a>
+      <a href="games/tag-alchemist/index.html" class="nav-chip primary">🃏 小丑牌魔王讨伐</a>
+      <a href="games/midnight-cafe/index.html" class="nav-chip primary">☕ 深夜咖啡馆</a>
+      <a href="games/neon-beat/index.html" class="nav-chip primary">🎵 次元节拍</a>
+      <a href="games/tag-alchemist/index.html#gallery" class="nav-chip">🏆 战利品CG馆</a>
+      <a href="games/midnight-cafe/index.html#recipes" class="nav-chip">📖 特调手账</a>
       <a href="art-style-lab.html" class="nav-chip">🎨 美术实验室</a>
-      <a href="https://pxlsan.cn/game.html" class="nav-chip">🏠 主站游戏中心</a>
     </nav>
   </header>
 
@@ -823,30 +887,30 @@
     <!-- ================= HERO 主视觉区 ================= -->
     <section class="hero-banner">
       <div>
-        <span class="hero-kicker">✨ NEW SEASON ARCADE LINEUP · 放学后的秘密基地</span>
-        <h2 class="hero-title">欢迎来到放学后的街机厅与创意馆</h2>
+        <span class="hero-kicker">✨ STANDALONE ARCADE SUITE · 100% 独立美术资产驱动</span>
+        <h2 class="hero-title">欢迎来到像素离散独立街机厅与创意馆</h2>
         <p class="hero-desc">
-          在放学后的小城街角，推开霓虹闪烁的街机厅木门——你可以在 <strong>A1 全息牌桌</strong> 组合词条爆出 SSR 神图，在 <strong>B2 胡桃木吧台</strong> 伴着雨声为女主手绘拉花，或是跃入 <strong>C1 糖果波普音游舞台</strong> 触发全屏漫画 Cut-in！所有游玩进度与勋章均实时保存在当前浏览器。
+          推开霓虹闪烁的独立街机厅木门——你可以在 <strong>A1 次元小丑牌：魔王讨伐战</strong> 率领看板娘凑齐<strong>顺子、四条王炸、葫芦与同花顺</strong>击败 9 大魔物 BOSS，在 <strong>B2 胡桃木吧台</strong> 伴着雨声为 12 位熟客手绘拉花，或是跃入 <strong>C1 糖果波普音游舞台</strong> 触发全屏漫画 Cut-in！
         </p>
         <div class="hero-cta-row">
-          <a href="tag-alchemist.html" class="hero-btn neon-primary">🎴 立即开局：炼丹工坊</a>
-          <a href="midnight-cafe.html" class="hero-btn neon-secondary">☕ 进入吧台：深夜咖啡馆</a>
-          <a href="neon-beat.html" class="hero-btn neon-secondary">🎵 开始打歌：次元节拍</a>
+          <a href="games/tag-alchemist/index.html" class="hero-btn neon-primary">🃏 立即开局：小丑牌魔王讨伐</a>
+          <a href="games/midnight-cafe/index.html" class="hero-btn neon-secondary">☕ 进入吧台：深夜咖啡馆</a>
+          <a href="games/neon-beat/index.html" class="hero-btn neon-secondary">🎵 开始打歌：次元节拍</a>
           <a href="art-style-lab.html" class="hero-btn neon-secondary">🎨 9套美术风格实验室</a>
         </div>
       </div>
 
       <div class="hero-showcase-stack">
-        <a href="tag-alchemist.html" class="mini-poster" title="进入《Pxlsan 炼丹工坊》">
-          <img src="dressup/assets/gacha/up-ssr-takagi-qipao-wide.webp" alt="Pxlsan 炼丹工坊" />
-          <div class="mini-poster-tag">🎴 A1 · 炼丹工坊</div>
+        <a href="games/tag-alchemist/index.html" class="mini-poster" title="进入《次元小丑牌：魔王讨伐战》">
+          <img src="games/tag-alchemist/assets/alchemist/ssr/ssr_01.webp" alt="次元小丑牌：魔王讨伐战" />
+          <div class="mini-poster-tag">🃏 A1 · 小丑牌讨伐</div>
         </a>
-        <a href="midnight-cafe.html" class="mini-poster" title="进入《放学以后的深夜咖啡馆》">
-          <img src="dressup/scenes/cafe_rain_night.webp" alt="放学以后的深夜咖啡馆" />
+        <a href="games/midnight-cafe/index.html" class="mini-poster" title="进入《放学以后的深夜咖啡馆》">
+          <img src="games/midnight-cafe/assets/cafe/bg_rain_night.webp" alt="放学以后的深夜咖啡馆" />
           <div class="mini-poster-tag">☕ B2 · 深夜咖啡馆</div>
         </a>
-        <a href="neon-beat.html" class="mini-poster" title="进入《次元节拍：糖果风暴》">
-          <img src="dressup/assets/gacha/up-ssr-takako-jingyong-wide.webp" alt="次元节拍：糖果风暴" />
+        <a href="games/neon-beat/index.html" class="mini-poster" title="进入《次元节拍：糖果风暴》">
+          <img src="games/neon-beat/assets/neonbeat/covers/track_01.webp" alt="次元节拍：糖果风暴" />
           <div class="mini-poster-tag">🎵 C1 · 次元节拍</div>
         </a>
       </div>
@@ -1026,41 +1090,41 @@
     </div>
 
     <section class="portal-grid" aria-label="街机厅游戏与模块列表">
-      <!-- 1. 游戏 A：Pxlsan 炼丹工坊 -->
+      <!-- 1. 游戏 A：次元小丑牌：魔王讨伐战 -->
       <article class="portal-card style-a1">
-        <a href="tag-alchemist.html" class="portal-cover">
+        <a href="games/tag-alchemist/index.html" class="portal-cover">
           <div class="portal-badge-top">
             <span class="style-chip" style="background: linear-gradient(135deg, #ff2a85, #7b2cbf);">NEW · 游戏 A</span>
-            <span class="style-chip" style="background: rgba(0, 0, 0, 0.72); border: 1px solid #00f0ff; color: #00f0ff;">A1 赛博 CRT 全息牌桌风</span>
+            <span class="style-chip" style="background: rgba(0, 0, 0, 0.72); border: 1px solid #00f0ff; color: #00f0ff;">A1 小丑牌顺子炸弹打怪</span>
           </div>
-          <img src="dressup/assets/gacha/up-ssr-takagi-qipao-wide.webp" alt="Pxlsan 炼丹工坊：AI 画师模拟器" />
+          <img src="games/tag-alchemist/assets/alchemist/ssr/ssr_01.webp" alt="次元小丑牌：魔王讨伐战" />
           <div class="live-save-pill">
             <span>📊 本地进度</span>
-            <span id="cardAlchLiveText">神图 1/18 · 最高算力 0</span>
+            <span id="cardAlchLiveText">战利品 1/18 · 最高伤害 0</span>
           </div>
         </a>
         <div class="portal-body">
-          <h3 class="portal-title">🎴 《Pxlsan 炼丹工坊：AI 画师模拟器》</h3>
+          <h3 class="portal-title">🃏 《次元小丑牌：魔王讨伐战》</h3>
           <p class="portal-desc">
-            Balatro 小丑牌式全息词条构筑 Roguelike！自由组合「角色穿搭 + 光影氛围 + 微表情」触发 8 大黄金构图羁绊，挂载 Anima 1.4 与 ADetailer 插件镇压六指恶魔，在 CRT 监视器爆出 18 张本地高清 SSR 神图！
+            Balatro 小丑牌式顺子/炸弹打怪 RPG！率领高木、长瀞、海梦、辉夜、黑猫 5 位看板娘迎战 9 大魔物与魔王 BOSS，凑齐「同花顺、四条王炸、葫芦满堂红、五连顺子」并搭配顶部 5 槽位小丑牌引爆百倍暴击伤害！
           </p>
           <div class="portal-tags">
-            <span class="portal-tag">🃏 全息闪卡构筑</span>
-            <span class="portal-tag">⚡ 像素×倍率跳字</span>
-            <span class="portal-tag">🖼️ 18张神图图鉴</span>
+            <span class="portal-tag">💣 顺子与四条王炸</span>
+            <span class="portal-tag">👾 角色 VS 9大魔王</span>
+            <span class="portal-tag">🏆 18张战利品CG</span>
           </div>
-          <a href="tag-alchemist.html" class="portal-enter-btn">🚀 立即进入《炼丹工坊》 ▸</a>
+          <a href="games/tag-alchemist/index.html" class="portal-enter-btn">⚔️ 立即进入《小丑牌魔王讨伐》 ▸</a>
         </div>
       </article>
 
       <!-- 2. 游戏 B：放学以后的深夜咖啡馆 -->
       <article class="portal-card style-b2">
-        <a href="midnight-cafe.html" class="portal-cover">
+        <a href="games/midnight-cafe/index.html" class="portal-cover">
           <div class="portal-badge-top">
             <span class="style-chip" style="background: linear-gradient(135deg, #d48c46, #8a5629);">NEW · 游戏 B</span>
             <span class="style-chip" style="background: rgba(0, 0, 0, 0.72); border: 1px solid #ffd166; color: #ffd166;">B2 暖调胡桃木 Lo-Fi 风</span>
           </div>
-          <img src="dressup/scenes/cafe_rain_night.webp" alt="放学以后的深夜咖啡馆" />
+          <img src="games/midnight-cafe/assets/cafe/bg_rain_night.webp" alt="放学以后的深夜咖啡馆" />
           <div class="live-save-pill">
             <span>📊 本地进度</span>
             <span id="cardCafeLiveText">配方 2/18 · 第 1 夜</span>
@@ -1069,25 +1133,25 @@
         <div class="portal-body">
           <h3 class="portal-title">☕ 《放学以后的深夜咖啡馆》</h3>
           <p class="portal-desc">
-            伴着窗外淅沥夜雨与 WebAudio 电钢琴 Lo-Fi 和弦，在胡桃木吧台接待 12 位放学后到访的女主。体验「精选配料 ▸ 黄金温区萃取 ▸ 交互式奶泡手绘拉花」三步调饮，收集 18 款秘密特调与雨夜手写寄语！
+            伴着窗外淅沥夜雨与 WebAudio 电钢琴 Lo-Fi 和弦，在胡桃木吧台接待 12 位放学后到访的熟客。体验「精选配料 ▸ 黄金温区萃取 ▸ 交互式奶泡手绘拉花」三步调饮，收集 18 款秘密特调与雨夜手写寄语！
           </p>
           <div class="portal-tags">
             <span class="portal-tag">☕ 三步调饮 &amp; 手绘拉花</span>
-            <span class="portal-tag">🌧️ 12位女主夜谈</span>
+            <span class="portal-tag">🌧️ 12位熟客夜谈</span>
             <span class="portal-tag">📖 18款秘密特调</span>
           </div>
-          <a href="midnight-cafe.html" class="portal-enter-btn">☕ 立即进入《深夜咖啡馆》 ▸</a>
+          <a href="games/midnight-cafe/index.html" class="portal-enter-btn">☕ 立即进入《深夜咖啡馆》 ▸</a>
         </div>
       </article>
 
       <!-- 3. 游戏 C：次元节拍：糖果风暴 -->
       <article class="portal-card style-c1">
-        <a href="neon-beat.html" class="portal-cover">
+        <a href="games/neon-beat/index.html" class="portal-cover">
           <div class="portal-badge-top">
             <span class="style-chip" style="background: linear-gradient(135deg, #ff1493, #ff7b00);">NEW · 游戏 C</span>
             <span class="style-chip" style="background: rgba(0, 0, 0, 0.72); border: 1px solid #ffe600; color: #ffe600;">C1 高饱和糖果波普漫改风</span>
           </div>
-          <img src="dressup/assets/gacha/up-ssr-takako-jingyong-wide.webp" alt="次元节拍：糖果风暴" />
+          <img src="games/neon-beat/assets/neonbeat/covers/track_03.webp" alt="次元节拍：糖果风暴" />
           <div class="live-save-pill">
             <span>📊 本地进度</span>
             <span id="cardBeatLiveText">最高分 0 · 待首通</span>
@@ -1103,59 +1167,59 @@
             <span class="portal-tag">💥 漫画斜切 Cut-in</span>
             <span class="portal-tag">💿 本地音乐生成谱面</span>
           </div>
-          <a href="neon-beat.html" class="portal-enter-btn">🎵 立即进入《次元节拍》 ▸</a>
+          <a href="games/neon-beat/index.html" class="portal-enter-btn">🎵 立即进入《次元节拍》 ▸</a>
         </div>
       </article>
 
-      <!-- 4. 换装与视觉小说主舞台 -->
+      <!-- 4. 炼丹神图与全息显卡插件典藏馆 -->
       <article class="portal-card style-core">
-        <a href="dressup.html" class="portal-cover">
+        <a href="games/tag-alchemist/index.html#gallery" class="portal-cover">
           <div class="portal-badge-top">
-            <span class="style-chip" style="background: linear-gradient(135deg, #ec4899, #8b5cf6);">CORE · 旗舰主舞台</span>
+            <span class="style-chip" style="background: linear-gradient(135deg, #ec4899, #8b5cf6);">GALLERY · 炼丹典藏馆</span>
           </div>
-          <img src="dressup/assets/loading/loading_takagi_school.webp" alt="放学以后·换装与视觉小说主舞台" />
+          <img src="games/tag-alchemist/assets/alchemist/ssr/ssr_14.webp" alt="炼丹神图与全息插件典藏馆" />
           <div class="live-save-pill">
-            <span>👗 旗舰核心体验</span>
-            <span>11 角色 · 242 套服装 · 66 章剧情</span>
+            <span>🖼️ 独立美术图鉴</span>
+            <span>18 张 SSR 神图 · 12 款显卡插件 · 4 套全息卡背</span>
           </div>
         </a>
         <div class="portal-body">
-          <h3 class="portal-title">👗 《放学以后·换装与视觉小说主舞台》</h3>
+          <h3 class="portal-title">🖼️ 《炼丹神图与全息插件典藏馆》</h3>
           <p class="portal-desc">
-            与高木、长瀞、爱莉、千鹤、海梦、辉夜等 11 位女主共度放学后的心动时光！体验 242 套全身立绘换装、4 部位触摸语音互动、Lv.0~Lv.10 好感度培养、66 章多分支剧情与限定卡池抽卡。
+            一键检视《炼丹工坊》收录的 18 张 16:9 原创高清二次元神图、完整 Prompt 配方、12 款 GPU/LoRA 算力插件图标与 4 套全息镭射卡背纹理！
           </p>
           <div class="portal-tags">
-            <span class="portal-tag">👗 242套华丽换装</span>
-            <span class="portal-tag">📖 66章多结局视觉小说</span>
-            <span class="portal-tag">🎙️ 声优级日语配音</span>
+            <span class="portal-tag">🖼️ 18张16:9神图</span>
+            <span class="portal-tag">🧩 12款显卡插件</span>
+            <span class="portal-tag">🔍 高清大图检视</span>
           </div>
-          <a href="dressup.html" class="portal-enter-btn">👗 进入《换装与主线剧场》 ▸</a>
+          <a href="games/tag-alchemist/index.html#gallery" class="portal-enter-btn">🖼️ 打开《炼丹神图典藏馆》 ▸</a>
         </div>
       </article>
 
-      <!-- 5. 放学以后的城市·大地图探索 -->
+      <!-- 5. 深夜吧台特调手账与熟客名册 -->
       <article class="portal-card style-core">
-        <a href="city.html" class="portal-cover">
+        <a href="games/midnight-cafe/index.html#recipes" class="portal-cover">
           <div class="portal-badge-top">
-            <span class="style-chip" style="background: linear-gradient(135deg, #06b6d4, #3b82f6);">CITY · 等距大地图</span>
+            <span class="style-chip" style="background: linear-gradient(135deg, #06b6d4, #3b82f6);">BARISTA · 特调与熟客手账</span>
           </div>
-          <img src="dressup/map/environment/urban-map-v2.webp" alt="放学以后的城市·大地图探索" />
+          <img src="games/midnight-cafe/assets/cafe/bg_sunset.webp" alt="深夜吧台特调手账与熟客名册" />
           <div class="live-save-pill">
-            <span>🌆 日常小城漫步</span>
-            <span id="cardCityLiveText">9 女主视角 · 昼夜切换 · 手账信箱</span>
+            <span>☕ 吧台手账档案</span>
+            <span id="cardCityLiveText">18 款特调精绘图标 · 12 位熟客全表情差分</span>
           </div>
         </a>
         <div class="portal-body">
-          <h3 class="portal-title">🌆 《放学以后的城市·大地图探索》</h3>
+          <h3 class="portal-title">📖 《深夜吧台·18款特调手账与熟客名册》</h3>
           <p class="portal-desc">
-            有些故事，走到那里才会发生。在果冻卡通渲染的日常小城中自由拖动地图，探索教学楼、图书馆、美术室、游乐园与商店街，体验 9 位女主的文化周主线、跨角色偶遇、海滩/温泉番外与每日手写信箱！
+            翻阅 18 款秘密特调饮品的高清手绘图标与配料秘方，查看 12 位吧台熟客的 5 档表情差分立绘与雨夜手写明信片寄语，支持一键按方载入吧台调制！
           </p>
           <div class="portal-tags">
-            <span class="portal-tag">🗺️ 6大街区昼夜切换</span>
-            <span class="portal-tag">✨ 39张事件CG与微剧场</span>
-            <span class="portal-tag">📮 每日便条信箱</span>
+            <span class="portal-tag">🍹 18款特调图标</span>
+            <span class="portal-tag">💌 12份手写寄语</span>
+            <span class="portal-tag">✨ 一键按方备料</span>
           </div>
-          <a href="city.html" class="portal-enter-btn">🌆 进入《放学以后的城市》 ▸</a>
+          <a href="games/midnight-cafe/index.html#recipes" class="portal-enter-btn">📖 打开《特调手账与名册》 ▸</a>
         </div>
       </article>
 
@@ -1165,7 +1229,7 @@
           <div class="portal-badge-top">
             <span class="style-chip" style="background: linear-gradient(135deg, #10b981, #0ea5e9);">CREATIVE LAB · 样机工坊</span>
           </div>
-          <img src="dressup/assets/gacha/up-ssr-aili-catgirl-wide.webp" alt="美术风格与动态 UI 样机实验室" />
+          <img src="games/tag-alchemist/assets/alchemist/ssr/ssr_02.webp" alt="美术风格与动态 UI 样机实验室" />
           <div class="live-save-pill">
             <span>🎨 交互式视觉参考</span>
             <span>3 款新游 × 9 套动态 UI 样机</span>

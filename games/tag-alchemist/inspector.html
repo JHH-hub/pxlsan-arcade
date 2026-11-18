@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>4状态半身像 & 双特写插屏检查台 · Pxlsan Arcade</title>
+  <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
+  <style>
+    :root {
+      --bg: #101218;
+      --panel: #181c26;
+      --border: #2c3347;
+      --gold: #f59e0b;
+      --cyan: #38bdf8;
+      --red: #f43f5e;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+      min-height: 100vh;
+      padding: 16px 24px 48px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 18px;
+    }
+    .topbar h1 {
+      font-size: 20px;
+      color: #fde68a;
+    }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      background: #252a3a;
+      color: var(--text);
+      border: 1px solid #3f4760;
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .btn:hover, .btn.active {
+      background: #363e57;
+      border-color: var(--gold);
+      color: #fde68a;
+    }
+    .btn.danger {
+      background: rgba(225, 29, 72, 0.2);
+      border-color: #f43f5e;
+      color: #fda4af;
+    }
+    .btn.danger:hover, .btn.danger.active {
+      background: #e11d48;
+      color: #fff;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--cyan);
+      margin: 18px 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .hero-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+      gap: 18px;
+    }
+    .hero-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .hero-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .hero-title {
+      font-size: 16px;
+      font-weight: 900;
+      color: #fff;
+    }
+    .cutin-btns {
+      display: flex;
+      gap: 8px;
+    }
+    .cutin-btn {
+      padding: 5px 11px;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      border: 1px solid rgba(251, 191, 36, 0.5);
+      background: rgba(245, 158, 11, 0.16);
+      color: #fde68a;
+    }
+    .cutin-btn.crit {
+      border-color: rgba(244, 63, 94, 0.6);
+      background: rgba(225, 29, 72, 0.2);
+      color: #fda4af;
+    }
+    .cutin-btn:hover {
+      filter: brightness(1.2);
+    }
+    .four-states-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .state-cell {
+      background:
+        linear-gradient(45deg, #1d2130 25%, transparent 25%),
+        linear-gradient(-45deg, #1d2130 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #1d2130 75%),
+        linear-gradient(-45deg, transparent 75%, #1d2130 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+      background-color: #141722;
+      border: 1px solid #32394e;
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .state-cell:hover {
+      transform: translateY(-3px);
+      border-color: var(--gold);
+    }
+    .state-cell.state-critical {
+      border-color: rgba(244, 63, 94, 0.55);
+    }
+    .state-cell img {
+      width: 100%;
+      height: 215px;
+      object-fit: cover;
+      object-position: top center;
+    }
+    .state-label {
+      width: 100%;
+      text-align: center;
+      font-size: 11.5px;
+      font-weight: 800;
+      padding: 4px 0;
+      background: rgba(0, 0, 0, 0.68);
+      color: #e5e7eb;
+    }
+    .state-cell.state-critical .state-label {
+      background: rgba(159, 18, 57, 0.85);
+      color: #ffe4e6;
+    }
+
+    /* 9 BOSS 网格 */
+    .boss-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+    }
+    .boss-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+    }
+    .boss-card img {
+      width: 100%;
+      height: 170px;
+      object-fit: contain;
+    }
+    .boss-card h4 {
+      font-size: 13px;
+      margin-top: 6px;
+      color: #fde68a;
+    }
+
+    /* 全屏大立绘 + 背后巨型海报文字 插屏预览层 (Cut-in Overlay) */
+    .cutin-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: radial-gradient(circle at 50% 50%, rgba(124, 45, 18, 0.92) 0%, rgba(8, 6, 15, 0.96) 100%);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .cutin-overlay.mode-critical {
+      background: radial-gradient(circle at 50% 50%, rgba(190, 18, 60, 0.92) 0%, rgba(20, 5, 28, 0.96) 100%);
+    }
+    .cutin-overlay.hidden {
+      display: none;
+    }
+    .cutin-slash-bar {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .cutin-speedlines {
+      position: absolute;
+      inset: -20%;
+      background: repeating-linear-gradient(
+        -14deg,
+        rgba(255, 255, 255, 0.06) 0px,
+        rgba(255, 255, 255, 0.06) 4px,
+        transparent 4px,
+        transparent 24px
+      );
+      z-index: 1;
+      pointer-events: none;
+    }
+    /* 背后巨型海报文字层 (z-index: 2，在人物正后方！) */
+    .cutin-text-col {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      text-align: center;
+    }
+    .cutin-pill {
+      position: absolute;
+      top: 28px;
+      left: 36px;
+      font-size: 15px;
+      font-weight: 900;
+      padding: 6px 18px;
+      border-radius: 99px;
+      background: #fde047;
+      color: #181311;
+      letter-spacing: 2px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+    }
+    .cutin-overlay.mode-critical .cutin-pill {
+      background: #fb7185;
+      color: #fff;
+    }
+    .cutin-title {
+      font-size: clamp(72px, 11vw, 156px);
+      font-weight: 900;
+      line-height: 1.05;
+      color: rgba(255, 255, 255, 0.22);
+      -webkit-text-stroke: 3.5px rgba(253, 224, 71, 0.78);
+      text-shadow: 0 0 60px rgba(251, 191, 36, 0.6);
+      letter-spacing: 8px;
+      transform: rotate(-5deg) translateY(-20px);
+      user-select: none;
+      white-space: nowrap;
+    }
+    .cutin-overlay.mode-critical .cutin-title {
+      -webkit-text-stroke: 3.5px rgba(253, 164, 175, 0.85);
+      text-shadow: 0 0 65px rgba(244, 63, 94, 0.8);
+    }
+    /* 人物主视觉层 (z-index: 3)：100%完整无切边全身立绘自然放大，头肩手发丝完整无硬边！ */
+    .cutin-hero-img {
+      position: relative;
+      z-index: 3;
+      height: 128vh;
+      width: auto;
+      object-fit: contain;
+      object-position: top center;
+      transform: translateY(15vh);
+      filter: drop-shadow(0 16px 42px rgba(0, 0, 0, 0.95));
+      animation: heroPopIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    /* 底部悬浮台词字幕条 (z-index: 5) */
+    .cutin-quote {
+      position: fixed;
+      bottom: 28px;
+      z-index: 5;
+      font-size: 18px;
+      font-weight: 800;
+      color: #fef3c7;
+      background: rgba(10, 8, 18, 0.88);
+      padding: 10px 28px;
+      border-radius: 99px;
+      border: 2px solid rgba(253, 224, 71, 0.75);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85);
+    }
+    @keyframes heroPopIn {
+      0% { transform: translateY(22vh) scale(0.9); opacity: 0; }
+      100% { transform: translateY(15vh) scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>🎬 角色 4 状态专属半身像 (正常 / 攻击 / 受击 / 濒死爆衣) & 双插屏特写检查台</h1>
+      <p style="font-size: 12.5px; color: var(--muted); margin-top: 4px;">
+        已彻底移除生硬骨骼拉扯，改为每位角色 4 张高张力专属状态半身像 + 【攻击前必杀奥义插屏】与【濒死战损破防插屏】！点击下方任意按钮即可实时预览。
+      </p>
+    </div>
+    <div class="toolbar">
+      <a href="index.html" class="btn">← 返回次元小丑牌实战</a>
+      <a href="../../index.html" class="btn">🏠 街机大厅</a>
+    </div>
+  </header>
+
+  <div class="section-title">
+    <span>👧 9 位出战女主 · 4 状态完整半身像 (768×920 · 0 削头顶 · 点击右侧按钮测试斜切插屏特写)</span>
+  </div>
+  <div class="hero-cards-grid" id="heroGrid"></div>
+
+  <div class="section-title">
+    <span>👾 9 大美少女反派 & 魔将 BOSS · 4 状态动态全身立绘 (正常 / 攻击 / 受击 / 濒死爆衣)</span>
+  </div>
+  <div class="hero-cards-grid" id="bossGrid"></div>
+
+  <!-- 斜切漫画插屏特写弹窗 -->
+  <div class="cutin-overlay hidden" id="cutinOverlay" title="点击任意处关闭">
+    <div class="cutin-slash-bar">
+      <div class="cutin-speedlines"></div>
+      <img src="" alt="特写" class="cutin-hero-img" id="cutinImg" />
+      <div class="cutin-text-col">
+        <span class="cutin-pill" id="cutinPill">⚡ 攻击前奥义特写 · CUT-IN</span>
+        <strong class="cutin-title" id="cutinTitle">高木 · 紫气东来!!</strong>
+        <p class="cutin-quote" id="cutinQuote">「哼哼，猜猜看我这一剑会砍向哪里？」</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const HEROES = [
+      {
+        id: 'takagi',
+        name: '高木',
+        atkSkill: '同花顺',
+        atkQuote: '「哼哼，猜猜看我这一手会出什么牌？」',
+        critQuote: '「呜……衣服被划破了……但下一手牌绝对不会输给你！」'
+      },
+      {
+        id: 'nagatoro',
+        name: '长瀞',
+        atkSkill: '四条 (炸弹)',
+        atkQuote: '「接招吧，吃我这一记重拳连击啦！！」',
+        critQuote: '「啧……居然把人家的制服弄破了，我要认真揍飞你了！」'
+      },
+      {
+        id: 'marin',
+        name: '海梦',
+        atkSkill: '满堂红 (葫芦)',
+        atkQuote: '「闪耀全场吧！这可是我最拿手的一手牌！」',
+        critQuote: '「呀啊！好不容易做好的礼服破掉了……绝对饶不了你！」'
+      },
+      {
+        id: 'kaguya',
+        name: '辉夜',
+        atkSkill: '同花顺',
+        atkQuote: '「真是可爱呢——这一手牌我已经算准了。」',
+        critQuote: '「怎、怎么会如此狼狈……本小姐绝不允许在此倒下！」'
+      },
+      {
+        id: 'kuroneko',
+        name: '黑猫',
+        atkSkill: '四条 (炸弹)',
+        atkQuote: '「哼哼，听从号令吧，看我用这一手牌击败你！」',
+        critQuote: '「咕呜……衣服破损了……但反击现在才开始！」'
+      },
+      {
+        id: 'aili',
+        name: '爱莉',
+        atkSkill: '顺子',
+        atkQuote: '「别小看人！看我用这一击把你彻底轰飞！」',
+        critQuote: '「笨、笨蛋别往这边看啦！还不快点出牌反击！」'
+      },
+      {
+        id: 'qianhe',
+        name: '千鹤',
+        atkSkill: '同花',
+        atkQuote: '「全力以赴的演出，现在才刚刚进入高潮！」',
+        critQuote: '「呼、呼……就算只剩最后一口气，我也绝不会退缩！」'
+      },
+      {
+        id: 'mai',
+        name: '麻衣',
+        atkSkill: '满堂红 (葫芦)',
+        atkQuote: '「看好了，这可是只为你一人准备的一手好牌。」',
+        critQuote: '「真是的……让人家露出这种破损的样子，你要怎么补偿我？」'
+      },
+      {
+        id: 'yukino',
+        name: '雪乃',
+        atkSkill: '同花顺',
+        atkQuote: '「毫无破绽的一手牌——就此分出胜负吧。」',
+        critQuote: '「咳……衣服破损算不上什么，冷静算牌，一举逆转它！」'
+      }
+    ];
+
+    const BOSSES = [
+      { id: 'boss_01', name: '1-1 · 见习小恶魔魅魔 · 莉莉姆', skill: '魅惑飞吻 · 盲牌恶作剧', quote: '「嘻嘻~ 猜猜看被人家翻过去的牌是什么点数呀？」' },
+      { id: 'boss_02', name: '1-2 · 暗夜血族女仆 · 薇薇安', skill: '鲜血夜宴 · 血雾盖牌', quote: '「大小姐的命令，把你的底牌全部遮住~！」' },
+      { id: 'boss_03', name: '1-3 · 【魔将】嫉妒魔将 · 塞拉菲娜', skill: '嫉妒锁链 · 人头牌盲封', quote: '「嫉妒锁链！不许你看清手里的皇室人头牌！」' },
+      { id: 'boss_04', name: '2-1 · 幻惑九尾狐姬 · 玉藻', skill: '九尾狐火 · 幻象盖牌', quote: '「狐火迷障~ 凭直觉摸牌吧，小可爱~」' },
+      { id: 'boss_05', name: '2-2 · 堕落黑纱修女 · 克拉拉', skill: '深渊黑纱 · 禁欲盲牌', quote: '「在黑纱的蒙蔽下，乖乖接受忏悔吧~」' },
+      { id: 'boss_06', name: '2-3 · 【魔将】催眠魔将 · 梦魔女王梅露', skill: '催眠怀表 · 梦魇盖牌', quote: '「看着这只怀表……你的手牌已经被我催眠反转了哦~」' },
+      { id: 'boss_07', name: '3-1 · 背德黑化圣女 · 贞德·Alter', skill: '背德圣咏 · 暗焰盲牌', quote: '「在黑化圣火中沉沦吧，你连自己的牌都看不清！」' },
+      { id: 'boss_08', name: '3-2 · 【魔将】支配魔将 · 龙角黑骑士姬', skill: '支配龙威 · 强袭盖牌', quote: '「在龙角魔将面前，跪下盲出你的手牌吧！」' },
+      { id: 'boss_09', name: '3-3 · 【最终BOSS】终焉魅惑魔王 · 阿斯莫德', skill: '掠夺契约 · 魔王盲域', quote: '「呵呵，连底牌都被本王夺走视野，还不快快臣服于我？」' }
+    ];
+
+    const v = Date.now();
+    const heroGrid = document.getElementById('heroGrid');
+    const overlay = document.getElementById('cutinOverlay');
+    let previewAudio = null;
+
+    function playPreviewVoice(url) {
+      try {
+        if (previewAudio) {
+          previewAudio.pause();
+          previewAudio.currentTime = 0;
+        }
+        previewAudio = new Audio(url);
+        previewAudio.volume = 0.88;
+        previewAudio.play().catch(() => {});
+      } catch (_) {}
+    }
+
+    function showCutin(h, mode) {
+      overlay.classList.toggle('mode-critical', mode === 'critical');
+      document.getElementById('cutinImg').src =
+        mode === 'critical'
+          ? `assets/alchemist/states/${h.id}_critical.webp?v=${v}`
+          : `assets/alchemist/states/${h.id}_attack.webp?v=${v}`;
+      document.getElementById('cutinPill').textContent =
+        mode === 'critical' ? '💔 战损特写 CG' : '✨ 角色特写 CG';
+      document.getElementById('cutinTitle').textContent =
+        mode === 'critical' ? `${h.name} · 战损特写` : `${h.name} · ${h.atkSkill}`;
+      document.getElementById('cutinQuote').textContent = mode === 'critical' ? h.critQuote : h.atkQuote;
+      playPreviewVoice(`assets/alchemist/voices/${h.id}_${mode === 'critical' ? 'critical' : 'attack'}.wav?v=${v}`);
+      overlay.classList.remove('hidden');
+    }
+
+    overlay.addEventListener('click', () => overlay.classList.add('hidden'));
+
+    HEROES.forEach((h) => {
+      const card = document.createElement('div');
+      card.className = 'hero-card';
+      card.innerHTML = `
+        <div class="hero-card-header">
+          <span class="hero-title">${h.name}</span>
+          <div class="cutin-btns">
+            <button type="button" class="cutin-btn" data-cutin="attack">⚡ 预览攻击前插屏</button>
+            <button type="button" class="cutin-btn crit" data-cutin="critical">💔 预览濒死爆衣插屏</button>
+          </div>
+        </div>
+        <div class="four-states-row">
+          <div class="state-cell" title="点击放大查看【正常待机】半身像" data-img="assets/alchemist/states/${h.id}_normal.webp?v=${v}">
+            <img src="assets/alchemist/states/${h.id}_normal.webp?v=${v}" alt="正常" />
+            <span class="state-label">① 正常待机</span>
+          </div>
+          <div class="state-cell" title="点击预览【出招攻击】插屏" data-cutin="attack">
+            <img src="assets/alchemist/states/${h.id}_attack.webp?v=${v}" alt="攻击" />
+            <span class="state-label">② 出招攻击</span>
+          </div>
+          <div class="state-cell" title="点击放大查看【受击招架】半身像" data-img="assets/alchemist/states/${h.id}_hit.webp?v=${v}">
+            <img src="assets/alchemist/states/${h.id}_hit.webp?v=${v}" alt="受击" />
+            <span class="state-label">③ 受击硬直</span>
+          </div>
+          <div class="state-cell state-critical" title="点击预览【濒死战损破衣】插屏" data-cutin="critical">
+            <img src="assets/alchemist/states/${h.id}_critical.webp?v=${v}" alt="濒死战损" />
+            <span class="state-label">④ 濒死战损(爆衣)</span>
+          </div>
+        </div>
+      `;
+
+      card.querySelectorAll('[data-cutin]').forEach((el) => {
+        el.addEventListener('click', () => showCutin(h, el.getAttribute('data-cutin')));
+      });
+      card.querySelectorAll('[data-img]').forEach((el) => {
+        el.addEventListener('click', () => window.open(el.getAttribute('data-img'), '_blank'));
+      });
+
+      heroGrid.appendChild(card);
+    });
+
+    const bossGrid = document.getElementById('bossGrid');
+    BOSSES.forEach((b) => {
+      const card = document.createElement('div');
+      card.className = 'hero-card';
+      card.innerHTML = `
+        <div class="hero-card-header">
+          <span class="hero-title">${b.name}</span>
+          <div class="cutin-btns">
+            <button type="button" class="cutin-btn" data-boss-cutin="attack">💋 预览攻击插屏</button>
+            <button type="button" class="cutin-btn crit" data-boss-cutin="critical">💔 预览爆衣破防插屏</button>
+          </div>
+        </div>
+        <div class="four-states-row">
+          <div class="state-cell" title="点击查看【正常待机】立绘" data-img="assets/alchemist/monsters/${b.id}_anim.webp?v=${v}">
+            <img src="assets/alchemist/monsters/${b.id}_anim.webp?v=${v}" alt="正常" />
+            <span class="state-label">① 正常待机</span>
+          </div>
+          <div class="state-cell" title="点击预览【技能攻击】插屏" data-boss-cutin="attack">
+            <img src="assets/alchemist/monsters/${b.id}_attack.webp?v=${v}" alt="攻击" />
+            <span class="state-label">② 技能攻击</span>
+          </div>
+          <div class="state-cell" title="点击查看【受击震退】立绘" data-img="assets/alchemist/monsters/${b.id}_hit.webp?v=${v}">
+            <img src="assets/alchemist/monsters/${b.id}_hit.webp?v=${v}" alt="受击" />
+            <span class="state-label">③ 受击震退</span>
+          </div>
+          <div class="state-cell state-critical" title="点击预览【濒死爆衣】插屏" data-boss-cutin="critical">
+            <img src="assets/alchemist/monsters/${b.id}_critical.webp?v=${v}" alt="濒死爆衣" />
+            <span class="state-label">④ 濒死战损(爆衣)</span>
+          </div>
+        </div>
+      `;
+      card.querySelectorAll('[data-boss-cutin]').forEach((el) => {
+        el.addEventListener('click', () => {
+          const m = el.getAttribute('data-boss-cutin');
+          overlay.classList.add('mode-critical');
+          document.getElementById('cutinImg').src =
+            m === 'critical'
+              ? `assets/alchemist/monsters/${b.id}_critical.webp?v=${v}`
+              : `assets/alchemist/monsters/${b.id}_attack.webp?v=${v}`;
+          document.getElementById('cutinPill').textContent =
+            m === 'critical' ? '💥 ARMOR BREAK · 魔将战损爆衣插屏' : '💋 魔城反击 · BOSS SKILL CUT-IN';
+          document.getElementById('cutinTitle').textContent =
+            m === 'critical' ? `${b.name} · 战损破防!!` : b.skill;
+          document.getElementById('cutinQuote').textContent =
+            m === 'critical' ? '「咕呜……铠甲和礼服居然被你斩碎了……别得意忘形！！」' : b.quote;
+          playPreviewVoice(`assets/alchemist/voices/${b.id}_${m === 'critical' ? 'critical' : 'attack'}.wav?v=${v}`);
+          overlay.classList.remove('hidden');
+        });
+      });
+      card.querySelectorAll('[data-img]').forEach((el) => {
+        el.addEventListener('click', () => window.open(el.getAttribute('data-img'), '_blank'));
+      });
+      bossGrid.appendChild(card);
+    });
+  </script>
+</body>
+</html>

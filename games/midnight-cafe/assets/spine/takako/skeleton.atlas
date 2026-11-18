@@ -1,0 +1,298 @@
+back_hair.webp
+  size: 338,518
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+back_hair
+  rotate: false
+  xy: 0, 0
+  size: 338, 518
+  orig: 338, 518
+  offset: 0, 0
+  index: -1
+
+tail.webp
+  size: 522,766
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+tail
+  rotate: false
+  xy: 0, 0
+  size: 522, 766
+  orig: 522, 766
+  offset: 0, 0
+  index: -1
+
+legwear.webp
+  size: 230,192
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+legwear
+  rotate: false
+  xy: 0, 0
+  size: 230, 192
+  orig: 230, 192
+  offset: 0, 0
+  index: -1
+
+bottomwear.webp
+  size: 291,182
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+bottomwear
+  rotate: false
+  xy: 0, 0
+  size: 291, 182
+  orig: 291, 182
+  offset: 0, 0
+  index: -1
+
+neck.webp
+  size: 111,134
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+neck
+  rotate: false
+  xy: 0, 0
+  size: 111, 134
+  orig: 111, 134
+  offset: 0, 0
+  index: -1
+
+topwear.webp
+  size: 235,396
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+topwear
+  rotate: false
+  xy: 0, 0
+  size: 235, 396
+  orig: 235, 396
+  offset: 0, 0
+  index: -1
+
+ears-l.webp
+  size: 35,54
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+ears-l
+  rotate: false
+  xy: 0, 0
+  size: 35, 54
+  orig: 35, 54
+  offset: 0, 0
+  index: -1
+
+ears-r.webp
+  size: 41,51
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+ears-r
+  rotate: false
+  xy: 0, 0
+  size: 41, 51
+  orig: 41, 51
+  offset: 0, 0
+  index: -1
+
+face.webp
+  size: 181,216
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+face
+  rotate: false
+  xy: 0, 0
+  size: 181, 216
+  orig: 181, 216
+  offset: 0, 0
+  index: -1
+
+nose.webp
+  size: 19,18
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+nose
+  rotate: false
+  xy: 0, 0
+  size: 19, 18
+  orig: 19, 18
+  offset: 0, 0
+  index: -1
+
+mouth.webp
+  size: 61,32
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+mouth
+  rotate: false
+  xy: 0, 0
+  size: 61, 32
+  orig: 61, 32
+  offset: 0, 0
+  index: -1
+
+eyebrow-l.webp
+  size: 25,6
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+eyebrow-l
+  rotate: false
+  xy: 0, 0
+  size: 25, 6
+  orig: 25, 6
+  offset: 0, 0
+  index: -1
+
+eyelash-l.webp
+  size: 58,25
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+eyelash-l
+  rotate: false
+  xy: 0, 0
+  size: 58, 25
+  orig: 58, 25
+  offset: 0, 0
+  index: -1
+
+eyebrow-r.webp
+  size: 23,8
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+eyebrow-r
+  rotate: false
+  xy: 0, 0
+  size: 23, 8
+  orig: 23, 8
+  offset: 0, 0
+  index: -1
+
+handwear-r.webp
+  size: 138,287
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+handwear-r
+  rotate: false
+  xy: 0, 0
+  size: 138, 287
+  orig: 138, 287
+  offset: 0, 0
+  index: -1
+
+irides-l.webp
+  size: 29,19
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+irides-l
+  rotate: false
+  xy: 0, 0
+  size: 29, 19
+  orig: 29, 19
+  offset: 0, 0
+  index: -1
+
+eyewhite-r.webp
+  size: 46,20
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+eyewhite-r
+  rotate: false
+  xy: 0, 0
+  size: 46, 20
+  orig: 46, 20
+  offset: 0, 0
+  index: -1
+
+eyewhite-l.webp
+  size: 46,18
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+eyewhite-l
+  rotate: false
+  xy: 0, 0
+  size: 46, 18
+  orig: 46, 18
+  offset: 0, 0
+  index: -1
+
+irides-r.webp
+  size: 31,18
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+irides-r
+  rotate: false
+  xy: 0, 0
+  size: 31, 18
+  orig: 31, 18
+  offset: 0, 0
+  index: -1
+
+eyelash-r.webp
+  size: 62,31
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+eyelash-r
+  rotate: false
+  xy: 0, 0
+  size: 62, 31
+  orig: 62, 31
+  offset: 0, 0
+  index: -1
+
+headwear.webp
+  size: 35,42
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+headwear
+  rotate: false
+  xy: 0, 0
+  size: 35, 42
+  orig: 35, 42
+  offset: 0, 0
+  index: -1
+
+front_hair.webp
+  size: 194,362
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+front_hair
+  rotate: false
+  xy: 0, 0
+  size: 194, 362
+  orig: 194, 362
+  offset: 0, 0
+  index: -1
+
+handwear-l.webp
+  size: 135,292
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+handwear-l
+  rotate: false
+  xy: 0, 0
+  size: 135, 292
+  orig: 135, 292
+  offset: 0, 0
+  index: -1

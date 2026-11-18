@@ -1,0 +1,316 @@
+{
+  "charId": "yukino",
+  "rigType": "heroine_seethrough_20layers",
+  "source": "ComfyUI-See-through + Vertex-spine-workflow",
+  "width": 768,
+  "height": 768,
+  "bones": {
+    "root": {
+      "x": 0.5,
+      "y": 0.92,
+      "parent": null
+    },
+    "bone_torso": {
+      "x": 0.5553,
+      "y": 0.6174,
+      "parent": "root"
+    },
+    "bone_wing_l": {
+      "x": 0.3753,
+      "y": 0.49739999999999995,
+      "parent": "bone_torso"
+    },
+    "bone_wing_r": {
+      "x": 0.7353000000000001,
+      "y": 0.49739999999999995,
+      "parent": "bone_torso"
+    },
+    "bone_arm_l": {
+      "x": 0.7148,
+      "y": 0.501,
+      "parent": "bone_torso"
+    },
+    "bone_arm_r": {
+      "x": 0.3242,
+      "y": 0.3177,
+      "parent": "bone_torso"
+    },
+    "bone_neck": {
+      "x": 0.5514,
+      "y": 0.2953,
+      "parent": "bone_torso"
+    },
+    "bone_head": {
+      "x": 0.5065,
+      "y": 0.2517,
+      "parent": "bone_neck"
+    },
+    "bone_hair_back": {
+      "x": 0.5527,
+      "y": 0.2201,
+      "parent": "bone_head"
+    },
+    "bone_hair_front": {
+      "x": 0.5378,
+      "y": 0.1123,
+      "parent": "bone_head"
+    },
+    "bone_brow_l": {
+      "x": 0.5495,
+      "y": 0.153,
+      "parent": "bone_head"
+    },
+    "bone_brow_r": {
+      "x": 0.4453,
+      "y": 0.1862,
+      "parent": "bone_head"
+    },
+    "bone_eye_l": {
+      "x": 0.5638,
+      "y": 0.1862,
+      "parent": "bone_head"
+    },
+    "bone_eye_r": {
+      "x": 0.4635,
+      "y": 0.2194,
+      "parent": "bone_head"
+    },
+    "bone_pupil_l": {
+      "x": 0.5638,
+      "y": 0.1849,
+      "parent": "bone_eye_l"
+    },
+    "bone_pupil_r": {
+      "x": 0.4688,
+      "y": 0.2174,
+      "parent": "bone_eye_r"
+    },
+    "bone_mouth": {
+      "x": 0.5286,
+      "y": 0.263,
+      "parent": "bone_head"
+    }
+  },
+  "parts": [
+    {
+      "name": "back_hair",
+      "rawName": "back hair",
+      "file": "back_hair.webp",
+      "bone": "bone_hair_back",
+      "left": 224,
+      "top": 0,
+      "right": 625,
+      "bottom": 676,
+      "depth": 0.9805
+    },
+    {
+      "name": "handwear-l",
+      "rawName": "handwear-l",
+      "file": "handwear-l.webp",
+      "bone": "bone_arm_l",
+      "left": 501,
+      "top": 289,
+      "right": 597,
+      "bottom": 768,
+      "depth": 0.8828
+    },
+    {
+      "name": "bottomwear",
+      "rawName": "bottomwear",
+      "file": "bottomwear.webp",
+      "bone": "bone_torso",
+      "left": 233,
+      "top": 537,
+      "right": 545,
+      "bottom": 768,
+      "depth": 0.7624
+    },
+    {
+      "name": "neck",
+      "rawName": "neck",
+      "file": "neck.webp",
+      "bone": "bone_neck",
+      "left": 376,
+      "top": 156,
+      "right": 471,
+      "bottom": 274,
+      "depth": 0.7344
+    },
+    {
+      "name": "topwear",
+      "rawName": "topwear",
+      "file": "topwear.webp",
+      "bone": "bone_torso",
+      "left": 273,
+      "top": 239,
+      "right": 580,
+      "bottom": 575,
+      "depth": 0.6356
+    },
+    {
+      "name": "ears-r",
+      "rawName": "ears-r",
+      "file": "ears-r.webp",
+      "bone": "bone_head",
+      "left": 324,
+      "top": 161,
+      "right": 366,
+      "bottom": 201,
+      "depth": 0.4888
+    },
+    {
+      "name": "ears-l",
+      "rawName": "ears-l",
+      "file": "ears-l.webp",
+      "bone": "bone_head",
+      "left": 466,
+      "top": 108,
+      "right": 496,
+      "bottom": 152,
+      "depth": 0.469
+    },
+    {
+      "name": "face",
+      "rawName": "face",
+      "file": "face.webp",
+      "bone": "bone_head",
+      "left": 298,
+      "top": 17,
+      "right": 480,
+      "bottom": 232,
+      "depth": 0.4473
+    },
+    {
+      "name": "nose",
+      "rawName": "nose",
+      "file": "nose.webp",
+      "bone": "bone_head",
+      "left": 388,
+      "top": 174,
+      "right": 404,
+      "bottom": 191,
+      "depth": 0.4463
+    },
+    {
+      "name": "mouth",
+      "rawName": "mouth",
+      "file": "mouth.webp",
+      "bone": "bone_mouth",
+      "left": 393,
+      "top": 196,
+      "right": 419,
+      "bottom": 208,
+      "depth": 0.4463
+    },
+    {
+      "name": "eyebrow-l",
+      "rawName": "eyebrow-l",
+      "file": "eyebrow-l.webp",
+      "bone": "bone_brow_l",
+      "left": 393,
+      "top": 111,
+      "right": 451,
+      "bottom": 124,
+      "depth": 0.4341
+    },
+    {
+      "name": "eyebrow-r",
+      "rawName": "eyebrow-r",
+      "file": "eyebrow-r.webp",
+      "bone": "bone_brow_r",
+      "left": 322,
+      "top": 134,
+      "right": 362,
+      "bottom": 152,
+      "depth": 0.3983
+    },
+    {
+      "name": "eyelash-r",
+      "rawName": "eyelash-r",
+      "file": "eyelash-r.webp",
+      "bone": "bone_eye_r",
+      "left": 328,
+      "top": 153,
+      "right": 375,
+      "bottom": 181,
+      "depth": 0.3576
+    },
+    {
+      "name": "irides-r",
+      "rawName": "irides-r",
+      "file": "irides-r.webp",
+      "bone": "bone_pupil_r",
+      "left": 347,
+      "top": 159,
+      "right": 373,
+      "bottom": 175,
+      "depth": 0.3512
+    },
+    {
+      "name": "eyewhite-r",
+      "rawName": "eyewhite-r",
+      "file": "eyewhite-r.webp",
+      "bone": "bone_eye_r",
+      "left": 338,
+      "top": 158,
+      "right": 374,
+      "bottom": 179,
+      "depth": 0.3161
+    },
+    {
+      "name": "eyewhite-l",
+      "rawName": "eyewhite-l",
+      "file": "eyewhite-l.webp",
+      "bone": "bone_eye_l",
+      "left": 415,
+      "top": 132,
+      "right": 451,
+      "bottom": 154,
+      "depth": 0.3161
+    },
+    {
+      "name": "eyelash-l",
+      "rawName": "eyelash-l",
+      "file": "eyelash-l.webp",
+      "bone": "bone_eye_l",
+      "left": 407,
+      "top": 124,
+      "right": 461,
+      "bottom": 154,
+      "depth": 0.2958
+    },
+    {
+      "name": "irides-l",
+      "rawName": "irides-l",
+      "file": "irides-l.webp",
+      "bone": "bone_pupil_l",
+      "left": 420,
+      "top": 132,
+      "right": 446,
+      "bottom": 152,
+      "depth": 0.2546
+    },
+    {
+      "name": "front_hair",
+      "rawName": "front hair",
+      "file": "front_hair.webp",
+      "bone": "bone_hair_front",
+      "left": 286,
+      "top": 0,
+      "right": 540,
+      "bottom": 392,
+      "depth": 0.1579
+    },
+    {
+      "name": "handwear-r",
+      "rawName": "handwear-r",
+      "file": "handwear-r.webp",
+      "bone": "bone_arm_r",
+      "left": 121,
+      "top": 207,
+      "right": 377,
+      "bottom": 392,
+      "depth": 0.0693
+    }
+  ]
+}

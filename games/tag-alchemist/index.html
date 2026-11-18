@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>次元小丑牌：魔王讨伐战</title>
+  <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="src/arcade/tag-alchemist.css?v=27" />
+</head>
+<body>
+  <!-- 顶部正式游戏状态栏（单行不换行：左侧返回/音效/5颗红心，中间关数，右侧铜钱/牌型/主角/CG/重开） -->
+  <header class="alchemist-topbar">
+    <div class="top-left-group">
+      <a href="../../index.html" class="icon-hud-btn" title="返回街机大厅">← 大厅</a>
+      <button type="button" class="icon-hud-btn" id="btnToggleSound" title="开关音效">🔊</button>
+      <div class="hearts-life-row top-hearts-bar" id="heartsLifeRow" title="当前剩余红心生命"></div>
+    </div>
+
+    <div class="top-stage-pill">
+      <span class="act-badge" id="actBadge">第 1 / 9 关</span>
+      <span class="boss-tag" id="blindTypeBadge">第一幕</span>
+      <strong class="hidden" id="blindTitle"></strong>
+    </div>
+
+    <div class="top-right-group">
+      <div class="coin-orb-badge top-coin-pill" title="当前持有铜钱">
+        <span class="orb-icon">🪙</span>
+        <strong id="creditsDisplay">0</strong>
+      </div>
+      <button type="button" class="icon-hud-btn top-synergy-btn" id="btnOpenSynergy" title="查看牌型伤害表与剩余扑克牌 (52张)">
+        🃏 牌型 <strong id="deckCountDisplay">44/52</strong>
+      </button>
+      <button type="button" class="icon-hud-btn" id="btnOpenHeroSelect" title="选择本局出战主角">
+        👤 主角
+      </button>
+      <button type="button" class="icon-hud-btn" id="btnOpenGallery" title="CG图鉴">
+        🖼️ CG <strong id="galleryCountBadge">1/18</strong>
+      </button>
+      <button type="button" class="icon-hud-btn" id="btnNewRun" title="重新开始本局">🔄 重开</button>
+    </div>
+  </header>
+
+  <!-- 核心全屏战斗舞台（全屏立绘对决 + 扑克手牌叠在全屏上方） -->
+  <main class="poker-battle-main" id="alchemistStage">
+    <span class="hidden" id="moduleSlotCount">0/5</span>
+
+    <!-- 2. 角色 VS 魔王 实时 Spine 骨骼战斗舞台 + 中央算盘计分器 -->
+    <section class="battle-arena-wrapper">
+      <div class="crt-screen-frame boss-battle-arena" id="crtScreenFrame">
+        <img
+          src="assets/alchemist/ssr/ssr_06.webp"
+          alt="战场背景"
+          class="crt-cg-image arena-bg-cg"
+          id="monitorCgImage"
+        />
+        <div class="arena-vignette"></div>
+
+        <!-- 顶部 BOSS 血条 -->
+        <div class="arena-boss-hud">
+          <div class="arena-boss-name-row">
+            <span class="boss-skull-badge" id="arenaBossTitle">👾 迷雾水晶史莱姆王</span>
+            <span class="boss-hp-numbers" id="arenaBossHpText">HP 300 / 300</span>
+          </div>
+          <div class="arena-boss-hp-track">
+            <div class="arena-boss-hp-fill" id="arenaBossHpBar" style="width: 100%"></div>
+          </div>
+          <p class="blind-boss-rule" id="blindRuleDesc">标准牌局：凑出对子、顺子、同花、葫芦或四条炸弹击败魔物</p>
+        </div>
+
+        <!-- 60FPS 刀光与受击特效 Canvas -->
+        <canvas id="arenaVfxCanvas" class="arena-vfx-canvas"></canvas>
+
+        <!-- 攻击前必杀奥义 / 濒死战损爆衣 全屏斜切漫画插屏 (Anime Cut-in) -->
+        <div class="arena-cutin-banner hidden" id="arenaCutinBanner">
+          <div class="cutin-slash-bg">
+            <div class="cutin-speedlines"></div>
+            <img src="assets/alchemist/states/takagi_attack.webp" alt="插屏特写" class="cutin-portrait-img" id="arenaCutinImg" />
+            <div class="cutin-Copy-box">
+              <span class="cutin-badge" id="arenaCutinBadge">⚡ 必杀奥义发动</span>
+              <strong class="cutin-skill-tag" id="arenaCutinSkill">紫气东来 · 绯红一闪!!</strong>
+              <p class="cutin-quote-line" id="arenaCutinQuote">「这一剑，看你能不能接得住！」</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 左侧女主 4状态大幅立绘 VS 中央伤害算分器 VS 右侧 BOSS 大幅立绘 -->
+        <div class="arena-combatants-stage" id="arenaCombatantsStage">
+          <div class="combatant-box hero-combatant" id="heroCombatantBox">
+            <div class="combatant-speech-bubble hidden" id="heroSpeechBubble"></div>
+            <img
+              src="assets/alchemist/states/takagi_normal.webp"
+              alt="出战角色"
+              class="combatant-sprite hero-sprite"
+              id="arenaHeroSprite"
+            />
+            <span class="combatant-tag hero-tag" id="arenaHeroNameTag">高木</span>
+            <!-- 鼠标悬浮显示主角被动天赋说明（主角均为纯被动天赋） -->
+            <div class="combatant-hover-card">
+              <div class="hover-card-title">🌟 主角被动技能</div>
+              <p id="heroPassiveDesc">打出对子 / 两对 / 三条 / 满堂红时，基础倍率 +2</p>
+            </div>
+          </div>
+
+          <!-- 中央悬浮：牌型名称 + 蓝底伤害 × 红底倍率 (无底部遮挡) -->
+          <div class="center-abacus-hud" id="calcBox">
+            <div class="abacus-hand-title">
+              <span class="synergy-tier" id="synergyTierBadge">等级1</span>
+              <strong class="synergy-name" id="synergyNameDisplay">请选择手牌</strong>
+              <span class="synergy-level hidden" id="synergyLevelDisplay">Lv.1</span>
+            </div>
+            <div class="abacus-Dual-pills">
+              <div class="brush-pill blue-damage" id="pixelsWell">
+                <span class="well-label">伤害</span>
+                <strong class="well-value" id="basePixelsDisplay">0</strong>
+              </div>
+              <span class="abacus-mult-x">×</span>
+              <div class="brush-pill red-mult" id="multWell">
+                <span class="well-label">倍率</span>
+                <strong class="well-value" id="aestheticMultDisplay">0</strong>
+              </div>
+            </div>
+            <div class="abacus-total-line">
+              预计伤害 <strong id="previewTotalNumber">0</strong>
+            </div>
+          </div>
+
+          <div class="combatant-box boss-combatant" id="bossCombatantBox">
+            <div class="combatant-speech-bubble boss-bubble hidden" id="bossSpeechBubble"></div>
+            <img
+              src="assets/alchemist/monsters/boss_01_anim.webp"
+              alt="当前对手"
+              class="combatant-sprite boss-sprite"
+              id="arenaBossSprite"
+            />
+            <span class="combatant-tag boss-tag-label" id="arenaBossSubTag">👾 魔物</span>
+          </div>
+        </div>
+
+        <div class="ssr-flash-burst" id="ssrFlashBurst"></div>
+        <!-- 浮动跳字层 -->
+        <div class="floating-popups-layer" id="floatingPopupsLayer" aria-hidden="true"></div>
+      </div>
+
+      <div class="hidden" id="heroRosterBar"></div>
+    </section>
+
+    <!-- 隐藏兼容旧 DOM 引用节点 -->
+    <div class="hidden">
+      <div id="blindCard"></div>
+      <span id="targetScoreDisplay">300</span>
+      <div id="scoreProgressBar"></div>
+      <span id="currentScoreDisplay">0</span>
+      <span id="handLimitHint"></span>
+      <div id="stagedCardsRow"></div>
+      <span id="gpuTempText"></span>
+      <div id="gpuTempFill"></div>
+      <div id="renderLog"></div>
+      <span id="monitorRarityBadge"></span>
+      <span id="monitorCgTitle"></span>
+      <span id="monitorScoreChip"></span>
+      <span id="monitorPromptText"></span>
+      <ul id="synergyMiniList"></ul>
+      <span id="handCountText">8/8</span>
+      <button type="button" id="btnToggleCrt"></button>
+      <button type="button" id="btnSwitchHero"></button>
+      <button type="button" id="btnInspectCg"></button>
+      <button type="button" id="btnSortPixels"></button>
+      <button type="button" id="btnSortSuit"></button>
+      <button type="button" id="btnSuggestBest"></button>
+      <button type="button" id="btnClearSelect"></button>
+      <button type="button" id="btnHeroActiveSkill"><span id="heroActiveSkillName"></span><span id="heroSkillCharges"></span></button>
+    </div>
+
+    <!-- 3. 纯正经典扑克手牌区：5槽位道具栏紧贴在扑克手牌正上方 -->
+    <section class="classic-poker-hand-section">
+      <div class="joker-slots-row above-cards-relics" id="jokerSlotsRow"></div>
+
+      <div class="poker-hand-fan" id="holoHandRow">
+        <!-- JS 渲染 8 张纯正经典扑克牌 -->
+      </div>
+
+      <!-- 底部极简居中操作栏：仅保留 弃牌 + 出牌 -->
+      <div class="poker-bottom-bar centered-only">
+        <div class="bottom-center-actions">
+          <button type="button" class="poker-main-btn discard" id="btnDiscard">
+            <span>弃牌 (<strong id="rerollsLeftDisplay">3</strong>)</span>
+          </button>
+          <button type="button" class="poker-main-btn play" id="btnPlayHand">
+            <span>出牌 (<strong id="rendersLeftDisplay">5</strong>)</span>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= 弹窗 1：三标签「牌型 / 完整牌组 / 剩余牌堆」卷轴弹窗 (1:1 复刻参考图2) ================= -->
+  <div class="cyber-modal-backdrop hidden" id="rulesModal">
+    <div class="scroll-book-modal">
+      <!-- 顶部三个书签页签：牌型 | 完整 | 剩余 -->
+      <div class="scroll-tabs-row">
+        <button type="button" class="scroll-tab active" data-book-tab="hands" id="tabBtnHands">
+          <span>牌型</span>
+        </button>
+        <button type="button" class="scroll-tab" data-book-tab="full" id="tabBtnFullDeck">
+          <span>完整</span>
+        </button>
+        <button type="button" class="scroll-tab" data-book-tab="remain" id="tabBtnRemainDeck">
+          <span>剩余</span>
+        </button>
+      </div>
+
+      <div class="scroll-paper-frame">
+        <!-- 页签 1：9 大固定牌型伤害与倍率表 (蓝底伤害 / 红底倍率 / 出牌次数) -->
+        <div class="book-tab-pane active" id="bookPaneHands">
+          <table class="scroll-hands-table">
+            <thead>
+              <tr>
+                <th>等级</th>
+                <th>牌型名称</th>
+                <th>伤害</th>
+                <th>倍率</th>
+                <th>次数</th>
+              </tr>
+            </thead>
+            <tbody id="rulesSynergyTbody">
+              <!-- JS 渲染 9 行：同花顺(100×8)、四条(60×7)、葫芦(40×4)、同花(35×4)、顺子(30×4)、三条(30×3)、两对(20×2)、对子(10×2)、高牌(5×1) -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 页签 2：完整 52 张扑克牌组一览 -->
+        <div class="book-tab-pane hidden" id="bookPaneFull">
+          <div class="deck-suit-grid" id="fullDeckGrid"></div>
+        </div>
+
+        <!-- 页签 3：当前牌盒剩余未抽出的扑克牌 -->
+        <div class="book-tab-pane hidden" id="bookPaneRemain">
+          <div class="deck-suit-grid" id="remainDeckGrid"></div>
+        </div>
+      </div>
+
+      <button type="button" class="scroll-close-hint" data-close-modal="rulesModal">
+        点击此处或空白处关闭
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= 弹窗 2：全屏虚化店铺背景 + 框外巨幅老板娘芙莉莲 + 黄金宝箱货架 ================= -->
+  <div class="cyber-modal-backdrop fullscreen-shop-scene hidden" id="shopModal">
+    <!-- 全屏店铺背景（加景深虚化） -->
+    <div class="shop-blurred-store-bg"></div>
+
+    <!-- 左侧：完全脱离边框、直接立于整个页面上的巨幅老板娘芙莉莲 + 悬浮台词气泡 -->
+    <div class="shopkeeper-free-stage">
+      <div class="shopkeeper-dialogue-bubble" id="shopkeeperBubble">
+        <span class="shopkeeper-name-tag">🧙‍♀️ 道具屋老板娘 · 芙莉莲</span>
+        <p id="shopkeeperSpeechText">「欢迎光临。宝箱里全是我花了一千年收集来的珍贵魔法宝物哦，把鼠标移到宝物上我来给你介绍吧。」</p>
+      </div>
+      <img
+        src="assets/alchemist/shopkeeper_girl_half.webp?v=21"
+        alt="商店老板娘芙莉莲"
+        class="shopkeeper-fullpage-img"
+        id="shopkeeperPortraitImg"
+      />
+    </div>
+
+    <!-- 右侧：俯视直视内部的打开宝箱（无多余嵌套框，宝物直接陈列在宝箱天鹅绒内胆上） -->
+    <div class="cyber-modal shop-modal-card treasure-chest-modal">
+      <div class="treasure-chest-lid-bar">
+        <div class="shop-reward-summary" id="shopRewardSummary"></div>
+        <div class="shop-header-right">
+          <div class="shop-wallet-badge">
+            <span>🪙</span>
+            <strong id="shopCreditsDisplay">0</strong>
+          </div>
+          <button type="button" class="tool-orb-btn" id="btnRerollShop">🎲 换一批 (🪙3)</button>
+        </div>
+      </div>
+
+      <div class="shop-owned-strip">
+        <span class="owned-strip-label">已装备宝物 (点击可出售)：</span>
+        <div class="shop-owned-relics-row" id="shopOwnedRelicsRow"></div>
+      </div>
+
+      <div class="shopkeeper-shelves">
+        <div class="shop-cards-grid" id="shopModulesList"></div>
+        <div class="shop-cards-grid upgrades-shelf" id="shopUpgradesList"></div>
+      </div>
+
+      <div class="modal-footer shop-footer">
+        <button type="button" class="poker-main-btn play" id="btnNextBlind">
+          <span id="btnNextBlindLabel">⚔️ 迎战下一关</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 弹窗 3：战利品 CG 画廊 ================= -->
+  <div class="cyber-modal-backdrop hidden" id="galleryModal">
+    <div class="cyber-modal gallery-modal-card">
+      <div class="modal-header">
+        <h2>🏆 战利品 CG 图鉴 (<span id="galleryProgressText">1 / 18</span>)</h2>
+        <button type="button" class="modal-close-btn" data-close-modal="galleryModal">✕ 关闭</button>
+      </div>
+      <div class="gallery-grid" id="galleryGrid"></div>
+    </div>
+  </div>
+
+  <!-- ================= 弹窗 4：CG 大图检视 ================= -->
+  <div class="cyber-modal-backdrop hidden" id="cgLightboxModal">
+    <div class="cyber-modal lightbox-modal-card">
+      <div class="modal-header">
+        <div>
+          <span id="lightboxRarityTag" class="act-badge">SSR</span>
+          <h2 id="lightboxTitle">CG 检视</h2>
+        </div>
+        <button type="button" class="modal-close-btn" data-close-modal="cgLightboxModal">✕ 关闭</button>
+      </div>
+      <div class="lightbox-body">
+        <div class="lightbox-img-wrap">
+          <img src="assets/alchemist/ssr/ssr_06.webp" alt="战利品CG" id="lightboxImage" />
+        </div>
+        <div class="lightbox-meta">
+          <div class="meta-block">
+            <span class="meta-label">解锁牌型记录</span>
+            <code id="lightboxPromptCode">同花顺 · 紫气东来</code>
+          </div>
+          <div class="meta-block">
+            <p id="lightboxUnlockInfo"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 弹窗 5：通关 / 失败结算 ================= -->
+  <div class="cyber-modal-backdrop hidden" id="runEndModal">
+    <div class="cyber-modal run-end-card">
+      <div class="modal-header">
+        <div>
+          <span id="runEndTag" class="act-badge">结算</span>
+          <h2 id="runEndTitle">🏆 讨伐完成！</h2>
+        </div>
+      </div>
+      <div class="run-end-body">
+        <p id="runEndDesc"></p>
+        <div class="run-stats-grid" id="runStatsGrid"></div>
+      </div>
+      <div class="modal-footer run-end-footer">
+        <button type="button" class="poker-main-btn discard" id="btnEndlessMode">
+          <span>♾️ 无尽深渊</span>
+        </button>
+        <button type="button" class="poker-main-btn play" id="btnRestartFromModal">
+          <span>🔄 重新讨伐</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 弹窗 6：深渊魅惑魔城 · 本局唯一出战主角选择弹窗 ================= -->
+  <div class="cyber-modal-backdrop hidden" id="heroSelectModal">
+    <div class="cyber-modal hero-select-modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="act-badge">WORLDVIEW · 深渊魅惑魔城讨伐战</span>
+          <h2>⚔️ 选择本局唯一出战女主（赌上尊严讨伐 NTR 魅惑魔王与三大魔将）</h2>
+        </div>
+        <button type="button" class="modal-close-btn" data-close-modal="heroSelectModal">✕</button>
+      </div>
+      <p class="hero-select-subtitle">
+        深渊魅惑魔王「阿斯莫德」率领三大魔将与魅魔军团侵蚀了学园与街区。每局只能选定 <strong>1 位专属女主</strong> 出战，利用她的<strong>专属主动必杀技</strong>与顶部 5 槽位<strong>魔导小鬼圣遗物</strong>击溃魔城军团！
+      </p>
+      <div class="hero-select-grid" id="heroSelectGrid"></div>
+    </div>
+  </div>
+
+  <script src="src/arcade/tag-alchemist.js?v=27"></script>
+</body>
+</html>

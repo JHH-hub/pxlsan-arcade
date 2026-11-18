@@ -1,0 +1,492 @@
+{
+  "skeleton": {
+    "hash": "seethrough_takagi",
+    "spine": "3.8.99",
+    "x": -384.0,
+    "y": -384.0,
+    "width": 768,
+    "height": 768,
+    "images": "./assets/spine/takagi/"
+  },
+  "bones": [
+    {
+      "name": "root"
+    },
+    {
+      "name": "bone_torso",
+      "parent": "root",
+      "x": -13.0,
+      "y": -194.6
+    },
+    {
+      "name": "bone_wing_l",
+      "parent": "bone_torso",
+      "x": -151.2,
+      "y": -102.5
+    },
+    {
+      "name": "bone_wing_r",
+      "parent": "bone_torso",
+      "x": 125.3,
+      "y": -102.5
+    },
+    {
+      "name": "bone_arm_l",
+      "parent": "bone_torso",
+      "x": 91.5,
+      "y": 21.2
+    },
+    {
+      "name": "bone_arm_r",
+      "parent": "bone_torso",
+      "x": -111.5,
+      "y": -59.6
+    },
+    {
+      "name": "bone_neck",
+      "parent": "bone_torso",
+      "x": -8.0,
+      "y": 62.2
+    },
+    {
+      "name": "bone_head",
+      "parent": "bone_neck",
+      "x": 14.5,
+      "y": 111.6
+    },
+    {
+      "name": "bone_hair_back",
+      "parent": "bone_head",
+      "x": -16.5,
+      "y": 234.5
+    },
+    {
+      "name": "bone_hair_front",
+      "parent": "bone_head",
+      "x": 7.5,
+      "y": 267.9
+    },
+    {
+      "name": "bone_brow_l",
+      "parent": "bone_head",
+      "x": 93.0,
+      "y": 229.5
+    },
+    {
+      "name": "bone_brow_r",
+      "parent": "bone_head",
+      "x": -26.0,
+      "y": 207.5
+    },
+    {
+      "name": "bone_eye_l",
+      "parent": "bone_head",
+      "x": 80.0,
+      "y": 172.0
+    },
+    {
+      "name": "bone_eye_r",
+      "parent": "bone_head",
+      "x": -31.5,
+      "y": 149.0
+    },
+    {
+      "name": "bone_pupil_l",
+      "parent": "bone_eye_l",
+      "x": 72.5,
+      "y": 171.5
+    },
+    {
+      "name": "bone_pupil_r",
+      "parent": "bone_eye_r",
+      "x": -34.0,
+      "y": 150.0
+    },
+    {
+      "name": "bone_mouth",
+      "parent": "bone_head",
+      "x": 30.5,
+      "y": 95.5
+    }
+  ],
+  "slots": [
+    {
+      "name": "slot_back_hair",
+      "bone": "bone_hair_back",
+      "attachment": "back_hair"
+    },
+    {
+      "name": "slot_handwear-l",
+      "bone": "bone_arm_l",
+      "attachment": "handwear-l"
+    },
+    {
+      "name": "slot_bottomwear",
+      "bone": "bone_torso",
+      "attachment": "bottomwear"
+    },
+    {
+      "name": "slot_handwear-r",
+      "bone": "bone_arm_r",
+      "attachment": "handwear-r"
+    },
+    {
+      "name": "slot_neck",
+      "bone": "bone_neck",
+      "attachment": "neck"
+    },
+    {
+      "name": "slot_topwear",
+      "bone": "bone_torso",
+      "attachment": "topwear"
+    },
+    {
+      "name": "slot_face",
+      "bone": "bone_head",
+      "attachment": "face"
+    },
+    {
+      "name": "slot_mouth",
+      "bone": "bone_mouth",
+      "attachment": "mouth"
+    },
+    {
+      "name": "slot_nose",
+      "bone": "bone_head",
+      "attachment": "nose"
+    },
+    {
+      "name": "slot_ears-l",
+      "bone": "bone_head",
+      "attachment": "ears-l"
+    },
+    {
+      "name": "slot_ears-r",
+      "bone": "bone_head",
+      "attachment": "ears-r"
+    },
+    {
+      "name": "slot_eyebrow-l",
+      "bone": "bone_brow_l",
+      "attachment": "eyebrow-l"
+    },
+    {
+      "name": "slot_eyebrow-r",
+      "bone": "bone_brow_r",
+      "attachment": "eyebrow-r"
+    },
+    {
+      "name": "slot_eyewhite-r",
+      "bone": "bone_eye_r",
+      "attachment": "eyewhite-r"
+    },
+    {
+      "name": "slot_eyewhite-l",
+      "bone": "bone_eye_l",
+      "attachment": "eyewhite-l"
+    },
+    {
+      "name": "slot_eyelash-l",
+      "bone": "bone_eye_l",
+      "attachment": "eyelash-l"
+    },
+    {
+      "name": "slot_irides-l",
+      "bone": "bone_pupil_l",
+      "attachment": "irides-l"
+    },
+    {
+      "name": "slot_eyelash-r",
+      "bone": "bone_eye_r",
+      "attachment": "eyelash-r"
+    },
+    {
+      "name": "slot_irides-r",
+      "bone": "bone_pupil_r",
+      "attachment": "irides-r"
+    },
+    {
+      "name": "slot_front_hair",
+      "bone": "bone_hair_front",
+      "attachment": "front_hair"
+    }
+  ],
+  "skins": [
+    {
+      "name": "default",
+      "attachments": {
+        "slot_back_hair": {
+          "back_hair": {
+            "width": 361,
+            "height": 598
+          }
+        },
+        "slot_handwear-l": {
+          "handwear-l": {
+            "width": 85,
+            "height": 309
+          }
+        },
+        "slot_bottomwear": {
+          "bottomwear": {
+            "width": 254,
+            "height": 143
+          }
+        },
+        "slot_handwear-r": {
+          "handwear-r": {
+            "width": 115,
+            "height": 353
+          }
+        },
+        "slot_neck": {
+          "neck": {
+            "width": 106,
+            "height": 133
+          }
+        },
+        "slot_topwear": {
+          "topwear": {
+            "width": 296,
+            "height": 408
+          }
+        },
+        "slot_face": {
+          "face": {
+            "width": 221,
+            "height": 292
+          }
+        },
+        "slot_mouth": {
+          "mouth": {
+            "width": 43,
+            "height": 15
+          }
+        },
+        "slot_nose": {
+          "nose": {
+            "width": 19,
+            "height": 21
+          }
+        },
+        "slot_ears-l": {
+          "ears-l": {
+            "width": 46,
+            "height": 68
+          }
+        },
+        "slot_ears-r": {
+          "ears-r": {
+            "width": 58,
+            "height": 65
+          }
+        },
+        "slot_eyebrow-l": {
+          "eyebrow-l": {
+            "width": 50,
+            "height": 11
+          }
+        },
+        "slot_eyebrow-r": {
+          "eyebrow-r": {
+            "width": 66,
+            "height": 23
+          }
+        },
+        "slot_eyewhite-r": {
+          "eyewhite-r": {
+            "width": 61,
+            "height": 40
+          }
+        },
+        "slot_eyewhite-l": {
+          "eyewhite-l": {
+            "width": 46,
+            "height": 40
+          }
+        },
+        "slot_eyelash-l": {
+          "eyelash-l": {
+            "width": 55,
+            "height": 44
+          }
+        },
+        "slot_irides-l": {
+          "irides-l": {
+            "width": 31,
+            "height": 39
+          }
+        },
+        "slot_eyelash-r": {
+          "eyelash-r": {
+            "width": 76,
+            "height": 55
+          }
+        },
+        "slot_irides-r": {
+          "irides-r": {
+            "width": 40,
+            "height": 36
+          }
+        },
+        "slot_front_hair": {
+          "front_hair": {
+            "width": 275,
+            "height": 528
+          }
+        }
+      }
+    }
+  ],
+  "animations": {
+    "idle_sway": {
+      "bones": {
+        "bone_torso": {
+          "translate": [
+            {
+              "time": 0,
+              "y": 0
+            },
+            {
+              "time": 1.0,
+              "y": 4.5
+            },
+            {
+              "time": 2.0,
+              "y": 0
+            }
+          ],
+          "scale": [
+            {
+              "time": 0,
+              "x": 1,
+              "y": 1
+            },
+            {
+              "time": 1.0,
+              "x": 0.99,
+              "y": 1.02
+            },
+            {
+              "time": 2.0,
+              "x": 1,
+              "y": 1
+            }
+          ]
+        },
+        "bone_head": {
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 0
+            },
+            {
+              "time": 0.5,
+              "angle": 2.5
+            },
+            {
+              "time": 1.5,
+              "angle": -2.5
+            },
+            {
+              "time": 2.0,
+              "angle": 0
+            }
+          ]
+        },
+        "bone_hair_front": {
+          "rotate": [
+            {
+              "time": 0,
+              "angle": -1.5
+            },
+            {
+              "time": 0.6,
+              "angle": 3.8
+            },
+            {
+              "time": 1.6,
+              "angle": -3.8
+            },
+            {
+              "time": 2.0,
+              "angle": -1.5
+            }
+          ]
+        },
+        "bone_hair_back": {
+          "rotate": [
+            {
+              "time": 0,
+              "angle": -2.2
+            },
+            {
+              "time": 0.7,
+              "angle": 5.2
+            },
+            {
+              "time": 1.7,
+              "angle": -5.2
+            },
+            {
+              "time": 2.0,
+              "angle": -2.2
+            }
+          ]
+        }
+      }
+    },
+    "attack_slash": {
+      "bones": {
+        "root": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 0
+            },
+            {
+              "time": 0.2,
+              "x": 45
+            },
+            {
+              "time": 0.5,
+              "x": 0
+            }
+          ]
+        },
+        "bone_arm_l": {
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 0
+            },
+            {
+              "time": 0.2,
+              "angle": -55
+            },
+            {
+              "time": 0.5,
+              "angle": 0
+            }
+          ]
+        },
+        "bone_arm_r": {
+          "rotate": [
+            {
+              "time": 0,
+              "angle": 0
+            },
+            {
+              "time": 0.2,
+              "angle": 42
+            },
+            {
+              "time": 0.5,
+              "angle": 0
+            }
+          ]
+        }
+      }
+    }
+  }
+}

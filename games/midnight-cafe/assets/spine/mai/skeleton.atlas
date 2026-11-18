@@ -1,0 +1,272 @@
+back_hair.webp
+  size: 455,764
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+back_hair
+  rotate: false
+  xy: 0, 0
+  size: 455, 764
+  orig: 455, 764
+  offset: 0, 0
+  index: -1
+
+handwear-r.webp
+  size: 97,444
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+handwear-r
+  rotate: false
+  xy: 0, 0
+  size: 97, 444
+  orig: 97, 444
+  offset: 0, 0
+  index: -1
+
+handwear-l.webp
+  size: 122,473
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+handwear-l
+  rotate: false
+  xy: 0, 0
+  size: 122, 473
+  orig: 122, 473
+  offset: 0, 0
+  index: -1
+
+neck.webp
+  size: 91,136
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+neck
+  rotate: false
+  xy: 0, 0
+  size: 91, 136
+  orig: 91, 136
+  offset: 0, 0
+  index: -1
+
+bottomwear.webp
+  size: 271,148
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+bottomwear
+  rotate: false
+  xy: 0, 0
+  size: 271, 148
+  orig: 271, 148
+  offset: 0, 0
+  index: -1
+
+headwear.webp
+  size: 44,49
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+headwear
+  rotate: false
+  xy: 0, 0
+  size: 44, 49
+  orig: 44, 49
+  offset: 0, 0
+  index: -1
+
+topwear.webp
+  size: 354,533
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+topwear
+  rotate: false
+  xy: 0, 0
+  size: 354, 533
+  orig: 354, 533
+  offset: 0, 0
+  index: -1
+
+ears-r.webp
+  size: 49,51
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+ears-r
+  rotate: false
+  xy: 0, 0
+  size: 49, 51
+  orig: 49, 51
+  offset: 0, 0
+  index: -1
+
+ears-l.webp
+  size: 37,58
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+ears-l
+  rotate: false
+  xy: 0, 0
+  size: 37, 58
+  orig: 37, 58
+  offset: 0, 0
+  index: -1
+
+face.webp
+  size: 203,230
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+face
+  rotate: false
+  xy: 0, 0
+  size: 203, 230
+  orig: 203, 230
+  offset: 0, 0
+  index: -1
+
+nose.webp
+  size: 15,17
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+nose
+  rotate: false
+  xy: 0, 0
+  size: 15, 17
+  orig: 15, 17
+  offset: 0, 0
+  index: -1
+
+mouth.webp
+  size: 34,12
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+mouth
+  rotate: false
+  xy: 0, 0
+  size: 34, 12
+  orig: 34, 12
+  offset: 0, 0
+  index: -1
+
+eyelash-r.webp
+  size: 61,39
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+eyelash-r
+  rotate: false
+  xy: 0, 0
+  size: 61, 39
+  orig: 61, 39
+  offset: 0, 0
+  index: -1
+
+irides-r.webp
+  size: 31,27
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+irides-r
+  rotate: false
+  xy: 0, 0
+  size: 31, 27
+  orig: 31, 27
+  offset: 0, 0
+  index: -1
+
+eyewhite-r.webp
+  size: 42,27
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+eyewhite-r
+  rotate: false
+  xy: 0, 0
+  size: 42, 27
+  orig: 42, 27
+  offset: 0, 0
+  index: -1
+
+eyewhite-l.webp
+  size: 44,32
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+eyewhite-l
+  rotate: false
+  xy: 0, 0
+  size: 44, 32
+  orig: 44, 32
+  offset: 0, 0
+  index: -1
+
+eyebrow-r.webp
+  size: 51,16
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+eyebrow-r
+  rotate: false
+  xy: 0, 0
+  size: 51, 16
+  orig: 51, 16
+  offset: 0, 0
+  index: -1
+
+irides-l.webp
+  size: 31,31
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+irides-l
+  rotate: false
+  xy: 0, 0
+  size: 31, 31
+  orig: 31, 31
+  offset: 0, 0
+  index: -1
+
+eyebrow-l.webp
+  size: 58,13
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+eyebrow-l
+  rotate: false
+  xy: 0, 0
+  size: 58, 13
+  orig: 58, 13
+  offset: 0, 0
+  index: -1
+
+eyelash-l.webp
+  size: 67,38
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+eyelash-l
+  rotate: false
+  xy: 0, 0
+  size: 67, 38
+  orig: 67, 38
+  offset: 0, 0
+  index: -1
+
+front_hair.webp
+  size: 242,387
+  format: RGBA8888
+  filter: Linear,Linear
+  repeat: none
+front_hair
+  rotate: false
+  xy: 0, 0
+  size: 242, 387
+  orig: 242, 387
+  offset: 0, 0
+  index: -1
