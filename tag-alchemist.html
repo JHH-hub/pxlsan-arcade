@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pxlsan 炼丹工坊：AI 画师模拟器 (Tag Alchemist) · 赛博全息卡牌构筑</title>
+  <link rel="stylesheet" href="src/arcade/tag-alchemist.css" />
+  <script src="site-routing.js" defer></script>
+</head>
+<body class="crt-active">
+  <!-- CRT 扫描线与色差暗角滤镜层 -->
+  <div class="crt-overlay" id="crtOverlay" aria-hidden="true"></div>
+  <div class="chromatic-glow" aria-hidden="true"></div>
+
+  <!-- 顶部导航栏 (含返回小城/换装/街机大厅 + 状态开关) -->
+  <header class="alchemist-topbar">
+    <div class="brand-cluster">
+      <div class="brand-chip">A1 · CRT HOLO</div>
+      <div class="brand-titles">
+        <h1>Pxlsan 炼丹工坊 <span class="sub-en">TAG ALCHEMIST · AI ILLUSTRATOR ROGUELIKE</span></h1>
+      </div>
+    </div>
+
+    <nav class="portal-nav" aria-label="站点导航">
+      <a href="city.html" class="portal-link">🏙️ 返回小城</a>
+      <a href="dressup.html" class="portal-link">👗 换装物语</a>
+      <a href="arcade.html" class="portal-link">🕹️ 街机大厅</a>
+      <a href="art-style-lab.html" class="portal-link">🎨 美术实验室</a>
+    </nav>
+
+    <div class="util-controls">
+      <button type="button" class="cyber-pill-btn" id="btnOpenSynergy" title="查看8大构图羁绊公式">
+        <span>📐 羁绊公式</span>
+      </button>
+      <button type="button" class="cyber-pill-btn" id="btnOpenGallery" title="查看已解锁的本地高清二次元神图">
+        <span>🖼️ 神图图鉴</span>
+        <strong id="galleryCountBadge">0/18</strong>
+      </button>
+      <button type="button" class="cyber-pill-btn" id="btnOpenRules" title="查看炼丹规则说明">
+        <span>📖 炼丹手册</span>
+      </button>
+      <button type="button" class="cyber-pill-btn active" id="btnToggleCrt" title="开关 CRT 扫描线与色差滤镜">
+        <span>📺 CRT: ON</span>
+      </button>
+      <button type="button" class="cyber-pill-btn active" id="btnToggleSound" title="开关 WebAudio 合成器音效">
+        <span>🔊 音效: ON</span>
+      </button>
+      <button type="button" class="cyber-pill-btn danger" id="btnNewRun" title="重置当前肉鸽进度开启新周目">
+        <span>🔄 重开炼丹</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 主舞台三栏全息牌桌布局 -->
+  <main class="alchemist-stage" id="alchemistStage">
+    <!-- 左栏：Balatro 式复古 CRT 显卡计分仪表盘 -->
+    <aside class="crt-scoreboard-panel">
+      <!-- 当前委托盲注信息 -->
+      <section class="blind-card" id="blindCard">
+        <div class="blind-header">
+          <span class="act-badge" id="actBadge">ACT 1 · 盲注 1/9</span>
+          <span class="boss-tag" id="blindTypeBadge">普通委托</span>
+        </div>
+        <h2 class="blind-title" id="blindTitle">社团招新海报委托</h2>
+        <p class="blind-boss-rule" id="blindRuleDesc">标准显存环境：无特殊场地限制</p>
+        <div class="target-score-box">
+          <div class="target-label">委托目标画质分 (TARGET QUALITY)</div>
+          <div class="target-number" id="targetScoreDisplay">600</div>
+        </div>
+        <div class="score-progress-wrap">
+          <div class="score-progress-bar" id="scoreProgressBar" style="width: 0%"></div>
+        </div>
+        <div class="current-score-row">
+          <span>当前累计画质：</span>
+          <strong id="currentScoreDisplay">0</strong>
+        </div>
+      </section>
+
+      <!-- Balatro 式双框跳字算分器 -->
+      <section class="balatro-calc-box" id="calcBox">
+        <div class="synergy-banner" id="synergyBanner">
+          <span class="synergy-tier" id="synergyTierBadge">READY</span>
+          <strong class="synergy-name" id="synergyNameDisplay">请选择 1~5 张词条卡</strong>
+          <span class="synergy-level" id="synergyLevelDisplay">Lv.1</span>
+        </div>
+
+        <div class="pixels-mult-row">
+          <div class="calc-well pixels-well" id="pixelsWell">
+            <span class="well-label">基础像素 (PIXELS)</span>
+            <span class="well-value" id="basePixelsDisplay">0</span>
+          </div>
+          <div class="calc-operator">×</div>
+          <div class="calc-well mult-well" id="multWell">
+            <span class="well-label">美学倍率 (MULT)</span>
+            <span class="well-value" id="aestheticMultDisplay">0</span>
+          </div>
+        </div>
+
+        <div class="hand-preview-total" id="handPreviewTotal">
+          预计单次出图算力：<strong id="previewTotalNumber">0</strong>
+        </div>
+      </section>
+
+      <!-- 显卡状态与剩余次数仪表 -->
+      <section class="gpu-telemetry-grid">
+        <div class="telemetry-cell renders-cell">
+          <span class="tele-label">⚡ 生成次数 (RENDERS)</span>
+          <strong class="tele-val" id="rendersLeftDisplay">4</strong>
+        </div>
+        <div class="telemetry-cell rerolls-cell">
+          <span class="tele-label">♻️ 重抽弃牌 (REROLLS)</span>
+          <strong class="tele-val" id="rerollsLeftDisplay">3</strong>
+        </div>
+        <div class="telemetry-cell gold-cell">
+          <span class="tele-label">🪙 炼丹算力币 (CREDITS)</span>
+          <strong class="tele-val" id="creditsDisplay">¥12</strong>
+        </div>
+        <div class="telemetry-cell deck-cell" id="deckInfoBtn" title="点击查看牌库构成">
+          <span class="tele-label">🃏 词条牌堆 (DECK)</span>
+          <strong class="tele-val" id="deckCountDisplay">32/32</strong>
+        </div>
+      </section>
+
+      <!-- 显卡温度条与实时出图日志 -->
+      <section class="gpu-console-box">
+        <div class="vram-bar-row">
+          <span>GPU 负载 (RTX-PXLSAN 24GB)</span>
+          <strong id="gpuTempText">46°C · 稳定</strong>
+        </div>
+        <div class="vram-meter">
+          <div class="vram-fill" id="gpuTempFill" style="width: 32%"></div>
+        </div>
+        <div class="render-log" id="renderLog" aria-live="polite">
+          <div class="log-entry">[SYS] Anima 1.4 &amp; NoobAI 炼丹核心已就绪。</div>
+          <div class="log-entry">[TIP] 组合【角色+光影+微表情】触发三维黄金构图羁绊！</div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- 中栏：顶部显卡插件槽 (Jokers) + 出牌检视区 + 3D全息手牌区 -->
+    <section class="card-table-center">
+      <!-- 顶部常驻：显卡插件与 LoRA 模块槽 (最多5个) -->
+      <div class="joker-rack-bar">
+        <div class="rack-header">
+          <div class="rack-title">
+            <span class="neon-dot"></span>
+            <span>显卡插件与 LoRA 挂载槽 (GPU &amp; LoRA MODULES)</span>
+            <strong id="moduleSlotCount">0 / 5</strong>
+          </div>
+          <span class="rack-hint">过关后在「模型集市」采购插件，插件从左向右依次结算倍率加成</span>
+        </div>
+        <div class="joker-slots-row" id="jokerSlotsRow">
+          <!-- 动态渲染 5 个插件槽位 -->
+        </div>
+      </div>
+
+      <!-- 中央出牌结算舞台 / 过关商店切换区 -->
+      <div class="playfield-well" id="playfieldWell">
+        <div class="prompt-terminal-header">
+          <span class="terminal-tag">POSITIVE PROMPT BUFFER</span>
+          <span class="terminal-limit" id="handLimitHint">已选 0 / 5 张词条卡</span>
+        </div>
+
+        <!-- 选中的出牌预览队列 & 结算跳字舞台 -->
+        <div class="staged-cards-row" id="stagedCardsRow">
+          <div class="empty-stage-placeholder" id="emptyStageHint">
+            <div class="placeholder-icon">✨</div>
+            <p>从下方手牌点击选择 <strong>1 ~ 5 张 Prompt 词条卡</strong>，点击【⚡ 开始生成 (RENDER)】引爆连锁倍率！</p>
+            <small>凑齐「角色穿搭 + 光影氛围 + 微表情机位」即可激活【三维铁三角】高倍暴击</small>
+          </div>
+        </div>
+
+        <!-- 浮动跳字层 -->
+        <div class="floating-popups-layer" id="floatingPopupsLayer" aria-hidden="true"></div>
+      </div>
+
+      <!-- 底部手牌区 (支持 3D Holographic 悬浮倾斜 + 彩虹全息遮罩) -->
+      <div class="hand-zone-wrapper">
+        <div class="hand-toolbar">
+          <div class="hand-sort-group">
+            <span class="hand-label">手牌工作台 (<span id="handCountText">0/8</span>)</span>
+            <button type="button" class="mini-action-btn" id="btnSortSuit">按类别排序</button>
+            <button type="button" class="mini-action-btn" id="btnSortPixels">按像素值排序</button>
+            <button type="button" class="mini-action-btn" id="btnClearSelect">取消全选</button>
+          </div>
+
+          <div class="suit-legend">
+            <span class="legend-pill suit-char">🎨 角色穿搭</span>
+            <span class="legend-pill suit-light">✨ 光影氛围</span>
+            <span class="legend-pill suit-expr">💖 表情机位</span>
+            <span class="legend-pill suit-glitch">⚠️ 崩坏干扰</span>
+          </div>
+        </div>
+
+        <div class="holo-hand-row" id="holoHandRow">
+          <!-- JS 动态生成 3D 全息手牌 -->
+        </div>
+
+        <!-- 核心出牌与弃牌操作栏 -->
+        <div class="action-dock">
+          <button type="button" class="dock-btn reroll-btn" id="btnDiscard">
+            <span class="btn-main-text">♻️ 重抽换牌 (REROLL)</span>
+            <span class="btn-sub-text" id="btnDiscardSub">弃掉选中牌并补齐手牌</span>
+          </button>
+
+          <button type="button" class="dock-btn render-btn" id="btnPlayHand">
+            <span class="btn-main-text">⚡ 开始生成 (RENDER PROMPT)</span>
+            <span class="btn-sub-text" id="btnPlaySub">触发词条连锁与 CRT 出图</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 右栏：CRT 显像管实时成图监视器 + 构图羁绊速查 -->
+    <aside class="crt-monitor-sidebar">
+      <section class="crt-monitor-card">
+        <div class="monitor-top-bar">
+          <span class="rec-indicator"><i class="rec-dot"></i> CRT MONITOR</span>
+          <span class="rarity-pill" id="monitorRarityBadge">STANDBY</span>
+        </div>
+
+        <div class="crt-screen-frame" id="crtScreenFrame">
+          <img
+            src="dressup/assets/loading/loading_takagi_school.webp"
+            alt="CRT 炼丹生成预览"
+            class="crt-cg-image"
+            id="monitorCgImage"
+          />
+          <div class="noise-canvas-overlay" id="noiseOverlay"></div>
+          <div class="ssr-flash-burst" id="ssrFlashBurst"></div>
+          <div class="cg-scan-beam" id="cgScanBeam"></div>
+
+          <div class="monitor-caption-bar">
+            <div class="cg-title-row">
+              <strong id="monitorCgTitle">高木 · 放学后的夕阳教室</strong>
+              <span class="cg-score-chip" id="monitorScoreChip">待生成</span>
+            </div>
+            <p class="cg-prompt-line" id="monitorPromptText">
+              1girl, takagi, sailor serafuku, golden hour, teasing smirk, masterpiece
+            </p>
+          </div>
+        </div>
+
+        <div class="monitor-footer">
+          <button type="button" class="cyber-pill-btn full-width" id="btnInspectCg">
+            🔍 放大检视当前神图 / 查看完整 Prompt
+          </button>
+        </div>
+      </section>
+
+      <!-- 8大构图羁绊实时高亮速查表 -->
+      <section class="synergy-quick-card">
+        <div class="quick-header">
+          <h3>📐 8大黄金构图羁绊 (PROMPT HANDS)</h3>
+          <span>打出自动识别最高阶羁绊</span>
+        </div>
+        <ul class="synergy-mini-list" id="synergyMiniList">
+          <!-- JS 动态渲染 8 种羁绊与当前等级 -->
+        </ul>
+      </section>
+    </aside>
+  </main>
+
+  <!-- 弹窗 1：过关结算与「模型集市 (Checkpoint Shop)」 -->
+  <div class="cyber-modal-backdrop hidden" id="shopModal">
+    <div class="cyber-modal shop-modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="modal-tag">CHECKPOINT MARKET · 炼丹集市</span>
+          <h2 id="shopModalTitle">🎉 委托大成功！进入模型集市</h2>
+        </div>
+        <div class="shop-wallet-badge">
+          <span>当前算力币：</span>
+          <strong id="shopCreditsDisplay">¥15</strong>
+        </div>
+      </div>
+
+      <div class="shop-reward-summary" id="shopRewardSummary">
+        <!-- 显示本关过关奖励明细 -->
+      </div>
+
+      <div class="shop-sections-grid">
+        <!-- 商店左区：显卡插件 / LoRA 模块 -->
+        <div class="shop-column">
+          <div class="shop-col-header">
+            <h3>🧩 显卡插件与 LoRA 模块 (挂载至顶部插槽)</h3>
+            <button type="button" class="mini-action-btn" id="btnRerollShop">🎲 刷新货架 (¥3)</button>
+          </div>
+          <div class="shop-items-list" id="shopModulesList"></div>
+        </div>
+
+        <!-- 商店右区：Prompt 权重强化 & 废词净化服务 -->
+        <div class="shop-column">
+          <div class="shop-col-header">
+            <h3>⚡ 算力调优与构图升级服务</h3>
+            <span>永久强化本局构筑</span>
+          </div>
+          <div class="shop-items-list" id="shopUpgradesList"></div>
+        </div>
+      </div>
+
+      <div class="modal-footer shop-footer">
+        <button type="button" class="dock-btn render-btn" id="btnNextBlind">
+          <span class="btn-main-text">🚀 进入下一委托关卡 (NEXT COMMISSION)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗 2：本地高清二次元「炼丹神图图鉴 (SSR Gallery)」 -->
+  <div class="cyber-modal-backdrop hidden" id="galleryModal">
+    <div class="cyber-modal gallery-modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="modal-tag">LOCALSTORAGE ARCHIVE · pxlsan-game:arcade:alchemist</span>
+          <h2>🖼️ 炼丹神图图鉴 (SSR CG GALLERY)</h2>
+        </div>
+        <button type="button" class="modal-close-btn" data-close-modal="galleryModal">✕ 关闭</button>
+      </div>
+
+      <div class="gallery-stats-bar">
+        <span id="galleryProgressText">已解锁神图：0 / 18</span>
+        <span class="gallery-tip">💡 提示：打出不同角色卡与高阶构图羁绊，即可在 CRT 监视器渲染并永久点亮对应 CG！</span>
+      </div>
+
+      <div class="gallery-grid" id="galleryGrid">
+        <!-- JS 动态渲染 18 张本地真实 .webp 高清 CG -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗 3：CG 大图检视器 -->
+  <div class="cyber-modal-backdrop hidden" id="cgLightboxModal">
+    <div class="cyber-modal lightbox-modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="modal-tag" id="lightboxRarityTag">SSR MASTERPIECE</span>
+          <h2 id="lightboxTitle">神图检视</h2>
+        </div>
+        <button type="button" class="modal-close-btn" data-close-modal="cgLightboxModal">✕ 关闭</button>
+      </div>
+      <div class="lightbox-body">
+        <div class="lightbox-img-wrap">
+          <img src="dressup/assets/loading/loading_takagi_school.webp" alt="神图大图" id="lightboxImage" />
+        </div>
+        <div class="lightbox-meta">
+          <div class="meta-block">
+            <span class="meta-label">完整 Prompt 配方</span>
+            <code id="lightboxPromptCode">1girl, masterpiece, best quality</code>
+          </div>
+          <div class="meta-block">
+            <span class="meta-label">解锁条件 / 最高画质分记录</span>
+            <p id="lightboxUnlockInfo">在任意关卡触发黄金构图羁绊解锁</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗 4：炼丹规则说明与8大构图羁绊详情 -->
+  <div class="cyber-modal-backdrop hidden" id="rulesModal">
+    <div class="cyber-modal rules-modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="modal-tag">HOW TO PLAY · 炼丹师进阶指南</span>
+          <h2>📖 《Pxlsan 炼丹工坊：AI 画师模拟器》玩法手册</h2>
+        </div>
+        <button type="button" class="modal-close-btn" data-close-modal="rulesModal">✕ 关闭</button>
+      </div>
+      <div class="rules-content">
+        <div class="rule-card-grid">
+          <div class="rule-box">
+            <h3>1. 核心算分公式：基础像素 × 美学倍率</h3>
+            <p>每次从手牌中选择 <strong>1 ~ 5 张 Prompt 词条卡</strong>打出。总画质分 = <code>基础像素值 (Base Pixels) × 美学倍率 (Aesthetic Mult)</code>。在每关 <strong>4 次生成机会 (Renders)</strong> 用完前，累计画质分达到「甲方委托目标分」即可过关！</p>
+          </div>
+          <div class="rule-box">
+            <h3>2. 四大词条花色与负向崩坏卡</h3>
+            <ul>
+              <li><strong style="color:#ff2a85">🎨 角色与穿搭卡</strong>：高木、长瀞、爱莉、千鹤等核心角色，提供高额基础像素。</li>
+              <li><strong style="color:#00f0ff">✨ 光影与氛围卡</strong>：丁达尔光、黄金夕阳、赛博霓虹，提供稳定美学倍率。</li>
+              <li><strong style="color:#ffe600">💖 微表情与机位卡</strong>：捉弄坏笑、伸手互动视角、伦勃朗特写，具备暴击连携特效。</li>
+              <li><strong style="color:#ff4d4f">⚠️ 负向崩坏干扰卡</strong>：六指恶魔、高光过曝、祖传包浆。默认扣分，但若装备 <code>ADetailer 修手神器</code> 或特定卡牌净化，反而能转化为恐怖倍率！</li>
+            </ul>
+          </div>
+          <div class="rule-box">
+            <h3>3. 顶部显卡插件槽 (GPU &amp; LoRA Modules)</h3>
+            <p>最多可挂载 <strong>5 个被动插件</strong>（如 <code>Anima 1.4 底模</code>、<code>NoobAI XL 引擎</code>、<code>Hires.fix 2x</code>、<code>ControlNet 骨架</code>）。每关通关后可在「模型集市」使用算力币购买新插件、给卡牌加权重 <code>(Tag:1.3)</code> 或删减废牌。</p>
+          </div>
+          <div class="rule-box">
+            <h3>4. 9关委托盲注 + 无尽炼丹模式</h3>
+            <p>完整包含 <strong>3 幕 × 3 关 = 9 个递进委托关卡</strong>，每幕第 3 关为带有特殊场地限制的「漫展压轴 Boss 委托」。通关第 9 关后可选择直接开启 <strong>无尽算力狂飙模式 (Endless Overclock)</strong>！</p>
+          </div>
+        </div>
+        <div class="synergy-table-wrap">
+          <h3>📐 8 种触发式「黄金构图羁绊 (Prompt Synergies)」一览</h3>
+          <table class="cyber-table" id="rulesSynergyTable">
+            <thead>
+              <tr>
+                <th>羁绊代号</th>
+                <th>构图名称</th>
+                <th>触发条件</th>
+                <th>初始基础分 (Pixels × Mult)</th>
+              </tr>
+            </thead>
+            <tbody id="rulesSynergyTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗 5：通关致敬 / 显存爆满失败结算弹窗 -->
+  <div class="cyber-modal-backdrop hidden" id="runEndModal">
+    <div class="cyber-modal run-end-card">
+      <div class="modal-header">
+        <div>
+          <span class="modal-tag" id="runEndTag">RUN SUMMARY</span>
+          <h2 id="runEndTitle">🎉 传奇炼丹师！9关委托全部达成！</h2>
+        </div>
+      </div>
+      <div class="run-end-body">
+        <p id="runEndDesc">你成功驾驭了 Anima 与 NoobAI 引擎，在显存崩溃前交出了惊艳全场的 SSR 神图！</p>
+        <div class="run-stats-grid" id="runStatsGrid"></div>
+      </div>
+      <div class="modal-footer run-end-footer">
+        <button type="button" class="dock-btn reroll-btn" id="btnEndlessMode">
+          <span class="btn-main-text">♾️ 进入无尽超频模式 (ENDLESS)</span>
+        </button>
+        <button type="button" class="dock-btn render-btn" id="btnRestartFromModal">
+          <span class="btn-main-text">🔄 开启全新炼丹周目 (NEW RUN)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="src/arcade/tag-alchemist.js"></script>
+</body>
+</html>

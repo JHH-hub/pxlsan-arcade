@@ -1,0 +1,3097 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pxlsan 3大新小游戏 · 美术风格参考与实时 UI 样机实验室 (Art Style Reference Lab)</title>
+  <style>
+    :root {
+      --bg-dark: #090b10;
+      --bg-panel: #12151f;
+      --bg-card: #171b28;
+      --border-subtle: rgba(255, 255, 255, 0.1);
+      --text-main: #f3f5f9;
+      --text-muted: #949db3;
+      --accent-primary: #ff2a85;
+      --accent-cyan: #00f0ff;
+      --accent-gold: #ffd166;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image:
+        radial-gradient(circle at 12% 10%, rgba(255, 42, 133, 0.10), transparent 35%),
+        radial-gradient(circle at 88% 15%, rgba(0, 240, 255, 0.09), transparent 38%),
+        linear-gradient(180deg, #090b10 0%, #0d1018 100%);
+      color: var(--text-main);
+      font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding-bottom: 80px;
+    }
+
+    /* ================= TOP HEADER & NAVIGATION ================= */
+    .lab-header {
+      position: sticky;
+      top: 0;
+      z-index: 900;
+      background: rgba(9, 11, 16, 0.88);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 14px 28px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #ff2a85, #7b2cbf, #00f0ff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: -0.5px;
+      color: #fff;
+      box-shadow: 0 0 20px rgba(255, 42, 133, 0.45);
+    }
+
+    .brand-title h1 {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 99px;
+      background: rgba(0, 240, 255, 0.14);
+      border: 1px solid rgba(0, 240, 255, 0.4);
+      color: #00f0ff;
+      font-weight: 700;
+    }
+
+    .brand-title p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .nav-tabs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .nav-tab {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #d0d7e6;
+      padding: 9px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-tab:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .nav-tab.active {
+      background: linear-gradient(135deg, rgba(255, 42, 133, 0.28), rgba(0, 240, 255, 0.22));
+      border-color: #00f0ff;
+      color: #fff;
+      box-shadow: 0 0 18px rgba(0, 240, 255, 0.25);
+    }
+
+    .quick-jump-bar {
+      background: rgba(18, 21, 31, 0.9);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      padding: 8px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 12px;
+    }
+
+    .jump-pills {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .jump-pill {
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      color: #b8c2d8;
+      cursor: pointer;
+      text-decoration: none;
+      transition: 0.18s;
+      font-weight: 600;
+    }
+
+    .jump-pill:hover {
+      color: #fff;
+      border-color: var(--accent-cyan);
+      background: rgba(0, 240, 255, 0.12);
+    }
+
+    .selection-summary {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #ffd166;
+      font-weight: 600;
+    }
+
+    .copy-choice-btn {
+      padding: 4px 11px;
+      border-radius: 6px;
+      background: linear-gradient(90deg, #ff2a85, #ff6b00);
+      border: none;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* ================= MAIN CONTAINER & GAME SECTIONS ================= */
+    .lab-container {
+      max-width: 1620px;
+      margin: 0 auto;
+      padding: 24px 28px;
+    }
+
+    .game-section {
+      margin-bottom: 52px;
+      animation: fadeIn 0.35s ease;
+    }
+
+    .game-section.hidden {
+      display: none;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 22px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .section-title-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .game-icon-box {
+      width: 50px;
+      height: 50px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .section-title-group h2 {
+      font-size: 23px;
+      font-weight: 900;
+      letter-spacing: 0.3px;
+    }
+
+    .section-title-group p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .styles-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px;
+    }
+
+    @media (max-width: 1360px) {
+      .styles-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 900px) {
+      .styles-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ================= STYLE CARD WRAPPER ================= */
+    .style-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      border-radius: 18px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+      position: relative;
+    }
+
+    .style-card.picked {
+      border-color: #ffd166;
+      box-shadow: 0 0 28px rgba(255, 209, 102, 0.25);
+    }
+
+    .style-card-header {
+      padding: 14px 18px;
+      background: rgba(0, 0, 0, 0.32);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .style-code-badge {
+      font-size: 12px;
+      font-weight: 900;
+      padding: 3px 9px;
+      border-radius: 6px;
+      letter-spacing: 0.6px;
+    }
+
+    .style-name {
+      font-size: 16px;
+      font-weight: 800;
+      flex: 1;
+    }
+
+    .pick-style-btn {
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #d6deef;
+      cursor: pointer;
+      font-weight: 700;
+      transition: 0.18s;
+    }
+
+    .pick-style-btn:hover {
+      background: rgba(255, 209, 102, 0.2);
+      border-color: #ffd166;
+      color: #ffd166;
+    }
+
+    .style-card.picked .pick-style-btn {
+      background: #ffd166;
+      color: #111;
+      border-color: #ffd166;
+    }
+
+    /* ================= LIVE UI VIEWPORT (380px height) ================= */
+    .mockup-viewport {
+      height: 390px;
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      user-select: none;
+    }
+
+    /* =====================================================================
+       A1: 赛博 CRT 全息牌桌风 (Balatro × Needy Streamer Overload)
+    ===================================================================== */
+    .mockup-a1 {
+      background: radial-gradient(circle at 50% 42%, #241138 0%, #10081c 70%, #07030d 100%);
+      font-family: "Courier New", "Consolas", monospace;
+      color: #f8f0ff;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* CRT Scanlines + Vignette */
+    .mockup-a1::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          rgba(0, 0, 0, 0.26) 0px,
+          rgba(0, 0, 0, 0.26) 1px,
+          transparent 1px,
+          transparent 3px
+        ),
+        radial-gradient(circle at center, transparent 58%, rgba(0, 0, 0, 0.65) 100%);
+      pointer-events: none;
+      z-index: 25;
+    }
+
+    .a1-top-hud {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      z-index: 5;
+    }
+
+    .a1-score-box {
+      background: #140b24;
+      border: 2px solid #ff3898;
+      box-shadow: 0 0 12px rgba(255, 56, 152, 0.45), inset 0 0 8px rgba(255, 56, 152, 0.2);
+      border-radius: 8px;
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .a1-chip {
+      background: #00e5ff;
+      color: #06101e;
+      font-weight: 900;
+      padding: 3px 7px;
+      border-radius: 4px;
+      font-size: 13px;
+      text-shadow: none;
+    }
+
+    .a1-mult {
+      background: #ff2a6d;
+      color: #fff;
+      font-weight: 900;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 13px;
+      animation: a1Pulse 1.3s infinite alternate;
+    }
+
+    @keyframes a1Pulse {
+      0% { transform: scale(1) rotate(-1deg); }
+      100% { transform: scale(1.08) rotate(1.5deg); }
+    }
+
+    .a1-vram-pill {
+      background: rgba(0, 229, 255, 0.12);
+      border: 1px solid #00e5ff;
+      color: #7df9ff;
+      padding: 4px 9px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .a1-center-stage {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 5;
+      my: auto;
+    }
+
+    .a1-cg-preview {
+      width: 122px;
+      height: 158px;
+      border-radius: 8px;
+      border: 2px solid #00f0ff;
+      box-shadow: 0 0 18px rgba(0, 240, 255, 0.45);
+      overflow: hidden;
+      position: relative;
+      flex-shrink: 0;
+      background: #000;
+    }
+
+    .a1-cg-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease, filter 0.4s ease;
+    }
+
+    .a1-cg-preview .a1-ssr-tag {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: linear-gradient(90deg, #ff2a85, #ffbe0b, #00f0ff);
+      color: #000;
+      font-size: 10px;
+      font-weight: 900;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .a1-cg-preview .a1-caption {
+      position: absolute;
+      bottom: 0;
+      inset-x: 0;
+      background: rgba(12, 4, 24, 0.86);
+      font-size: 10px;
+      padding: 4px 6px;
+      text-align: center;
+      color: #ff99d6;
+      border-top: 1px solid rgba(255, 42, 133, 0.5);
+    }
+
+    .a1-holo-deck {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      flex: 1;
+      perspective: 700px;
+    }
+
+    .holo-card {
+      position: relative;
+      border-radius: 8px;
+      padding: 8px 9px;
+      background:
+        linear-gradient(135deg, rgba(255, 42, 133, 0.25) 0%, rgba(0, 240, 255, 0.22) 50%, rgba(255, 230, 0, 0.25) 100%),
+        #1b0f30;
+      border: 1.5px solid rgba(255, 255, 255, 0.45);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.55);
+      cursor: pointer;
+      transform-style: preserve-3d;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.2s;
+      overflow: hidden;
+    }
+
+    .holo-card::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background: conic-gradient(
+        from 0deg,
+        transparent,
+        rgba(255, 0, 160, 0.35),
+        rgba(0, 255, 255, 0.4),
+        rgba(255, 255, 0, 0.35),
+        transparent 60%
+      );
+      mix-blend-mode: color-dodge;
+      opacity: 0.65;
+      animation: holoSpin 5s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes holoSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    .holo-card:hover {
+      border-color: #00f0ff;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
+    }
+
+    .holo-card.debuff {
+      background: linear-gradient(135deg, rgba(255, 30, 60, 0.3), #1f0812);
+      border-color: #ff3355;
+    }
+
+    .holo-card-type {
+      font-size: 9px;
+      color: #a8ffe2;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      position: relative;
+      z-index: 2;
+    }
+
+    .holo-card-name {
+      font-size: 12px;
+      font-weight: 900;
+      color: #fff;
+      margin: 3px 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .holo-card-val {
+      font-size: 11px;
+      font-weight: 800;
+      color: #ffe600;
+      position: relative;
+      z-index: 2;
+    }
+
+    .a1-bottom-bar {
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(12, 6, 24, 0.85);
+      border: 1px solid rgba(255, 56, 152, 0.5);
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 11px;
+    }
+
+    .a1-synth-btn {
+      background: linear-gradient(90deg, #ff2a85, #7b2cbf);
+      border: 1px solid #ff99d6;
+      color: #fff;
+      padding: 5px 12px;
+      border-radius: 5px;
+      font-family: inherit;
+      font-weight: 900;
+      font-size: 11px;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(255, 42, 133, 0.6);
+    }
+
+    /* =====================================================================
+       A2: 街头机能潮酷 / 绝区零 × P5 撞色风 (ZZZ × Persona 5)
+    ===================================================================== */
+    .mockup-a2 {
+      background:
+        repeating-linear-gradient(
+          -35deg,
+          #0c0c0e 0px,
+          #0c0c0e 14px,
+          #131317 14px,
+          #131317 28px
+        );
+      color: #fff;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-family: "Impact", "Arial Black", "PingFang SC", sans-serif;
+    }
+
+    .a2-Warning-tape {
+      position: absolute;
+      top: 10px;
+      right: -36px;
+      transform: rotate(16deg);
+      background: #e5ff00;
+      color: #090909;
+      font-size: 10px;
+      font-weight: 900;
+      padding: 2px 42px;
+      letter-spacing: 1px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6);
+      z-index: 4;
+    }
+
+    .a2-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 3;
+    }
+
+    .a2-skew-badge {
+      background: #e5ff00;
+      color: #0a0a0a;
+      padding: 5px 14px;
+      transform: skewX(-16deg);
+      font-weight: 900;
+      font-size: 14px;
+      box-shadow: 4px 4px 0 #ff4d00;
+    }
+
+    .a2-sub-tape {
+      background: #ff4d00;
+      color: #fff;
+      padding: 4px 10px;
+      transform: skewX(-16deg);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .a2-main-body {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 3;
+    }
+
+    .a2-char-slash {
+      width: 130px;
+      height: 195px;
+      background: #ff4d00;
+      clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
+      padding: 4px;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .a2-char-slash img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
+      filter: contrast(1.12) saturate(1.15);
+    }
+
+    .a2-cassette-stack {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .a2-tag-strip {
+      background: #1b1b20;
+      border-left: 6px solid #e5ff00;
+      border-right: 2px solid #fff;
+      padding: 8px 10px;
+      transform: skewX(-10deg);
+      box-shadow: 4px 4px 0 rgba(255, 77, 0, 0.9);
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .a2-tag-strip:hover {
+      transform: skewX(-10deg) translateX(5px) scale(1.02);
+      background: #e5ff00;
+      color: #000;
+    }
+
+    .a2-tag-strip:hover .a2-mult-pill {
+      background: #000;
+      color: #e5ff00;
+    }
+
+    .a2-tag-title {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.4px;
+    }
+
+    .a2-mult-pill {
+      background: #ff4d00;
+      color: #fff;
+      padding: 2px 7px;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .a2-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 3;
+      background: #000;
+      border: 2px solid #e5ff00;
+      padding: 7px 12px;
+      transform: skewX(-8deg);
+    }
+
+    .a2-crit-text {
+      color: #e5ff00;
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 0.8px;
+      text-shadow: 2px 2px 0 #ff4d00;
+    }
+
+    .a2-trigger-slam {
+      background: #ff4d00;
+      color: #fff;
+      border: 2px solid #fff;
+      padding: 4px 12px;
+      font-weight: 900;
+      font-size: 11px;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+
+    /* =====================================================================
+       A3: 千禧学园清透毛玻璃 / 蔚蓝档案风 (Blue Archive)
+    ===================================================================== */
+    .mockup-a3 {
+      background:
+        linear-gradient(135deg, #e3f6ff 0%, #f4faff 52%, #dff2ff 100%);
+      color: #1d3557;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+
+    .mockup-a3::before {
+      content: "";
+      position: absolute;
+      right: -35px;
+      top: -35px;
+      width: 170px;
+      height: 170px;
+      border-radius: 50%;
+      border: 2px dashed rgba(0, 174, 239, 0.35);
+      pointer-events: none;
+    }
+
+    .a3-top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(0, 174, 239, 0.28);
+      border-radius: 99px;
+      padding: 6px 14px;
+      box-shadow: 0 4px 14px rgba(0, 140, 210, 0.08);
+      z-index: 2;
+    }
+
+    .a3-club-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: #0096d6;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .a3-ap-pill {
+      background: #00aeef;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 10px;
+      border-radius: 99px;
+    }
+
+    .a3-workspace {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 2;
+    }
+
+    .a3-polaroid {
+      width: 128px;
+      background: #fff;
+      padding: 7px 7px 20px 7px;
+      border-radius: 10px;
+      box-shadow: 0 10px 24px rgba(0, 110, 180, 0.15);
+      transform: rotate(-2.5deg);
+      transition: transform 0.25s ease;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .a3-polaroid:hover {
+      transform: rotate(0deg) scale(1.04);
+    }
+
+    .a3-polaroid img {
+      width: 100%;
+      height: 138px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
+    .a3-polaroid-label {
+      position: absolute;
+      bottom: 4px;
+      inset-x: 0;
+      text-align: center;
+      font-size: 10px;
+      font-weight: 800;
+      color: #2d4a6d;
+    }
+
+    .a3-glass-tags {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .a3-capsule {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(10px);
+      border: 1.5px solid rgba(0, 174, 239, 0.35);
+      border-radius: 12px;
+      padding: 7px 11px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 10px rgba(0, 150, 220, 0.08);
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    .a3-capsule:hover {
+      background: #00aeef;
+      color: #fff;
+      transform: translateY(-2px);
+    }
+
+    .a3-capsule-name {
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .a3-capsule-badge {
+      background: #eefaff;
+      color: #0096d6;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .a3-bottom-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid rgba(0, 174, 239, 0.3);
+      border-radius: 14px;
+      padding: 8px 12px;
+      z-index: 2;
+    }
+
+    .a3-jelly-btn {
+      background: linear-gradient(135deg, #00aeef, #38c6ff);
+      color: #fff;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 174, 239, 0.38);
+    }
+
+    /* =====================================================================
+       B1: 赛博朋克雨夜霓虹酒馆风 (VA-11 Hall-A)
+    ===================================================================== */
+    .mockup-b1 {
+      background: #0d0722;
+      color: #f6e8ff;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-family: "Courier New", "PingFang SC", monospace;
+      position: relative;
+    }
+
+    .b1-bar-stage {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 10px;
+      height: 220px;
+      z-index: 2;
+    }
+
+    .b1-window-view {
+      position: relative;
+      border: 2px solid #00f0ff;
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.35), inset 0 0 12px rgba(255, 42, 133, 0.35);
+      border-radius: 4px;
+      overflow: hidden;
+      background: #140a2e;
+    }
+
+    .b1-window-bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: hue-rotate(-18deg) saturate(1.35) brightness(0.65);
+    }
+
+    .b1-patron-sprite {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      height: 195px;
+      object-fit: cover;
+      border-radius: 6px 6px 0 0;
+      filter: drop-shadow(0 0 10px rgba(255, 42, 133, 0.7));
+    }
+
+    .b1-neon-sign {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(13, 7, 34, 0.85);
+      border: 1px solid #ff2a85;
+      color: #ff2a85;
+      text-shadow: 0 0 6px #ff2a85;
+      font-size: 10px;
+      font-weight: 900;
+      padding: 2px 6px;
+    }
+
+    .b1-mixer-panel {
+      background: #160c33;
+      border: 2px solid #ff2a85;
+      box-shadow: 0 0 10px rgba(255, 42, 133, 0.3);
+      border-radius: 4px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .b1-mixer-title {
+      font-size: 10px;
+      font-weight: 900;
+      color: #00f0ff;
+      letter-spacing: 0.6px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .b1-chem-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 5px;
+    }
+
+    .b1-chem-slot {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(0, 240, 255, 0.45);
+      padding: 5px 6px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 10px;
+      transition: 0.15s;
+    }
+
+    .b1-chem-slot:hover {
+      background: rgba(255, 42, 133, 0.28);
+      border-color: #ff2a85;
+    }
+
+    .b1-chem-name {
+      font-weight: 900;
+      display: block;
+    }
+
+    .b1-chem-bars {
+      color: #00f0ff;
+      font-size: 10px;
+      letter-spacing: 1px;
+    }
+
+    .b1-shaker-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .b1-shaker-icon {
+      font-size: 20px;
+      display: inline-block;
+      transition: transform 0.2s;
+    }
+
+    .b1-shaker-icon.shaking {
+      animation: shakerAnim 0.14s infinite alternate;
+    }
+
+    @keyframes shakerAnim {
+      from { transform: rotate(-18deg) translateY(-3px); }
+      to { transform: rotate(18deg) translateY(3px); }
+    }
+
+    .b1-mix-btn {
+      flex: 1;
+      background: #ff2a85;
+      color: #fff;
+      border: 1px solid #00f0ff;
+      padding: 5px 8px;
+      font-size: 11px;
+      font-weight: 900;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .b1-dialog-box {
+      background: #090418;
+      border: 2px solid #ff2a85;
+      outline: 1px solid #00f0ff;
+      outline-offset: -4px;
+      padding: 10px 12px;
+      z-index: 2;
+      min-height: 118px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .b1-speaker {
+      color: #00f0ff;
+      font-size: 11px;
+      font-weight: 900;
+      margin-bottom: 4px;
+    }
+
+    .b1-dialog-text {
+      font-size: 12px;
+      line-height: 1.5;
+      color: #f8e8ff;
+    }
+
+    /* =====================================================================
+       B2: 暖调胡桃木 Lo-Fi 深夜咖啡馆风 (Coffee Talk)
+    ===================================================================== */
+    .mockup-b2 {
+      background: linear-gradient(180deg, #1e120b 0%, #2b1b12 65%, #190f0a 100%);
+      color: #f7e6d0;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-family: "Georgia", "Songti SC", "PingFang SC", serif;
+      position: relative;
+    }
+
+    .b2-rain-overlay {
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        105deg,
+        transparent 0px,
+        transparent 18px,
+        rgba(255, 214, 165, 0.06) 18px,
+        rgba(255, 214, 165, 0.06) 19px
+      );
+      pointer-events: none;
+    }
+
+    .b2-top-wooden {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #3a2316;
+      border: 1px solid #d48c46;
+      border-radius: 8px;
+      padding: 6px 12px;
+      z-index: 2;
+    }
+
+    .b2-lofi-track {
+      font-size: 11px;
+      color: #f3c68f;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .b2-middle {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 2;
+    }
+
+    .b2-guest-frame {
+      width: 118px;
+      height: 162px;
+      border-radius: 10px;
+      border: 2px solid #d48c46;
+      overflow: hidden;
+      position: relative;
+      flex-shrink: 0;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .b2-guest-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: sepia(0.22) contrast(1.05);
+    }
+
+    .b2-chalkboard {
+      flex: 1;
+      background: #1b241e;
+      border: 3px solid #8a5629;
+      border-radius: 10px;
+      padding: 9px 11px;
+      box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.6);
+      position: relative;
+    }
+
+    .b2-chalk-title {
+      font-size: 11px;
+      color: #f4d599;
+      border-bottom: 1px dashed rgba(244, 213, 153, 0.4);
+      padding-bottom: 4px;
+      margin-bottom: 7px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .b2-latte-cup-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .b2-cup-preview {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 50%, #f5e2c8 25%, #b56e33 68%, #633715 100%);
+      border: 3px solid #fff3e2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      position: relative;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+    }
+
+    .b2-steam {
+      position: absolute;
+      top: -16px;
+      font-size: 13px;
+      opacity: 0.75;
+      animation: steamRise 2.2s infinite ease-in-out;
+    }
+
+    @keyframes steamRise {
+      0% { transform: translateY(4px) scale(0.9); opacity: 0.3; }
+      50% { transform: translateY(-4px) scale(1.1); opacity: 0.85; }
+      100% { transform: translateY(-10px) scale(0.95); opacity: 0.1; }
+    }
+
+    .b2-recipe-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      flex: 1;
+    }
+
+    .b2-ing-pill {
+      font-size: 10px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: rgba(212, 140, 70, 0.22);
+      border: 1px solid #d48c46;
+      color: #ffe8c8;
+      cursor: pointer;
+    }
+
+    .b2-ing-pill:hover {
+      background: #d48c46;
+      color: #1e120b;
+    }
+
+    .b2-dialog {
+      background: rgba(43, 27, 18, 0.94);
+      border: 1.5px solid #d48c46;
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-size: 12px;
+      line-height: 1.55;
+      z-index: 2;
+    }
+
+    /* =====================================================================
+       B3: 昭和复古纯喫茶 / 奶油苏打波普风 (Showa Kissaten)
+    ===================================================================== */
+    .mockup-b3 {
+      background:
+        radial-gradient(circle at 20% 20%, #fffdf7 0%, #fff8e7 70%, #f5e6c8 100%);
+      color: #2c1d14;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-family: "Songti SC", "Yu Mincho", "Georgia", serif;
+      border: 6px double #1e824c;
+    }
+
+    .b3-stained-header {
+      background: #1e824c;
+      color: #fff8e7;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 2px solid #d9383a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .b3-main-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      my: auto;
+    }
+
+    .b3-retro-menu {
+      writing-mode: vertical-rl;
+      background: #fffdf8;
+      border: 2px solid #1e824c;
+      outline: 1px solid #d9383a;
+      outline-offset: -4px;
+      padding: 10px 7px;
+      height: 170px;
+      font-size: 12px;
+      font-weight: 900;
+      color: #1e824c;
+      letter-spacing: 2px;
+      box-shadow: 3px 3px 0 rgba(30, 130, 76, 0.25);
+    }
+
+    .b3-soda-card {
+      flex: 1;
+      background: #fff;
+      border: 2px solid #d9383a;
+      border-radius: 12px;
+      padding: 9px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 4px 4px 0 #1e824c;
+    }
+
+    .b3-char-oval {
+      width: 96px;
+      height: 136px;
+      border-radius: 50px;
+      border: 3px solid #1e824c;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .b3-char-oval img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .b3-soda-info {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .b3-cherry-badge {
+      display: inline-block;
+      background: #d9383a;
+      color: #fff8e7;
+      font-size: 10px;
+      font-weight: 900;
+      padding: 2px 8px;
+      border-radius: 99px;
+      width: fit-content;
+    }
+
+    .b3-soda-title {
+      font-size: 14px;
+      font-weight: 900;
+      color: #1e824c;
+    }
+
+    .b3-soda-desc {
+      font-size: 11px;
+      color: #5a3e2e;
+      line-height: 1.4;
+    }
+
+    .b3-serve-btn {
+      background: #d9383a;
+      color: #fff8e7;
+      border: 2px solid #2c1d14;
+      padding: 5px 10px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 2px 2px 0 #2c1d14;
+    }
+
+    .b3-footer-note {
+      background: #1e824c;
+      color: #fff8e7;
+      padding: 7px 11px;
+      border-radius: 6px;
+      font-size: 11px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* =====================================================================
+       C1: 高饱和糖果波普漫改风 (Muse Dash × Hi-Fi RUSH)
+    ===================================================================== */
+    .mockup-c1 {
+      background-color: #ff1493;
+      background-image:
+        radial-gradient( rgba(255, 230, 0, 0.32) 2px, transparent 2px ),
+        linear-gradient(135deg, #ff1493 0%, #7928ca 55%, #00f0ff 100%);
+      background-size: 14px 14px, 100% 100%;
+      color: #fff;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-family: "Impact", "Arial Black", "PingFang SC", sans-serif;
+      position: relative;
+    }
+
+    .c1-top-hud {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 4;
+    }
+
+    .c1-combo-burst {
+      background: #ffe600;
+      color: #111;
+      border: 3px solid #000;
+      padding: 4px 12px;
+      transform: rotate(-4deg) skewX(-10deg);
+      box-shadow: 4px 4px 0 #000;
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    .c1-fever-bar {
+      background: #000;
+      border: 2px solid #fff;
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-size: 11px;
+      color: #00f0ff;
+      font-weight: 900;
+    }
+
+    .c1-stage-highway {
+      position: relative;
+      height: 215px;
+      background: rgba(0, 0, 0, 0.55);
+      border: 3px solid #000;
+      box-shadow: 5px 5px 0 #ffe600;
+      border-radius: 12px;
+      overflow: hidden;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+    }
+
+    .c1-heroine-cutin {
+      width: 148px;
+      height: 100%;
+      object-fit: cover;
+      clip-path: polygon(0 0, 88% 0, 100% 100%, 0% 100%);
+      border-right: 4px solid #ffe600;
+      flex-shrink: 0;
+    }
+
+    .c1-lanes {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
+      padding: 12px;
+      position: relative;
+    }
+
+    .c1-lane {
+      height: 44px;
+      background: rgba(255, 255, 255, 0.12);
+      border-top: 2px dashed rgba(255, 230, 0, 0.6);
+      border-bottom: 2px dashed rgba(0, 240, 255, 0.6);
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .c1-hit-ring {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 3px solid #ffe600;
+      background: rgba(255, 20, 147, 0.45);
+      margin-left: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      cursor: pointer;
+      z-index: 3;
+    }
+
+    .c1-candy-note {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #00f0ff;
+      border: 3px solid #000;
+      box-shadow: 2px 2px 0 #ff1493;
+      animation: c1NoteRun 1.6s linear infinite;
+    }
+
+    .c1-candy-note.pink {
+      background: #ffe600;
+      animation-delay: 0.75s;
+    }
+
+    @keyframes c1NoteRun {
+      0% { right: -30px; transform: scale(0.8) rotate(0deg); }
+      85% { right: calc(100% - 44px); transform: scale(1.15) rotate(180deg); }
+      100% { right: calc(100% - 44px); opacity: 0; transform: scale(1.6); }
+    }
+
+    .c1-bottom-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 4;
+    }
+
+    .c1-judge-banner {
+      font-size: 18px;
+      font-weight: 900;
+      color: #ffe600;
+      text-shadow: 3px 3px 0 #000, -1px -1px 0 #ff1493;
+      letter-spacing: 1px;
+    }
+
+    .c1-cutin-btn {
+      background: #00f0ff;
+      color: #000;
+      border: 3px solid #000;
+      box-shadow: 3px 3px 0 #000;
+      padding: 5px 12px;
+      font-weight: 900;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    /* =====================================================================
+       C2: 空灵立体透视几何轨道风 (Arcaea × Phigros)
+    ===================================================================== */
+    .mockup-c2 {
+      background: radial-gradient(circle at 50% 18%, #281f47 0%, #0d0b1a 65%, #06050c 100%);
+      color: #f0edff;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-family: "Cinzel", "Times New Roman", "Songti SC", serif;
+      position: relative;
+    }
+
+    .c2-top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(199, 185, 255, 0.3);
+      padding-bottom: 6px;
+      z-index: 4;
+    }
+
+    .c2-song-meta {
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      color: #e4dcff;
+    }
+
+    .c2-score-num {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #fff;
+      text-shadow: 0 0 12px rgba(169, 145, 255, 0.8);
+    }
+
+    .c2-3d-viewport {
+      position: relative;
+      height: 235px;
+      perspective: 460px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .c2-partner-silhouette {
+      position: absolute;
+      top: 4px;
+      right: 10px;
+      width: 112px;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 8px;
+      opacity: 0.78;
+      border: 1px solid rgba(190, 175, 255, 0.45);
+      box-shadow: 0 0 22px rgba(155, 135, 255, 0.35);
+      z-index: 2;
+    }
+
+    .c2-highway {
+      width: 240px;
+      height: 260px;
+      transform: rotateX(56deg);
+      background: linear-gradient(180deg, rgba(164, 140, 255, 0.04) 0%, rgba(120, 215, 255, 0.22) 100%);
+      border-left: 2px solid rgba(190, 175, 255, 0.7);
+      border-right: 2px solid rgba(120, 215, 255, 0.7);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      position: relative;
+      box-shadow: 0 12px 35px rgba(130, 190, 255, 0.25);
+    }
+
+    .c2-track-col {
+      border-right: 1px solid rgba(255, 255, 255, 0.12);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .c2-note {
+      position: absolute;
+      inset-x: 4px;
+      height: 14px;
+      background: linear-gradient(90deg, #7be6ff, #d5b8ff);
+      box-shadow: 0 0 12px #7be6ff;
+      border-radius: 2px;
+      animation: c2Fall 1.5s linear infinite;
+    }
+
+    .c2-track-col:nth-child(2) .c2-note { animation-delay: 0.4s; background: #ff9de6; box-shadow: 0 0 12px #ff9de6; }
+    .c2-track-col:nth-child(3) .c2-note { animation-delay: 0.9s; }
+    .c2-track-col:nth-child(4) .c2-note { animation-delay: 1.2s; background: #ff9de6; }
+
+    @keyframes c2Fall {
+      0% { top: -15%; opacity: 0.3; }
+      90% { top: 86%; opacity: 1; }
+      100% { top: 95%; opacity: 0; transform: scaleX(1.3); }
+    }
+
+    .c2-judge-line {
+      position: absolute;
+      bottom: 22px;
+      inset-x: -14px;
+      height: 3px;
+      background: #fff;
+      box-shadow: 0 0 14px #7be6ff, 0 0 28px #d5b8ff;
+    }
+
+    .c2-bottom-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #c9bef5;
+      z-index: 4;
+    }
+
+    .c2-pure-badge {
+      padding: 4px 12px;
+      border: 1px solid rgba(190, 175, 255, 0.6);
+      background: rgba(164, 140, 255, 0.16);
+      color: #fff;
+      letter-spacing: 2px;
+      cursor: pointer;
+    }
+
+    /* =====================================================================
+       C3: 涩谷街机框体 Synthwave 风 (maimai DX × 80s Synthwave)
+    ===================================================================== */
+    .mockup-c3 {
+      background: linear-gradient(180deg, #0b031d 0%, #240742 52%, #4a0e4e 100%);
+      color: #fff;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-family: "Consolas", "Arial Black", sans-serif;
+      position: relative;
+    }
+
+    .c3-synth-grid-floor {
+      position: absolute;
+      bottom: 0;
+      inset-x: -20%;
+      height: 150px;
+      background-image:
+        linear-gradient(to right, rgba(255, 0, 160, 0.45) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 240, 255, 0.45) 1px, transparent 1px);
+      background-size: 26px 18px;
+      transform: perspective(220px) rotateX(62deg);
+      transform-origin: bottom;
+      pointer-events: none;
+    }
+
+    .c3-led-marquee {
+      background: #070210;
+      border: 2px solid #00f0ff;
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.45);
+      padding: 5px 10px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      z-index: 3;
+    }
+
+    .c3-credit-blink {
+      color: #ffbd00;
+      font-weight: 900;
+      animation: blinkLed 1s steps(2) infinite;
+    }
+
+    @keyframes blinkLed {
+      50% { opacity: 0.25; }
+    }
+
+    .c3-cabinet-ring-stage {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      z-index: 3;
+      my: auto;
+    }
+
+    .c3-maimai-ring {
+      width: 162px;
+      height: 162px;
+      border-radius: 50%;
+      border: 5px solid #ff00a0;
+      box-shadow: 0 0 20px #ff00a0, inset 0 0 18px #00f0ff;
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+      background: #120428;
+    }
+
+    .c3-maimai-ring img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.85;
+    }
+
+    .c3-ring-overlay-text {
+      position: absolute;
+      bottom: 10px;
+      inset-x: 0;
+      text-align: center;
+      background: rgba(7, 2, 16, 0.8);
+      color: #00f0ff;
+      font-size: 10px;
+      font-weight: 900;
+      padding: 2px 0;
+    }
+
+    .c3-spectrum-panel {
+      flex: 1;
+      background: rgba(9, 3, 24, 0.82);
+      border: 1.5px solid #ff00a0;
+      border-radius: 8px;
+      padding: 9px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .c3-katakana-hud {
+      font-size: 10px;
+      color: #ff77d9;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .c3-eq-bars {
+      height: 68px;
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+    }
+
+    .c3-eq-bar {
+      flex: 1;
+      background: linear-gradient(180deg, #00f0ff 0%, #ff00a0 60%, #ffbd00 100%);
+      border-radius: 2px 2px 0 0;
+      animation: eqBounce 0.65s ease-in-out infinite alternate;
+    }
+
+    @keyframes eqBounce {
+      0% { height: 18%; }
+      100% { height: 96%; }
+    }
+
+    .c3-sync-rate {
+      font-size: 13px;
+      font-weight: 900;
+      color: #00f0ff;
+      text-shadow: 0 0 8px #00f0ff;
+    }
+
+    .c3-bottom-hud {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(7, 2, 16, 0.9);
+      border: 1px solid #ffbd00;
+      padding: 6px 10px;
+      border-radius: 6px;
+      z-index: 3;
+      font-size: 11px;
+    }
+
+    .c3-arcade-btn {
+      background: linear-gradient(90deg, #ff00a0, #ffbd00);
+      color: #000;
+      border: none;
+      padding: 5px 11px;
+      border-radius: 4px;
+      font-weight: 900;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    /* ================= FX OVERLAY INSIDE VIEWPORT ================= */
+    .fx-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 60;
+      background: rgba(8, 6, 18, 0.86);
+      backdrop-filter: blur(5px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease;
+    }
+
+    .fx-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .fx-Overlay-card {
+      max-width: 92%;
+      border-radius: 14px;
+      padding: 14px 18px;
+      border: 2px solid #fff;
+      box-shadow: 0 0 35px rgba(255, 42, 133, 0.75);
+      animation: fxPop 0.35s cubic-bezier(0.18, 1.3, 0.4, 1);
+    }
+
+    @keyframes fxPop {
+      from { transform: scale(0.55) rotate(-5deg); opacity: 0; }
+      to { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    .fx-cg-thumb {
+      width: 210px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid #ffe600;
+      margin: 8px auto;
+      display: block;
+    }
+
+    /* ================= CARD METADATA FOOTER ================= */
+    .style-meta-body {
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+      flex: 1;
+      background: linear-gradient(180deg, rgba(23, 27, 40, 0.95), rgba(16, 19, 29, 0.98));
+    }
+
+    .meta-row {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .meta-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .benchmark-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .benchmark-tag {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #f0f4ff;
+    }
+
+    /* 5-Color Swatch Bar */
+    .palette-bar {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+
+    .swatch-item {
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s;
+      background: #0d1017;
+    }
+
+    .swatch-item:hover {
+      transform: translateY(-3px);
+      border-color: #fff;
+    }
+
+    .swatch-color {
+      height: 26px;
+      width: 100%;
+    }
+
+    .swatch-hex {
+      font-size: 10px;
+      font-family: "Consolas", monospace;
+      text-align: center;
+      padding: 3px 2px;
+      color: #cbd5e8;
+      font-weight: 700;
+    }
+
+    .dna-summary {
+      font-size: 12.5px;
+      line-height: 1.55;
+      color: #d2daec;
+      background: rgba(255, 255, 255, 0.035);
+      border-left: 3px solid var(--accent-cyan);
+      padding: 8px 10px;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .trigger-fx-btn {
+      margin-top: auto;
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      background: linear-gradient(135deg, rgba(255, 42, 133, 0.85), rgba(123, 44, 191, 0.85));
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 0.16s ease, filter 0.16s ease;
+      box-shadow: 0 6px 18px rgba(255, 42, 133, 0.28);
+    }
+
+    .trigger-fx-btn:hover {
+      filter: brightness(1.15);
+      transform: translateY(-1px);
+    }
+
+    .trigger-fx-btn:active {
+      transform: translateY(1px);
+    }
+
+    .play-live-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1.5px solid #ffd166;
+      background: linear-gradient(135deg, #ff2a85, #ff7b00);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 900;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(255, 42, 133, 0.38);
+      transition: transform 0.16s ease, filter 0.16s ease;
+    }
+
+    .play-live-btn:hover {
+      filter: brightness(1.14);
+      transform: translateY(-2px);
+    }
+
+    /* Screen Shake Utility */
+    .shake-screen {
+      animation: screenShake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+
+    @keyframes screenShake {
+      10%, 90% { transform: translate3d(-3px, 2px, 0); }
+      20%, 80% { transform: translate3d(5px, -3px, 0); }
+      30%, 50%, 70% { transform: translate3d(-6px, 4px, 0); }
+      40%, 60% { transform: translate3d(6px, -4px, 0); }
+    }
+
+    /* Toast Notification */
+    .lab-toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 2000;
+      background: rgba(15, 19, 30, 0.95);
+      border: 1.5px solid #00f0ff;
+      box-shadow: 0 8px 28px rgba(0, 240, 255, 0.3);
+      color: #fff;
+      padding: 11px 18px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.25s cubic-bezier(0.2, 0.9, 0.2, 1);
+      pointer-events: none;
+    }
+
+    .lab-toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ================= HEADER & TABS ================= -->
+  <header class="lab-header">
+    <div class="brand-group">
+      <div class="brand-logo">PX</div>
+      <div class="brand-title">
+        <h1>
+          Pxlsan 3大新小游戏 · 美术风格参考实验室
+          <span class="brand-badge">LIVE UI MOCKUP LAB v1.0</span>
+        </h1>
+        <p>在正式编码前直观对比 3 款新游 × 9 套视觉基因方案 · 支持实时悬浮交互、色板取色与一键动效演出</p>
+      </div>
+    </div>
+
+    <nav class="nav-tabs" id="gameFilterTabs">
+      <a class="nav-tab" href="arcade.html" style="text-decoration:none;border-color:#ffd166;color:#ffd166;">🕹️ 返回街机大厅</a>
+      <button class="nav-tab active" data-target="all">✨ 全部 9 套方案总览 (All 9 Styles)</button>
+      <button class="nav-tab" data-target="game-a">🎴 游戏 A：AI 炼丹工坊 (3)</button>
+      <button class="nav-tab" data-target="game-b">☕ 游戏 B：小城深夜食堂 (3)</button>
+      <button class="nav-tab" data-target="game-c">🎵 游戏 C：次元节拍音游 (3)</button>
+    </nav>
+  </header>
+
+  <!-- ================= QUICK JUMP & PICK BAR ================= -->
+  <div class="quick-jump-bar">
+    <div class="jump-pills">
+      <span style="color:#7e8aa3;">快速定位：</span>
+      <a class="jump-pill" href="#card-A1">A1 全息牌桌</a>
+      <a class="jump-pill" href="#card-A2">A2 绝区零×P5撞色</a>
+      <a class="jump-pill" href="#card-A3">A3 蔚蓝档案毛玻璃</a>
+      <a class="jump-pill" href="#card-B1">B1 赛博雨夜酒馆</a>
+      <a class="jump-pill" href="#card-B2">B2 胡桃木Lo-Fi咖啡</a>
+      <a class="jump-pill" href="#card-B3">B3 昭和纯喫茶波普</a>
+      <a class="jump-pill" href="#card-C1">C1 糖果漫改波普</a>
+      <a class="jump-pill" href="#card-C2">C2 空灵3D立体轨道</a>
+      <a class="jump-pill" href="#card-C3">C3 涩谷街机Synthwave</a>
+      <span style="color:#7e8aa3;margin-left:8px;">｜正式版直达：</span>
+      <a class="jump-pill" href="tag-alchemist.html" style="border-color:#ff2a85;color:#ff99d6;">🎮 玩《炼丹工坊》(A1)</a>
+      <a class="jump-pill" href="midnight-cafe.html" style="border-color:#d48c46;color:#ffd199;">🎮 玩《深夜咖啡馆》(B2)</a>
+      <a class="jump-pill" href="neon-beat.html" style="border-color:#00f0ff;color:#7df9ff;">🎮 玩《次元节拍》(C1)</a>
+    </div>
+    <div class="selection-summary">
+      <span id="pickedSummaryText">📌 当前实装正式版方案：A1 / B2 / C1</span>
+      <button class="copy-choice-btn" id="copyPickedBtn">复制我挑选的风格配置</button>
+    </div>
+  </div>
+
+  <main class="lab-container">
+
+    <!-- ===================================================================
+         GAME A: 《Pxlsan 炼丹工坊：AI 画师模拟器》（卡牌构筑 / Tag 合成）
+    ==================================================================== -->
+    <section class="game-section" id="game-a">
+      <div class="section-header">
+        <div class="section-title-group">
+          <div class="game-icon-box">🎴</div>
+          <div>
+            <h2>游戏 A：《Pxlsan 炼丹工坊：AI 画师模拟器》（卡牌构筑 / Tag 合成）</h2>
+            <p>核心玩法：拖拽/组合【底模卡 + 光影 Tag + 表情姿势卡】，化解【六指恶魔 / 显存溢出 Debuff】，翻倍倍率爆出小城角色 SSR 剧情 CG</p>
+          </div>
+        </div>
+        <a class="play-live-btn" href="tag-alchemist.html">🎮 立即进入正式版游戏 (tag-alchemist.html) ▸</a>
+      </div>
+
+      <div class="styles-grid">
+
+        <!-- ==================== STYLE A1 ==================== -->
+        <article class="style-card picked" id="card-A1" data-game="A" data-code="A1">
+          <div class="style-card-header">
+            <span class="style-code-badge" style="background:#ff2a85;color:#fff;">A1</span>
+            <span class="style-name">赛博 CRT 全息牌桌风</span>
+            <button class="pick-style-btn" onclick="togglePick('A', 'A1', this)">★ 已选为 A 方案</button>
+          </div>
+
+          <div class="mockup-viewport mockup-a1" id="viewport-A1">
+            <div class="a1-top-hud">
+              <div class="a1-score-box">
+                <span style="font-size:10px;color:#ff99d6;">PROMPT SCORE</span>
+                <span class="a1-chip" id="a1-chip-val">480</span>
+                <span style="font-weight:900;">×</span>
+                <span class="a1-mult" id="a1-mult-val">18.5 MULT</span>
+              </div>
+              <div class="a1-vram-pill">VRAM: 14.2 / 16GB</div>
+            </div>
+
+            <div class="a1-center-stage">
+              <div class="a1-cg-preview">
+                <img id="a1-preview-img" src="dressup/assets/gacha/up-ssr-takagi-qipao-wide.webp" alt="高木旗袍SSR" />
+                <span class="a1-ssr-tag">SSR HOLO</span>
+                <div class="a1-caption" id="a1-caption-text">高木·流光旗袍 (8,880 PTS)</div>
+              </div>
+
+              <div class="a1-holo-deck">
+                <div class="holo-card" onmousemove="tiltCard(event, this)" onmouseleave="resetTilt(this)" onclick="bumpA1Score('Anima 1.4 底模', 620, 24.0, 'dressup/assets/gacha/up-ssr-takagi-qipao-wide.webp')">
+                  <div class="holo-card-type">[CHECKPOINT]</div>
+                  <div class="holo-card-name">Anima 1.4 底模</div>
+                  <div class="holo-card-val">基础分 +250 · 稀有度 UP</div>
+                </div>
+                <div class="holo-card" onmousemove="tiltCard(event, this)" onmouseleave="resetTilt(this)" onclick="bumpA1Score('丁达尔夕阳', 740, 32.5, 'dressup/cg/chapters/ch_1.webp')">
+                  <div class="holo-card-type">[LIGHTING TAG]</div>
+                  <div class="holo-card-name">丁达尔夕阳</div>
+                  <div class="holo-card-val">倍率 ×1.5 · 暖色加成</div>
+                </div>
+                <div class="holo-card" onmousemove="tiltCard(event, this)" onmouseleave="resetTilt(this)" onclick="bumpA1Score('捉弄坏笑 +120', 890, 45.0, 'dressup/assets/loading/loading_takagi_school.webp')">
+                  <div class="holo-card-type">[EXPRESSION]</div>
+                  <div class="holo-card-name">捉弄坏笑 +120</div>
+                  <div class="holo-card-val">暴击率 +35% · 专属Tag</div>
+                </div>
+                <div class="holo-card debuff" onmousemove="tiltCard(event, this)" onmouseleave="resetTilt(this)" onclick="bumpA1Score('ADetailer 镇压六指', 999, 64.0, 'dressup/assets/gacha/up-ssr-aili-catgirl-wide.webp')">
+                  <div class="holo-card-type" style="color:#ff8599;">[BOSS DEBUFF]</div>
+                  <div class="holo-card-name">六指恶魔干扰</div>
+                  <div class="holo-card-val" style="color:#ff5577;">点击启用 LoRA 净化 ×2.0</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="a1-bottom-bar">
+              <span>💡 悬浮或点击全息词条卡体验 3D 镭射倾斜与算分跳字</span>
+              <button class="a1-synth-btn" onclick="triggerStyleFX('A1')">GENERATE!</button>
+            </div>
+
+            <!-- FX OVERLAY -->
+            <div class="fx-overlay" id="fx-A1" onclick="closeFX('A1')">
+              <div class="fx-Overlay-card" style="background:#160829;border-color:#00f0ff;">
+                <div style="color:#ffe600;font-weight:900;font-size:16px;letter-spacing:1px;">✨ RAINBOW HOLO SSR GENERATED!! ✨</div>
+                <img class="fx-cg-thumb" src="dressup/assets/gacha/up-ssr-takagi-qipao-wide.webp" alt="SSR揭晓" />
+                <div style="font-size:14px;font-weight:900;color:#00f0ff;">FINAL MULT: 480 × 99.5 = 47,760 PTS!</div>
+                <div style="font-size:11px;color:#ccc;margin-top:4px;">（点击任意处关闭演出预览）</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="style-meta-body">
+            <div class="meta-row">
+              <span class="meta-label">对标代表作 (Benchmark Games)</span>
+              <div class="benchmark-tags">
+                <span class="benchmark-tag">🃏 Balatro 小丑牌</span>
+                <span class="benchmark-tag">💻 主播女孩重度依赖</span>
+                <span class="benchmark-tag">🔮 赛博全息闪卡</span>
+              </div>
+            </div>
+
+            <div class="meta-row">
+              <span class="meta-label"><span>核心 5 色色板</span><span>点击色块复制 HEX</span></span>
+              <div class="palette-bar">
+                <div class="swatch-item" onclick="copyHex('#10081C')"><div class="swatch-color" style="background:#10081C"></div><div class="swatch-hex">#10081C</div></div>
+                <div class="swatch-item" onclick="copyHex('#FF2A85')"><div class="swatch-color" style="background:#FF2A85"></div><div class="swatch-hex">#FF2A85</div></div>
+                <div class="swatch-item" onclick="copyHex('#00F0FF')"><div class="swatch-color" style="background:#00F0FF"></div><div class="swatch-hex">#00F0FF</div></div>
+                <div class="swatch-item" onclick="copyHex('#FFE600')"><div class="swatch-color" style="background:#FFE600"></div><div class="swatch-hex">#FFE600</div></div>
+                <div class="swatch-item" onclick="copyHex('#7B2CBF')"><div class="swatch-color" style="background:#7B2CBF"></div><div class="swatch-hex">#7B2CBF</div></div>
+              </div>
+            </div>
+
+            <div class="dna-summary">
+              <strong>UI 材质与动效基因：</strong>全局 CRT 扫描线与暗角滤镜 + 鼠标跟随 3D 倾斜全息彩虹镭射 Shader（`conic-gradient` + `color-dodge`）+ 小丑牌式「基础筹码 × 倍率框」弹簧挤压跳字动效，爽感反馈极强。
+            </div>
+
+            <button class="trigger-fx-btn" onclick="triggerStyleFX('A1')">
+              ⚡ 一键试玩动效：SSR 全息炼丹爆闪 (Trigger FX)
+            </button>
+            <a class="play-live-btn" href="tag-alchemist.html">
+              🎮 立即进入正式版游戏 (tag-alchemist.html)
+            </a>
+          </div>
+        </article>
+
+        <!-- ==================== STYLE A2 ==================== -->
+        <article class="style-card" id="card-A2" data-game="A" data-code="A2">
+          <div class="style-card-header">
+            <span class="style-code-badge" style="background:#e5ff00;color:#000;">A2</span>
+            <span class="style-name">街头机能潮酷 / 绝区零 × P5 撞色风</span>
+            <button class="pick-style-btn" onclick="togglePick('A', 'A2', this)">设为 A 方案</button>
+          </div>
+
+          <div class="mockup-viewport mockup-a2" id="viewport-A2">
+            <div class="a2-Warning-tape">WARNING // OVERCLOCK</div>
+
+            <div class="a2-header">
+              <div class="a2-skew-badge">PROMPT // CHAIN</div>
+              <div class="a2-sub-tape" id="a2-combo-tape">COMBO ×32.0</div>
+            </div>
+
+            <div class="a2-main-body">
+              <div class="a2-char-slash">
+                <img id="a2-char-img" src="dressup/assets/gacha/up-ssr-aili-catgirl-wide.webp" alt="爱莉猫娘" />
+              </div>
+
+              <div class="a2-cassette-stack">
+                <div class="a2-tag-strip" onclick="swapA2Tag('NOOBAI-XL // 满血底模', '×2.4', 'dressup/assets/gacha/up-ssr-aili-catgirl-wide.webp')">
+                  <span class="a2-tag-title">01. NOOBAI-XL 满血底模</span>
+                  <span class="a2-mult-pill">×2.4</span>
+                </div>
+                <div class="a2-tag-strip" onclick="swapA2Tag('NEON RIM LIGHT // 赛博逆光', '×1.8', 'dressup/assets/gacha/up-ssr-takako-qipao-wide.webp')">
+                  <span class="a2-tag-title">02. 赛博霓虹轮廓逆光</span>
+                  <span class="a2-mult-pill">×1.8</span>
+                </div>
+                <div class="a2-tag-strip" onclick="swapA2Tag('CAT EARS // 傲娇挑眉暴击', '+340', 'dressup/assets/loading/loading_shasha.webp')">
+                  <span class="a2-tag-title">03. 猫耳傲娇挑眉暴击</span>
+                  <span class="a2-mult-pill">+340</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="a2-footer">
+              <span class="a2-crit-text" id="a2-status-text">ALL-OUT RENDER READY!!</span>
+              <button class="a2-trigger-slam" onclick="triggerStyleFX('A2')">ALL-OUT SLAM!</button>
+            </div>
+
+            <!-- FX OVERLAY -->
+            <div class="fx-overlay" id="fx-A2" onclick="closeFX('A2')">
+              <div class="fx-Overlay-card" style="background:#0a0a0a;border:3px solid #e5ff00;transform:skewX(-8deg);box-shadow:8px 8px 0 #ff4d00;">
+                <div style="background:#e5ff00;color:#000;font-weight:900;padding:3px 10px;font-size:15px;">CRITICAL FINISH // 总攻击出图！</div>
+                <img class="fx-cg-thumb" src="dressup/assets/gacha/up-ssr-aili-catgirl-wide.webp" alt="爱莉SSR" style="border-color:#ff4d00;" />
+                <div style="color:#e5ff00;font-weight:900;font-size:14px;">RANK S+ // 99,400 DMG</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="style-meta-body">
+            <div class="meta-row">
+              <span class="meta-label">对标代表作 (Benchmark Games)</span>
+              <div class="benchmark-tags">
+                <span class="benchmark-tag">⚡ 绝区零 Zenless Zone Zero</span>
+                <span class="benchmark-tag">🎭 女神异闻录 5 (P5R)</span>
+              </div>
+            </div>
+
+            <div class="meta-row">
+              <span class="meta-label"><span>核心 5 色色板</span><span>点击色块复制 HEX</span></span>
+              <div class="palette-bar">
+                <div class="swatch-item" onclick="copyHex('#0C0C0E')"><div class="swatch-color" style="background:#0C0C0E"></div><div class="swatch-hex">#0C0C0E</div></div>
+                <div class="swatch-item" onclick="copyHex('#E5FF00')"><div class="swatch-color" style="background:#E5FF00"></div><div class="swatch-hex">#E5FF00</div></div>
+                <div class="swatch-item" onclick="copyHex('#FF4D00')"><div class="swatch-color" style="background:#FF4D00"></div><div class="swatch-hex">#FF4D00</div></div>
+                <div class="swatch-item" onclick="copyHex('#FFFFFF')"><div class="swatch-color" style="background:#FFFFFF"></div><div class="swatch-hex">#FFFFFF</div></div>
+                <div class="swatch-item" onclick="copyHex('#272730')"><div class="swatch-color" style="background:#272730"></div><div class="swatch-hex">#272730</div></div>
+              </div>
+            </div>
+
+            <div class="dna-summary">
+              <strong>UI 材质与动效基因：</strong>纯黑斜条纹底 + 高饱和荧光芥末黄 `#E5FF00` 与电光橙 `#FF4D00` 强烈撞色，全组件采用 `clip-path` 斜切多边形与 `skewX(-12deg)` 锐角大字报切入，充满街头涂鸦与录像带机能感。
+            </div>
+
+            <button class="trigger-fx-btn" style="background:linear-gradient(90deg,#ff4d00,#b88600);" onclick="triggerStyleFX('A2')">
+              ⚡ 一键试玩动效：P5×ZZZ 斜切暴击演出 (Trigger FX)
+            </button>
+          </div>
+        </article>
+
+        <!-- ==================== STYLE A3 ==================== -->
+        <article class="style-card" id="card-A3" data-game="A" data-code="A3">
+          <div class="style-card-header">
+            <span class="style-code-badge" style="background:#00aeef;color:#fff;">A3</span>
+            <span class="style-name">千禧学园清透毛玻璃 / 蔚蓝档案风</span>
+            <button class="pick-style-btn" onclick="togglePick('A', 'A3', this)">设为 A 方案</button>
+          </div>
+
+          <div class="mockup-viewport mockup-a3" id="viewport-A3">
+            <div class="a3-top-bar">
+              <span class="a3-club-title">☀️ S.C.H.A.L.E 美术社 · 灵感合成台</span>
+              <span class="a3-ap-pill" id="a3-ap-val">灵感值 180 / 180</span>
+            </div>
+
+            <div class="a3-workspace">
+              <div class="a3-polaroid">
+                <img id="a3-photo-img" src="dressup/assets/loading/loading_takagi_school.webp" alt="高木学园拍立得" />
+                <div class="a3-polaroid-label" id="a3-photo-label">♥ 放学后的教室一角</div>
+              </div>
+
+              <div class="a3-glass-tags">
+                <div class="a3-capsule" onclick="pickA3Tag('放学后教室窗边', 'dressup/assets/loading/loading_takagi_school.webp')">
+                  <span class="a3-capsule-name"># 放学后微风窗边</span>
+                  <span class="a3-capsule-badge">清透度 +150</span>
+                </div>
+                <div class="a3-capsule" onclick="pickA3Tag('夏日海滨水花', 'dressup/cg/chapters/ch_11.webp')">
+                  <span class="a3-capsule-name"># 蔚蓝海滨透亮光斑</span>
+                  <span class="a3-capsule-badge">倍率 ×1.6</span>
+                </div>
+                <div class="a3-capsule" onclick="pickA3Tag('冬日圣诞礼赞', 'dressup/assets/gacha/up-ssr-qianhe-santa-wide.webp')">
+                  <span class="a3-capsule-name"># 纯白学园制服特写</span>
+                  <span class="a3-capsule-badge">好感 UP!</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="a3-bottom-bar">
+              <span style="font-size:11px;font-weight:700;color:#3d6089;">点击胶囊词条切换拍立得相纸预览</span>
+              <button class="a3-jelly-btn" onclick="triggerStyleFX('A3')">✨ 冲印回忆 (Synthesize)</button>
+            </div>
+
+            <!-- FX OVERLAY -->
+            <div class="fx-overlay" id="fx-A3" onclick="closeFX('A3')" style="background:rgba(225, 245, 255, 0.88);color:#1d3557;">
+              <div class="fx-Overlay-card" style="background:#fff;border-color:#00aeef;box-shadow:0 12px 35px rgba(0,174,239,0.35);">
+                <div style="color:#00aeef;font-weight:900;font-size:15px;">🌈 3★ 学园记忆拍立得冲印完成！</div>
+                <img class="fx-cg-thumb" src="dressup/cg/chapters/ch_1.webp" alt="学园CG" style="border-color:#00aeef;" />
+                <div style="font-size:12px;font-weight:800;color:#2d4a6d;">「今天的值日时间，稍微延长一点也没关系吧？」</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="style-meta-body">
+            <div class="meta-row">
+              <span class="meta-label">对标代表作 (Benchmark Games)</span>
+              <div class="benchmark-tags">
+                <span class="benchmark-tag">💠 蔚蓝档案 Blue Archive</span>
+                <span class="benchmark-tag">📸 千禧 Y2K 清透学园 UI</span>
+              </div>
+            </div>
+
+            <div class="meta-row">
+              <span class="meta-label"><span>核心 5 色色板</span><span>点击色块复制 HEX</span></span>
+              <div class="palette-bar">
+                <div class="swatch-item" onclick="copyHex('#00AEEF')"><div class="swatch-color" style="background:#00AEEF"></div><div class="swatch-hex">#00AEEF</div></div>
+                <div class="swatch-item" onclick="copyHex('#F0FAFF')"><div class="swatch-color" style="background:#F0FAFF"></div><div class="swatch-hex">#F0FAFF</div></div>
+                <div class="swatch-item" onclick="copyHex('#1D3557')"><div class="swatch-color" style="background:#1D3557"></div><div class="swatch-hex">#1D3557</div></div>
+                <div class="swatch-item" onclick="copyHex('#FF6B9D')"><div class="swatch-color" style="background:#FF6B9D"></div><div class="swatch-hex">#FF6B9D</div></div>
+                <div class="swatch-item" onclick="copyHex('#FFD166')"><div class="swatch-color" style="background:#FFD166"></div><div class="swatch-hex">#FFD166</div></div>
+              </div>
+            </div>
+
+            <div class="dna-summary">
+              <strong>UI 材质与动效基因：</strong>高明度天蓝 `#00AEEF` + 纯白磨砂毛玻璃（`backdrop-filter: blur(12px)`）、拍立得相纸角色卡、斜角光环装饰圆环与 Q 弹果冻胶囊按钮，整体极其清爽治愈，适合学园日常向调性。
+            </div>
+
+            <button class="trigger-fx-btn" style="background:linear-gradient(135deg,#00aeef,#3a86ff);" onclick="triggerStyleFX('A3')">
+              ⚡ 一键试玩动效：3★ 拍立得清爽揭晓 (Trigger FX)
+            </button>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         GAME B: 《小城深夜食堂 / 咖啡厅》（看板娘吧台调配 + 闲聊）
+    ==================================================================== -->
+    <section class="game-section" id="game-b">
+      <div class="section-header">
+        <div class="section-title-group">
+          <div class="game-icon-box">☕</div>
+          <div>
+            <h2>游戏 B：《小城深夜食堂 / 咖啡厅》（看板娘吧台调配 + 微醺闲聊）</h2>
+            <p>核心玩法：夜晚吧台接待高木、长瀞、莎夏等熟客，根据心情暗语调配特饮/拉花，解锁专属深夜私房话与雨夜 CG</p>
+          </div>
+        </div>
+        <a class="play-live-btn" href="midnight-cafe.html">🎮 立即进入正式版游戏 (midnight-cafe.html) ▸</a>
+      </div>
+
+      <div class="styles-grid">
+
+        <!-- ==================== STYLE B1 ==================== -->
+        <article class="style-card" id="card-B1" data-game="B" data-code="B1">
+          <div class="style-card-header">
+            <span class="style-code-badge" style="background:#ff2a85;color:#fff;">B1</span>
+            <span class="style-name">赛博朋克雨夜霓虹酒馆风</span>
+            <button class="pick-style-btn" onclick="togglePick('B', 'B1', this)">设为 B 方案</button>
+          </div>
+
+          <div class="mockup-viewport mockup-b1" id="viewport-B1">
+            <div class="b1-bar-stage">
+              <div class="b1-window-view">
+                <img class="b1-window-bg" src="dressup/scenes/cafe_rain_night.webp" alt="雨夜窗景" />
+                <img class="b1-patron-sprite" id="b1-patron-img" src="dressup/assets/loading/loading_takako.webp" alt="看板娘熟客" />
+                <div class="b1-neon-sign">PXLSAN HALL-A // OPEN</div>
+              </div>
+
+              <div class="b1-mixer-panel">
+                <div class="b1-mixer-title">
+                  <span>BTC-MIXER v2.4</span>
+                  <span id="b1-count-label">4 UNITS</span>
+                </div>
+
+                <div class="b1-chem-grid">
+                  <div class="b1-chem-slot" onclick="addB1Chem('Sweet', '■■■□□')">
+                    <span class="b1-chem-name" style="color:#ff2a85;">Adelhyde (甜)</span>
+                    <span class="b1-chem-bars" id="b1-bar-Sweet">■■□□□</span>
+                  </div>
+                  <div class="b1-chem-slot" onclick="addB1Chem('Bitter', '■■□□□')">
+                    <span class="b1-chem-name" style="color:#00f0ff;">Bronson (苦)</span>
+                    <span class="b1-chem-bars" id="b1-bar-Bitter">■□□□□</span>
+                  </div>
+                  <div class="b1-chem-slot" onclick="addB1Chem('Fizz', '■■■■□')">
+                    <span class="b1-chem-name" style="color:#ffe600;">Flanergide (泡)</span>
+                    <span class="b1-chem-bars" id="b1-bar-Fizz">■□□□□</span>
+                  </div>
+                  <div class="b1-chem-slot" onclick="addB1Chem('Karamell', '■■■□□')">
+                    <span class="b1-chem-name" style="color:#b57cff;">Karmotrine</span>
+                    <span class="b1-chem-bars" id="b1-bar-Karamell">OPT.</span>
+                  </div>
+                </div>
+
+                <div class="b1-shaker-row">
+                  <span class="b1-shaker-icon" id="b1-shaker">🍸</span>
+                  <button class="b1-mix-btn" onclick="shakeB1Mixer()">MIX & SERVE</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="b1-dialog-box">
+              <div class="b1-speaker">▶ 高木 / TAKAGI [MOOD: TEASING]</div>
+              <div class="b1-dialog-text" id="b1-typewriter">
+                「外面的霓虹雨下得好大呢……调酒师先生，今天能帮我调一杯『稍微带点甜味、但咽下去会心跳加速』的夜晚特调吗？」
+              </div>
+            </div>
+
+            <!-- FX OVERLAY -->
+            <div class="fx-overlay" id="fx-B1" onclick="closeFX('B1')">
+              <div class="fx-Overlay-card" style="background:#0d0722;border-color:#ff2a85;box-shadow:0 0 30px #00f0ff;">
+                <div style="color:#00f0ff;font-weight:900;font-size:14px;">🍸 TIME TO MIX DRINKS AND CHANGE LIVES</div>
+                <img class="fx-cg-thumb" src="dressup/cg/chapters/ch_21.webp" alt="微醺特写" style="border-color:#ff2a85;" />
+                <div style="color:#ff99d6;font-size:12px;font-weight:700;">成功调制【月光蜜桃气泡】· 解锁雨夜微醺私房话 CG！</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="style-meta-body">
+            <div class="meta-row">
+              <span class="meta-label">对标代表作 (Benchmark Games)</span>
+              <div class="benchmark-tags">
+                <span class="benchmark-tag">🍸 VA-11 Hall-A 赛博朋克酒保行动</span>
+                <span class="benchmark-tag">🌃 PC-98 霓虹视觉小说</span>
+              </div>
+            </div>
+
+            <div class="meta-row">
+              <span class="meta-label"><span>核心 5 色色板</span><span>点击色块复制 HEX</span></span>
+              <div class="palette-bar">
+                <div class="swatch-item" onclick="copyHex('#0D0722')"><div class="swatch-color" style="background:#0D0722"></div><div class="swatch-hex">#0D0722</div></div>
+                <div class="swatch-item" onclick="copyHex('#FF2A85')"><div class="swatch-color" style="background:#FF2A85"></div><div class="swatch-hex">#FF2A85</div></div>
+                <div class="swatch-item" onclick="copyHex('#00F0FF')"><div class="swatch-color" style="background:#00F0FF"></div><div class="swatch-hex">#00F0FF</div></div>
+                <div class="swatch-item" onclick="copyHex('#B57CFF')"><div class="swatch-color" style="background:#B57CFF"></div><div class="swatch-hex">#B57CFF</div></div>
+                <div class="swatch-item" onclick="copyHex('#F8E8FF')"><div class="swatch-color" style="background:#F8E8FF"></div><div class="swatch-hex">#F8E8FF</div></div>
+              </div>
+            </div>
+
+            <div class="dna-summary">
+              <strong>UI 材质与动效基因：</strong>深紫蓝雨夜窗景 + 品红 `#FF2A85` 与青色 `#00F0FF` 双层像素发光边框 + 右侧 4 维化学配料槽与雪克杯高频摇晃动画 + 底部复古逐字打印对话框，深夜沉浸感封神。
+            </div>
+
+            <button class="trigger-fx-btn" onclick="triggerStyleFX('B1')">
+              ⚡ 一键试玩动效：摇晃雪克杯 & 奉茶好感弹窗 (Trigger FX)
+            </button>
+          </div>
+        </article>
+
+        <!-- ==================== STYLE B2 ==================== -->
+        <article class="style-card picked" id="card-B2" data-game="B" data-code="B2">
+          <div class="style-card-header">
+            <span class="style-code-badge" style="background:#d48c46;color:#1e120b;">B2</span>
+            <span class="style-name">暖调胡桃木 Lo-Fi 深夜咖啡馆风</span>
+            <button class="pick-style-btn" onclick="togglePick('B', 'B2', this)">★ 已选为 B 方案</button>
+          </div>
+
+          <div class="mockup-viewport mockup-b2" id="viewport-B2">
+            <div class="b2-rain-overlay"></div>
+
+            <div class="b2-top-wooden">
+              <div class="b2-lofi-track">🎵 Lo-Fi Chill Beats · 雨夜街角咖啡屋 (23:45 PM)</div>
+              <span style="font-size:11px;color:#ffd199;">🌡️ 暖意 98%</span>
+            </div>
+
+            <div class="b2-middle">
+              <div class="b2-guest-frame">
+                <img id="b2-guest-img" src="dressup/cg/chapters/ch_2.webp" alt="咖啡馆熟客" />
+              </div>
+
+              <div class="b2-chalkboard">
+                <div class="b2-chalk-title">
+                  <span>CHALKBOARD // 今日手冲与拉花</span>
+                  <span>点击切换拉花</span>
+                </div>
+
+                <div class="b2-latte-cup-row">
+                  <div class="b2-cup-preview" onclick="cycleLatteArt()">
+                    <span class="b2-steam">♨️</span>
+                    <span id="b2-latte-icon">🌿</span>
+                  </div>
+                  <div class="b2-recipe-pills">
+                    <span class="b2-ing-pill" onclick="setB2Drink('焦糖肉桂拿铁', '🌿')">+ 浓缩咖啡</span>
+                    <span class="b2-ing-pill" onclick="setB2Drink('热可可棉花糖', '🐱')">+ 燕麦热奶</span>
+                    <span class="b2-ing-pill" onclick="setB2Drink('蜂蜜生姜红茶', '💛')">+ 焦糖肉桂</span>
+                    <span class="b2-ing-pill" onclick="triggerStyleFX('B2')">☕ 端上木吧台</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="b2-dialog" id="b2-dialog-box">
+              <strong style="color:#f4c078;">莎夏：</strong>「呼……手心一下子暖和起来了。能在这家木头香气的咖啡馆躲雨，真是太好了。」
+            </div>
+
+            <!-- FX OVERLAY -->
+            <div class="fx-overlay" id="fx-B2" onclick="closeFX('B2')">
+              <div class="fx-Overlay-card" style="background:#2b1b12;border-color:#d48c46;box-shadow:0 0 30px rgba(212,140,70,0.6);">
+                <div style="color:#ffd199;font-weight:900;font-size:15px;">☕ 暖心拉花完成 · 羁绊故事已收录</div>
+                <img class="fx-cg-thumb" src="dressup/cg/chapters/ch_2.webp" alt="暖调CG" style="border-color:#d48c46;" />
+                <div style="color:#f7e6d0;font-size:12px;">获得回礼【手写雨夜明信片】· 角色好感度 +50</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="style-meta-body">
+            <div class="meta-row">
+              <span class="meta-label">对标代表作 (Benchmark Games)</span>
+              <div class="benchmark-tags">
+                <span class="benchmark-tag">☕ Coffee Talk 1 & 2</span>
+                <span class="benchmark-tag">🍂 小城暖色日常 / Lo-Fi 书房</span>
+              </div>
+            </div>
+
+            <div class="meta-row">
+              <span class="meta-label"><span>核心 5 色色板</span><span>点击色块复制 HEX</span></span>
+              <div class="palette-bar">
+                <div class="swatch-item" onclick="copyHex('#2B1B12')"><div class="swatch-color" style="background:#2B1B12"></div><div class="swatch-hex">#2B1B12</div></div>
+                <div class="swatch-item" onclick="copyHex('#D48C46')"><div class="swatch-color" style="background:#D48C46"></div><div class="swatch-hex">#D48C46</div></div>
+                <div class="swatch-item" onclick="copyHex('#1B241E')"><div class="swatch-color" style="background:#1B241E"></div><div class="swatch-hex">#1B241E</div></div>
+                <div class="swatch-item" onclick="copyHex('#F7E6D0')"><div class="swatch-color" style="background:#F7E6D0"></div><div class="swatch-hex">#F7E6D0</div></div>
+                <div class="swatch-item" onclick="copyHex('#8A5629')"><div class="swatch-color" style="background:#8A5629"></div><div class="swatch-hex">#8A5629</div></div>
+              </div>
+            </div>
+
+            <div class="dna-summary">
+              <strong>UI 材质与动效基因：</strong>焦糖琥珀 `#D48C46` 与深胡桃木 `#2B1B12` 暖调搭配、斜向玻璃雨丝纹理、手写粉笔黑板菜单与持续升腾的热咖啡蒸汽粒子，极其契合慢节奏深夜陪伴。
+            </div>
+
+            <button class="trigger-fx-btn" style="background:linear-gradient(135deg,#b56e33,#7f461b);" onclick="triggerStyleFX('B2')">
+              ⚡ 一键试玩动效：咖啡拉花奉茶 & 羁绊解锁 (Trigger FX)
+            </button>
+            <a class="play-live-btn" href="midnight-cafe.html">
+              🎮 立即进入正式版游戏 (midnight-cafe.html)
+            </a>
+          </div>
+        </article>
+
+        <!-- ==================== STYLE B3 ==================== -->
+        <article class="style-card" id="card-B3" data-game="B" data-code="B3">
+          <div class="style-card-header">
+            <span class="style-code-badge" style="background:#1e824c;color:#fff8e7;">B3</span>
+            <span class="style-name">昭和复古纯喫茶 / 奶油苏打波普风</span>
+            <button class="pick-style-btn" onclick="togglePick('B', 'B3', this)">设为 B 方案</button>
+          </div>
+
+          <div class="mockup-viewport mockup-b3" id="viewport-B3">
+            <div class="b3-stained-header">
+              <span>🍒 純喫茶・ピクサン (KISSATEN PXLSAN)</span>
+              <span>昭和レトロ · 特選品</span>
+            </div>
+
+            <div class="b3-main-area">
+              <div class="b3-retro-menu">
+                名物・メロンクリームソーダ
+              </div>
+
+              <div class="b3-soda-card">
+                <div class="b3-char-oval">
+                  <img id="b3-char-img" src="dressup/cg/chapters/ch_3.webp" alt="昭和喫茶看板娘" />
+                </div>
+                <div class="b3-soda-info">
+                  <span class="b3-cherry-badge">★ 看板娘推し NO.1</span>
+                  <div class="b3-soda-title" id="b3-soda-name">翡翠哈密瓜奶油苏打</div>
+                  <div class="b3-soda-desc">香草冰淇淋球 + 糖渍红樱桃 + 绵密翡翠气泡，盛夏与放学后的浪漫定格。</div>
+                  <div style="display:flex;gap:6px;margin-top:4px;">
+                    <button class="b3-serve-btn" onclick="cycleB3Menu()">切换名物单品</button>
+                    <button class="b3-serve-btn" style="background:#1e824c;" onclick="triggerStyleFX('B3')">🍒 摇铃上桌</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="b3-footer-note">
+              <span>🔔 叮铃——「欢迎光临小城商店街纯喫茶！」</span>
+              <span>レトロ印章 +1</span>
+            </div>
+
+            <!-- FX OVERLAY -->
+            <div class="fx-overlay" id="fx-B3" onclick="closeFX('B3')" style="background:rgba(30, 130, 76, 0.88);">
+              <div class="fx-Overlay-card" style="background:#fff8e7;color:#2c1d14;border:3px solid #d9383a;box-shadow:6px 6px 0 #1e824c;">
+                <div style="color:#d9383a;font-weight:900;font-size:16px;">🍒 特选・翡翠奶油苏打上桌！</div>
+                <img class="fx-cg-thumb" src="dressup/cg/chapters/ch_3.webp" alt="纯喫茶CG" style="border-color:#1e824c;" />
+                <div style="font-size:12px;font-weight:800;color:#1e824c;">盖下【昭和纯喫茶纪念印章】· 商店街传闻解锁！</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="style-meta-body">
+            <div class="meta-row">
+              <span class="meta-label">对标代表作 (Benchmark Games)</span>
+              <div class="benchmark-tags">
+                <span class="benchmark-tag">🍈 日式昭和纯喫茶画报</span>
+                <span class="benchmark-tag">🐦 动森咖啡馆 / 复古波普喫茶</span>
+              </div>
+            </div>
+
+            <div class="meta-row">
+              <span class="meta-label"><span>核心 5 色色板</span><span>点击色块复制 HEX</span></span>
+              <div class="palette-bar">
+                <div class="swatch-item" onclick="copyHex('#1E824C')"><div class="swatch-color" style="background:#1E824C"></div><div class="swatch-hex">#1E824C</div></div>
+                <div class="swatch-item" onclick="copyHex('#D9383A')"><div class="swatch-color" style="background:#D9383A"></div><div class="swatch-hex">#D9383A</div></div>
+                <div class="swatch-item" onclick="copyHex('#FFF8E7')"><div class="swatch-color" style="background:#FFF8E7"></div><div class="swatch-hex">#FFF8E7</div></div>
+                <div class="swatch-item" onclick="copyHex('#2C1D14')"><div class="swatch-color" style="background:#2C1D14"></div><div class="swatch-hex">#2C1D14</div></div>
+                <div class="swatch-item" onclick="copyHex('#F4A261')"><div class="swatch-color" style="background:#F4A261"></div><div class="swatch-hex">#F4A261</div></div>
+              </div>
+            </div>
+
+            <div class="dna-summary">
+              <strong>UI 材质与动效基因：</strong>复古哈密瓜翡翠绿 `#1E824C` + 糖渍樱桃红 `#D9383A` + 香草奶油纸底色 `#FFF8E7`、双线花窗几何画框与竖排明朝体（`writing-mode: vertical-rl`）菜单牌，辨识度极高。
+            </div>
+
+            <button class="trigger-fx-btn" style="background:linear-gradient(135deg,#1e824c,#d9383a);" onclick="triggerStyleFX('B3')">
+              ⚡ 一键试玩动效：纯喫茶摇铃奉餐演出 (Trigger FX)
+            </button>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         GAME C: 《次元节拍：霓虹音游 / 弹幕街机》（音乐节奏 + Cut-in 演出）
+    ==================================================================== -->
+    <section class="game-section" id="game-c">
+      <div class="section-header">
+        <div class="section-title-group">
+          <div class="game-icon-box">🎵</div>
+          <div>
+            <h2>游戏 C：《次元节拍：霓虹音游 / 弹幕街机》（音乐节奏 + 看板娘 Cut-in 演出）</h2>
+            <p>核心玩法：踩点敲击音符积攒 FEVER 槽，触发看板娘全屏斜切漫画 Cut-in 大招与高连击震屏反馈</p>
+          </div>
+        </div>
+        <a class="play-live-btn" href="neon-beat.html">🎮 立即进入正式版游戏 (neon-beat.html) ▸</a>
+      </div>
+
+      <div class="styles-grid">
+
+        <!-- ==================== STYLE C1 ==================== -->
+        <article class="style-card picked" id="card-C1" data-game="C" data-code="C1">
+          <div class="style-card-header">
+            <span class="style-code-badge" style="background:#ff1493;color:#fff;">C1</span>
+            <span class="style-name">高饱和糖果波普漫改风</span>
+            <button class="pick-style-btn" onclick="togglePick('C', 'C1', this)">★ 已选为 C 方案</button>
+          </div>
+
+          <div class="mockup-viewport mockup-c1" id="viewport-C1">
+            <div class="c1-top-hud">
+              <div class="c1-combo-burst" id="c1-combo-box">999 COMBO!!</div>
+              <div class="c1-fever-bar">FEVER MAX // 100%</div>
+            </div>
+
+            <div class="c1-stage-highway">
+              <img class="c1-heroine-cutin" id="c1-heroine-img" src="dressup/assets/gacha/up-ssr-takako-jingyong-wide.webp" alt="看板娘Cutin" />
+
+              <div class="c1-lanes">
+                <div class="c1-lane">
+                  <div class="c1-hit-ring" onclick="hitC1Note()">★</div>
+                  <div class="c1-candy-note"></div>
+                </div>
+                <div class="c1-lane">
+                  <div class="c1-hit-ring" onclick="hitC1Note()">♥</div>
+                  <div class="c1-candy-note pink"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="c1-bottom-controls">
+              <span class="c1-judge-banner" id="c1-judge-text">PERFECT!! +2500</span>
+              <button class="c1-cutin-btn" onclick="triggerStyleFX('C1')">💥 SKILL CUT-IN!</button>
+            </div>
+
+            <!-- FX OVERLAY -->
+            <div class="fx-overlay" id="fx-C1" onclick="closeFX('C1')">
+              <div class="fx-Overlay-card" style="background:#ffe600;color:#000;border:4px solid #000;box-shadow:8px 8px 0 #ff1493;transform:rotate(-3deg);">
+                <div style="background:#ff1493;color:#fff;font-weight:900;font-size:16px;padding:3px 10px;border:2px solid #000;">⚡ FEVER SKILL CUT-IN // 满屏连击！</div>
+                <img class="fx-cg-thumb" src="dressup/assets/gacha/up-ssr-takako-jingyong-wide.webp" alt="Cutin大图" style="border:3px solid #000;" />
+                <div style="font-size:16px;font-weight:900;">PERFECT!! 999 COMBO UNSTOPPABLE!</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="style-meta-body">
+            <div class="meta-row">
+              <span class="meta-label">对标代表作 (Benchmark Games)</span>
+              <div class="benchmark-tags">
+                <span class="benchmark-tag">🍬 Muse Dash 喵斯快跑</span>
+                <span class="benchmark-tag">🎸 Hi-Fi RUSH 美漫波普</span>
+              </div>
+            </div>
+
+            <div class="meta-row">
+              <span class="meta-label"><span>核心 5 色色板</span><span>点击色块复制 HEX</span></span>
+              <div class="palette-bar">
+                <div class="swatch-item" onclick="copyHex('#FF1493')"><div class="swatch-color" style="background:#FF1493"></div><div class="swatch-hex">#FF1493</div></div>
+                <div class="swatch-item" onclick="copyHex('#FFE600')"><div class="swatch-color" style="background:#FFE600"></div><div class="swatch-hex">#FFE600</div></div>
+                <div class="swatch-item" onclick="copyHex('#00F0FF')"><div class="swatch-color" style="background:#00F0FF"></div><div class="swatch-hex">#00F0FF</div></div>
+                <div class="swatch-item" onclick="copyHex('#7928CA')"><div class="swatch-color" style="background:#7928CA"></div><div class="swatch-hex">#7928CA</div></div>
+                <div class="swatch-item" onclick="copyHex('#0A0A0A')"><div class="swatch-color" style="background:#0A0A0A"></div><div class="swatch-hex">#0A0A0A</div></div>
+              </div>
+            </div>
+
+            <div class="dna-summary">
+              <strong>UI 材质与动效基因：</strong>电光粉 `#FF1493` + 柠檬黄 `#FFE600` + 青色高饱和撞色、CSS 波普网点（Halftone Dots）背景、粗黑描边硬阴影漫画框与全屏斜切看板娘 **SKILL CUT-IN + 震屏反馈**，多巴胺拉满！
+            </div>
+
+            <button class="trigger-fx-btn" onclick="triggerStyleFX('C1')">
+              ⚡ 一键试玩动效：全屏 SKILL CUT-IN + 999连击震屏 (Trigger FX)
+            </button>
+            <a class="play-live-btn" href="neon-beat.html">
+              🎮 立即进入正式版游戏 (neon-beat.html)
+            </a>
+          </div>
+        </article>
+
+        <!-- ==================== STYLE C2 ==================== -->
+        <article class="style-card" id="card-C2" data-game="C" data-code="C2">
+          <div class="style-card-header">
+            <span class="style-code-badge" style="background:#9d85ff;color:#080612;">C2</span>
+            <span class="style-name">空灵立体透视几何轨道风</span>
+            <button class="pick-style-btn" onclick="togglePick('C', 'C2', this)">设为 C 方案</button>
+          </div>
+
+          <div class="mockup-viewport mockup-c2" id="viewport-C2">
+            <div class="c2-top-bar">
+              <span class="c2-song-meta">FRAGMENT OF TWILIGHT // FUTURE 10+</span>
+              <span class="c2-score-num" id="c2-score-val">09,984,210</span>
+            </div>
+
+            <div class="c2-3d-viewport">
+              <img class="c2-partner-silhouette" src="dressup/cg/chapters/ch_41.webp" alt="空灵搭档立绘" />
+
+              <div class="c2-highway">
+                <div class="c2-track-col"><div class="c2-note"></div></div>
+                <div class="c2-track-col"><div class="c2-note"></div></div>
+                <div class="c2-track-col"><div class="c2-note"></div></div>
+                <div class="c2-track-col"><div class="c2-note"></div></div>
+                <div class="c2-judge-line"></div>
+              </div>
+            </div>
+
+            <div class="c2-bottom-bar">
+              <span>◇ PURE MEMORY HARMONY</span>
+              <button class="c2-pure-badge" onclick="triggerStyleFX('C2')">◇ 触发 PURE MEMORY 觉醒</button>
+            </div>
+
+            <!-- FX OVERLAY -->
+            <div class="fx-overlay" id="fx-C2" onclick="closeFX('C2')">
+              <div class="fx-Overlay-card" style="background:#110d24;border:1px solid #d5b8ff;box-shadow:0 0 40px rgba(123,230,255,0.6);">
+                <div style="color:#7be6ff;font-size:15px;letter-spacing:3px;font-weight:700;">◇ PURE MEMORY // 10,000,000 ◇</div>
+                <img class="fx-cg-thumb" src="dressup/cg/chapters/ch_41.webp" alt="空灵觉醒CG" style="border-color:#d5b8ff;" />
+                <div style="color:#e4dcff;font-size:12px;letter-spacing:1px;">「星轨与次元节拍在此刻完全共鸣」</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="style-meta-body">
+            <div class="meta-row">
+              <span class="meta-label">对标代表作 (Benchmark Games)</span>
+              <div class="benchmark-tags">
+                <span class="benchmark-tag">💠 Arcaea 韵律源点</span>
+                <span class="benchmark-tag">✨ Phigros 几何空灵音游</span>
+              </div>
+            </div>
+
+            <div class="meta-row">
+              <span class="meta-label"><span>核心 5 色色板</span><span>点击色块复制 HEX</span></span>
+              <div class="palette-bar">
+                <div class="swatch-item" onclick="copyHex('#0D0B1A')"><div class="swatch-color" style="background:#0D0B1A"></div><div class="swatch-hex">#0D0B1A</div></div>
+                <div class="swatch-item" onclick="copyHex('#7BE6FF')"><div class="swatch-color" style="background:#7BE6FF"></div><div class="swatch-hex">#7BE6FF</div></div>
+                <div class="swatch-item" onclick="copyHex('#D5B8FF')"><div class="swatch-color" style="background:#D5B8FF"></div><div class="swatch-hex">#D5B8FF</div></div>
+                <div class="swatch-item" onclick="copyHex('#FF9DE6')"><div class="swatch-color" style="background:#FF9DE6"></div><div class="swatch-hex">#FF9DE6</div></div>
+                <div class="swatch-item" onclick="copyHex('#F0EDFF')"><div class="swatch-color" style="background:#F0EDFF"></div><div class="swatch-hex">#F0EDFF</div></div>
+              </div>
+            </div>
+
+            <div class="dna-summary">
+              <strong>UI 材质与动效基因：</strong>深邃微光星云背景 + CSS 3D 透视判定轨道（`perspective(460px) rotateX(56deg)`）+ 极简古典衬线体（Cinzel/明朝体）与高雅流光几何线框，极具音游殿堂高级感。
+            </div>
+
+            <button class="trigger-fx-btn" style="background:linear-gradient(135deg,#5e43b8,#2892d7);" onclick="triggerStyleFX('C2')">
+              ⚡ 一键试玩动效：PURE MEMORY 星轨共鸣 (Trigger FX)
+            </button>
+          </div>
+        </article>
+
+        <!-- ==================== STYLE C3 ==================== -->
+        <article class="style-card" id="card-C3" data-game="C" data-code="C3">
+          <div class="style-card-header">
+            <span class="style-code-badge" style="background:#ffbd00;color:#000;">C3</span>
+            <span class="style-name">涩谷街机框体 Synthwave 风</span>
+            <button class="pick-style-btn" onclick="togglePick('C', 'C3', this)">设为 C 方案</button>
+          </div>
+
+          <div class="mockup-viewport mockup-c3" id="viewport-C3">
+            <div class="c3-synth-grid-floor"></div>
+
+            <div class="c3-led-marquee">
+              <span>🕹️ SHIBUYA ARCADE // STAGE 03</span>
+              <span class="c3-credit-blink">CREDIT(S) 02 // FREE PLAY</span>
+            </div>
+
+            <div class="c3-cabinet-ring-stage">
+              <div class="c3-maimai-ring">
+                <img src="dressup/cg/chapters/ch_51.webp" alt="街机圆环看板娘" />
+                <div class="c3-ring-overlay-text">CRITICAL PERFECT!!</div>
+              </div>
+
+              <div class="c3-spectrum-panel">
+                <div class="c3-katakana-hud">ビート・シンクロ // 16-BAND EQ</div>
+                <div class="c3-eq-bars" id="c3-eq-container">
+                  <!-- 16 Spectrum bars populated or styled inline -->
+                  <div class="c3-eq-bar" style="animation-delay:0.05s"></div>
+                  <div class="c3-eq-bar" style="animation-delay:0.15s"></div>
+                  <div class="c3-eq-bar" style="animation-delay:0.25s"></div>
+                  <div class="c3-eq-bar" style="animation-delay:0.08s"></div>
+                  <div class="c3-eq-bar" style="animation-delay:0.35s"></div>
+                  <div class="c3-eq-bar" style="animation-delay:0.18s"></div>
+                  <div class="c3-eq-bar" style="animation-delay:0.42s"></div>
+                  <div class="c3-eq-bar" style="animation-delay:0.12s"></div>
+                  <div class="c3-eq-bar" style="animation-delay:0.28s"></div>
+                  <div class="c3-eq-bar" style="animation-delay:0.04s"></div>
+                  <div class="c3-eq-bar" style="animation-delay:0.38s"></div>
+                  <div class="c3-eq-bar" style="animation-delay:0.22s"></div>
+                  <div class="c3-eq-bar" style="animation-delay:0.48s"></div>
+                  <div class="c3-eq-bar" style="animation-delay:0.14s"></div>
+                  <div class="c3-eq-bar" style="animation-delay:0.31s"></div>
+                  <div class="c3-eq-bar" style="animation-delay:0.09s"></div>
+                </div>
+                <div class="c3-sync-rate">DX SYNC: 100.8942% (SSS+)</div>
+              </div>
+            </div>
+
+            <div class="c3-bottom-hud">
+              <span>フルコンボ // ALL BREAK</span>
+              <button class="c3-arcade-btn" onclick="triggerStyleFX('C3')">🕹️ INSERT COIN / SSS+ CLEAR</button>
+            </div>
+
+            <!-- FX OVERLAY -->
+            <div class="fx-overlay" id="fx-C3" onclick="closeFX('C3')">
+              <div class="fx-Overlay-card" style="background:#120428;border:2px solid #00f0ff;box-shadow:0 0 35px #ff00a0;">
+                <div style="color:#ffbd00;font-weight:900;font-size:15px;">🕹️ MASTER SSS+ // FULL SYNC DX!!</div>
+                <img class="fx-cg-thumb" src="dressup/cg/chapters/ch_51.webp" alt="街机SSS+" style="border-color:#00f0ff;" />
+                <div style="color:#00f0ff;font-size:12px;font-weight:900;">NEW RECORD: 101.0000% · 获得涩谷机厅传奇徽章！</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="style-meta-body">
+            <div class="meta-row">
+              <span class="meta-label">对标代表作 (Benchmark Games)</span>
+              <div class="benchmark-tags">
+                <span class="benchmark-tag">🕹️ 舞萌 maimai DX</span>
+                <span class="benchmark-tag">🌆 80s 涩谷街机 Synthwave</span>
+              </div>
+            </div>
+
+            <div class="meta-row">
+              <span class="meta-label"><span>核心 5 色色板</span><span>点击色块复制 HEX</span></span>
+              <div class="palette-bar">
+                <div class="swatch-item" onclick="copyHex('#0B031D')"><div class="swatch-color" style="background:#0B031D"></div><div class="swatch-hex">#0B031D</div></div>
+                <div class="swatch-item" onclick="copyHex('#FF00A0')"><div class="swatch-color" style="background:#FF00A0"></div><div class="swatch-hex">#FF00A0</div></div>
+                <div class="swatch-item" onclick="copyHex('#00F0FF')"><div class="swatch-color" style="background:#00F0FF"></div><div class="swatch-hex">#00F0FF</div></div>
+                <div class="swatch-item" onclick="copyHex('#FFBD00')"><div class="swatch-color" style="background:#FFBD00"></div><div class="swatch-hex">#FFBD00</div></div>
+                <div class="swatch-item" onclick="copyHex('#4A0E4E')"><div class="swatch-color" style="background:#4A0E4E"></div><div class="swatch-hex">#4A0E4E</div></div>
+              </div>
+            </div>
+
+            <div class="dna-summary">
+              <strong>UI 材质与动效基因：</strong>3D 透视紫红发光网格地面 + 街机圆形判定框体 + 实时跳动的 16 段音频频谱柱动画 + LED 点阵记分牌与日文片假名机台装饰 HUD，街机厅临场感极强。
+            </div>
+
+            <button class="trigger-fx-btn" style="background:linear-gradient(90deg,#ff00a0,#ff8c00);" onclick="triggerStyleFX('C3')">
+              ⚡ 一键试玩动效：街机 SSS+ 满同步爆闪 (Trigger FX)
+            </button>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+  </main>
+
+  <div class="lab-toast" id="labToast">已复制色值 #FF2A85 到剪贴板！</div>
+
+  <script>
+    // ================= 1. 顶部筛选切换 =================
+    const filterButtons = document.querySelectorAll('#gameFilterTabs .nav-tab');
+    const sections = {
+      'game-a': document.getElementById('game-a'),
+      'game-b': document.getElementById('game-b'),
+      'game-c': document.getElementById('game-c')
+    };
+
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const target = btn.getAttribute('data-target');
+        Object.keys(sections).forEach(key => {
+          if (target === 'all' || target === key) {
+            sections[key].classList.remove('hidden');
+          } else {
+            sections[key].classList.add('hidden');
+          }
+        });
+      });
+    });
+
+    // ================= 2. 方案标记与一键复制配置 =================
+    const pickedStyles = { A: 'A1', B: 'B2', C: 'C1' };
+
+    function togglePick(game, code, btnEl) {
+      pickedStyles[game] = code;
+      document.querySelectorAll(`.style-card[data-game="${game}"]`).forEach(card => {
+        const isCurrent = card.getAttribute('data-code') === code;
+        card.classList.toggle('picked', isCurrent);
+        const btn = card.querySelector('.pick-style-btn');
+        if (btn) {
+          btn.textContent = isCurrent ? `★ 已选为 ${game} 方案` : `设为 ${game} 方案`;
+        }
+      });
+      document.getElementById('pickedSummaryText').textContent =
+        `📌 当前已标记心仪方案：${pickedStyles.A} / ${pickedStyles.B} / ${pickedStyles.C}`;
+      showToast(`已将【${code}】设为游戏 ${game} 的首选美术风格！`);
+    }
+
+    document.getElementById('copyPickedBtn').addEventListener('click', () => {
+      const text = `Pxlsan 3大新小游戏选定美术风格方案：游戏A=${pickedStyles.A}，游戏B=${pickedStyles.B}，游戏C=${pickedStyles.C}`;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text);
+      }
+      showToast(`已复制所选方案：${pickedStyles.A} + ${pickedStyles.B} + ${pickedStyles.C}`);
+    });
+
+    // ================= 3. HEX 色块复制 =================
+    function copyHex(hex) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(hex);
+      }
+      showToast(`🎨 已复制色值 ${hex} 到剪贴板！`);
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      const toast = document.getElementById('labToast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    // ================= 4. A1 全息卡 3D 鼠标倾斜与跳字 =================
+    function tiltCard(e, el) {
+      const rect = el.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const rx = ((y / rect.height) - 0.5) * -22;
+      const ry = ((x / rect.width) - 0.5) * 22;
+      el.style.transform = `perspective(500px) rotateX(${rx}deg) rotateY(${ry}deg) scale(1.04)`;
+    }
+
+    function resetTilt(el) {
+      el.style.transform = 'perspective(500px) rotateX(0deg) rotateY(0deg) scale(1)';
+    }
+
+    function bumpA1Score(name, chip, mult, imgSrc) {
+      document.getElementById('a1-chip-val').textContent = chip;
+      document.getElementById('a1-mult-val').textContent = `${mult.toFixed(1)} MULT`;
+      document.getElementById('a1-preview-img').src = imgSrc;
+      document.getElementById('a1-caption-text').textContent =
+        `${name} (${Math.round(chip * mult).toLocaleString()} PTS)`;
+      showToast(`🃏 触发全息词条【${name}】· 倍率跃升至 ×${mult.toFixed(1)}！`);
+    }
+
+    // ================= 5. A2 绝区零×P5 词条切换 =================
+    function swapA2Tag(title, mult, imgSrc) {
+      document.getElementById('a2-char-img').src = imgSrc;
+      document.getElementById('a2-combo-tape').textContent = `TAG BOOST ${mult}`;
+      document.getElementById('a2-status-text').textContent = `${title} // LOCKED!`;
+    }
+
+    // ================= 6. A3 蔚蓝档案拍立得切换 =================
+    function pickA3Tag(label, imgSrc) {
+      document.getElementById('a3-photo-img').src = imgSrc;
+      document.getElementById('a3-photo-label').textContent = `♥ ${label}`;
+      showToast(`📸 切换学园记忆滤镜：# ${label}`);
+    }
+
+    // ================= 7. B1 赛博酒馆调酒与打字机 =================
+    function addB1Chem(type, bars) {
+      const el = document.getElementById(`b1-bar-${type}`);
+      if (el) el.textContent = bars;
+      showToast(`🧪 已注入配料【${type}】`);
+    }
+
+    function shakeB1Mixer() {
+      const shaker = document.getElementById('b1-shaker');
+      shaker.classList.add('shaking');
+      setTimeout(() => {
+        shaker.classList.remove('shaking');
+        triggerStyleFX('B1');
+      }, 650);
+    }
+
+    // ================= 8. B2 胡桃木咖啡馆拉花切换 =================
+    const latteIcons = ['🌿', '🐱', '💛', '🦢', '✨'];
+    let latteIdx = 0;
+    function cycleLatteArt() {
+      latteIdx = (latteIdx + 1) % latteIcons.length;
+      document.getElementById('b2-latte-icon').textContent = latteIcons[latteIdx];
+      showToast(`☕ 切换手冲咖啡拉花图案：${latteIcons[latteIdx]}`);
+    }
+
+    function setB2Drink(drinkName, icon) {
+      document.getElementById('b2-latte-icon').textContent = icon;
+      document.getElementById('b2-dialog-box').innerHTML =
+        `<strong style="color:#f4c078;">莎夏：</strong>「哇，这杯【${drinkName}】上面的 ${icon} 拉花好精致！连雨夜都变得温柔起来了呢。」`;
+    }
+
+    // ================= 9. B3 昭和纯喫茶菜单切换 =================
+    const b3Menus = [
+      { name: '翡翠哈密瓜奶油苏打', img: 'dressup/cg/chapters/ch_3.webp' },
+      { name: '昭和复古硬布丁拼盘', img: 'dressup/cg/chapters/ch_14.webp' },
+      { name: '厚烧玉子三明治套餐', img: 'dressup/cg/chapters/ch_25.webp' }
+    ];
+    let b3Idx = 0;
+    function cycleB3Menu() {
+      b3Idx = (b3Idx + 1) % b3Menus.length;
+      document.getElementById('b3-soda-name').textContent = b3Menus[b3Idx].name;
+      document.getElementById('b3-char-img').src = b3Menus[b3Idx].img;
+      showToast(`🍒 切换纯喫茶名物：${b3Menus[b3Idx].name}`);
+    }
+
+    // ================= 10. C1 音游敲击连击互动 =================
+    let c1Combo = 999;
+    function hitC1Note() {
+      c1Combo += 1;
+      document.getElementById('c1-combo-box').textContent = `${c1Combo} COMBO!!`;
+      document.getElementById('c1-judge-text').textContent = `PERFECT!! +${c1Combo * 5}`;
+      const vp = document.getElementById('viewport-C1');
+      vp.classList.remove('shake-screen');
+      void vp.offsetWidth;
+      vp.classList.add('shake-screen');
+    }
+
+    // ================= 11. 一键试玩动效 (Trigger FX) =================
+    function triggerStyleFX(code) {
+      const vp = document.getElementById(`viewport-${code}`);
+      const fx = document.getElementById(`fx-${code}`);
+      if (vp) {
+        vp.classList.remove('shake-screen');
+        void vp.offsetWidth;
+        vp.classList.add('shake-screen');
+      }
+      if (fx) {
+        fx.classList.add('active');
+      }
+      showToast(`⚡ 已触发【${code}】代表性视觉动效演出！`);
+    }
+
+    function closeFX(code) {
+      const fx = document.getElementById(`fx-${code}`);
+      if (fx) fx.classList.remove('active');
+    }
+  </script>
+</body>
+</html>

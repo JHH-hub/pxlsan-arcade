@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0d0b18" />
+  <title>像素离散·放学后的街机厅 & 创意馆 (Pxlsan Arcade Hub)</title>
+  <meta name="description" content="像素离散 Pxlsan 统一街机与创意工坊大厅：一键畅玩 AI 炼丹工坊、放学以后的深夜咖啡馆、次元节拍糖果风暴、换装主舞台、日常小城与美术风格实验室。" />
+  <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
+  <script src="site-routing.js" defer></script>
+  <style>
+    :root {
+      --bg-deep: #080911;
+      --bg-surface: #111424;
+      --bg-card: rgba(22, 26, 44, 0.84);
+      --border-glass: rgba(255, 255, 255, 0.12);
+      --text-main: #f5f7ff;
+      --text-sub: #a3b1cc;
+      --text-muted: #6e7b96;
+      --neon-pink: #ff2a85;
+      --neon-cyan: #00f0ff;
+      --neon-gold: #ffd166;
+      --walnut-amber: #d48c46;
+      --candy-magenta: #ff1493;
+      --purple-glow: #8b5cf6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background-color: var(--bg-deep);
+      background-image:
+        radial-gradient(circle at 12% 8%, rgba(255, 42, 133, 0.16), transparent 36%),
+        radial-gradient(circle at 86% 12%, rgba(0, 240, 255, 0.14), transparent 38%),
+        radial-gradient(circle at 50% 60%, rgba(212, 140, 70, 0.10), transparent 44%),
+        linear-gradient(180deg, #07080f 0%, #0d101f 55%, #090b14 100%);
+      color: var(--text-main);
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+      padding-bottom: 72px;
+    }
+
+    /* 背景霓虹网格装饰 */
+    .arcade-bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: radial-gradient(circle at 50% 25%, black 20%, transparent 80%);
+      -webkit-mask-image: radial-gradient(circle at 50% 25%, black 20%, transparent 80%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* ================= 顶部导航栏 ================= */
+    .hub-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+      padding: 14px 32px;
+      background: rgba(8, 9, 17, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-glass);
+    }
+
+    .brand-cluster {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--neon-pink), var(--purple-glow), var(--neon-cyan));
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      box-shadow: 0 0 22px rgba(255, 42, 133, 0.45);
+    }
+
+    .brand-text h1 {
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 0.4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-pill {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: rgba(0, 240, 255, 0.14);
+      border: 1px solid rgba(0, 240, 255, 0.45);
+      color: var(--neon-cyan);
+    }
+
+    .brand-text p {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-top: 2px;
+    }
+
+    .topbar-links {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .nav-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 15px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #e2e8f8;
+      transition: all 0.2s ease;
+    }
+
+    .nav-chip:hover {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: var(--neon-cyan);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(0, 240, 255, 0.2);
+    }
+
+    .nav-chip.primary {
+      background: linear-gradient(135deg, rgba(255, 42, 133, 0.28), rgba(139, 92, 246, 0.28));
+      border-color: rgba(255, 42, 133, 0.55);
+      color: #fff;
+    }
+
+    /* ================= 主体容器 ================= */
+    .hub-container {
+      position: relative;
+      z-index: 1;
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 28px 32px 0;
+    }
+
+    /* ================= HERO 横幅 ================= */
+    .hero-banner {
+      position: relative;
+      border-radius: 26px;
+      padding: 36px 40px;
+      margin-bottom: 32px;
+      background:
+        radial-gradient(circle at 85% 20%, rgba(0, 240, 255, 0.22), transparent 40%),
+        radial-gradient(circle at 15% 80%, rgba(255, 42, 133, 0.24), transparent 45%),
+        linear-gradient(135deg, rgba(25, 18, 46, 0.92) 0%, rgba(15, 21, 39, 0.94) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1.25fr 0.75fr;
+      gap: 28px;
+      align-items: center;
+    }
+
+    .hero-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 14px;
+      border-radius: 999px;
+      background: rgba(255, 209, 102, 0.14);
+      border: 1px solid rgba(255, 209, 102, 0.45);
+      color: var(--neon-gold);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      margin-bottom: 14px;
+    }
+
+    .hero-title {
+      font-size: clamp(26px, 3.2vw, 42px);
+      font-weight: 900;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+      background: linear-gradient(95deg, #ffffff 0%, #ffd166 45%, #ff6ec7 75%, #00f0ff 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-desc {
+      font-size: 15px;
+      line-height: 1.75;
+      color: var(--text-sub);
+      max-width: 680px;
+      margin-bottom: 22px;
+    }
+
+    .hero-cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .hero-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 22px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .hero-btn.neon-primary {
+      background: linear-gradient(135deg, #ff2a85, #7b2cbf);
+      color: #fff;
+      box-shadow: 0 8px 25px rgba(255, 42, 133, 0.4);
+    }
+
+    .hero-btn.neon-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(255, 42, 133, 0.6);
+    }
+
+    .hero-btn.neon-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: #f0f4ff;
+    }
+
+    .hero-btn.neon-secondary:hover {
+      background: rgba(0, 240, 255, 0.16);
+      border-color: var(--neon-cyan);
+      transform: translateY(-2px);
+    }
+
+    /* 右侧街机微缩海报叠层 */
+    .hero-showcase-stack {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .mini-poster {
+      position: relative;
+      height: 176px;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1.5px solid rgba(255, 255, 255, 0.24);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+      transition: transform 0.25s ease, border-color 0.25s ease;
+    }
+
+    .mini-poster:hover {
+      transform: translateY(-6px) scale(1.03);
+      border-color: var(--neon-gold);
+    }
+
+    .mini-poster img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .mini-poster-tag {
+      position: absolute;
+      inset: auto 0 0 0;
+      padding: 8px 10px;
+      background: linear-gradient(to top, rgba(6, 8, 16, 0.94), transparent);
+      font-size: 12px;
+      font-weight: 800;
+      text-align: center;
+      color: #fff;
+    }
+
+    /* ================= 街机生涯总览勋章墙 (Career & Medal Wall) ================= */
+    .career-wall-section {
+      background: rgba(18, 22, 38, 0.88);
+      border: 1px solid rgba(255, 209, 102, 0.28);
+      border-radius: 24px;
+      padding: 26px 30px;
+      margin-bottom: 36px;
+      box-shadow: 0 16px 44px rgba(0, 0, 0, 0.38);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .career-wall-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 22px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+    }
+
+    .career-title-cluster {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .career-trophy-badge {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(255, 209, 102, 0.24), rgba(255, 42, 133, 0.24));
+      border: 1px solid rgba(255, 209, 102, 0.5);
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+    }
+
+    .career-title-cluster h2 {
+      font-size: 20px;
+      font-weight: 900;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .career-title-cluster p {
+      font-size: 12.5px;
+      color: var(--text-sub);
+      margin-top: 3px;
+    }
+
+    .career-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sync-pill-btn {
+      padding: 7px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(0, 240, 255, 0.12);
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      color: var(--neon-cyan);
+      cursor: pointer;
+      transition: 0.18s;
+    }
+
+    .sync-pill-btn:hover {
+      background: rgba(0, 240, 255, 0.22);
+      transform: translateY(-1px);
+    }
+
+    /* 三大新游实时存档遥测卡 */
+    .telemetry-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .telemetry-card {
+      border-radius: 18px;
+      padding: 18px 20px;
+      background: rgba(11, 14, 25, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .telemetry-card.alchemist {
+      border-top: 3px solid var(--neon-pink);
+    }
+
+    .telemetry-card.cafe {
+      border-top: 3px solid var(--walnut-amber);
+    }
+
+    .telemetry-card.neonbeat {
+      border-top: 3px solid var(--neon-cyan);
+    }
+
+    .tele-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .tele-game-name {
+      font-size: 15px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tele-storage-key {
+      font-size: 10px;
+      font-family: "Consolas", "Courier New", monospace;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-sub);
+    }
+
+    .tele-metrics-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .tele-metric-box {
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    .tele-metric-label {
+      font-size: 11px;
+      color: var(--text-sub);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .tele-metric-val {
+      font-size: 17px;
+      font-weight: 900;
+      color: #fff;
+    }
+
+    .tele-progress-bar-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .tele-progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: var(--text-sub);
+    }
+
+    .tele-progress-track {
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .tele-progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.5s ease;
+    }
+
+    /* 勋章墙网格 */
+    .medal-rack-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--neon-gold);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .medals-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .medal-badge-card {
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+      opacity: 0.52;
+      filter: grayscale(0.75);
+    }
+
+    .medal-badge-card.unlocked {
+      opacity: 1;
+      filter: none;
+      background: linear-gradient(135deg, rgba(255, 209, 102, 0.14), rgba(255, 42, 133, 0.10));
+      border-color: rgba(255, 209, 102, 0.55);
+      box-shadow: 0 6px 20px rgba(255, 209, 102, 0.14);
+    }
+
+    .medal-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .medal-info h4 {
+      font-size: 12.5px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+
+    .medal-info p {
+      font-size: 11px;
+      color: var(--text-sub);
+      line-height: 1.35;
+    }
+
+    /* ================= 分区标题 ================= */
+    .section-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .section-heading h2 {
+      font-size: 24px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-heading p {
+      font-size: 13.5px;
+      color: var(--text-sub);
+    }
+
+    /* ================= 6 大核心体验卡片网格 ================= */
+    .portal-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px;
+      margin-bottom: 44px;
+    }
+
+    .portal-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 22px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+      position: relative;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
+    }
+
+    .portal-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(0, 240, 255, 0.55);
+      box-shadow: 0 22px 48px rgba(0, 240, 255, 0.16);
+    }
+
+    .portal-card.style-a1:hover {
+      border-color: var(--neon-pink);
+      box-shadow: 0 22px 48px rgba(255, 42, 133, 0.24);
+    }
+
+    .portal-card.style-b2:hover {
+      border-color: var(--walnut-amber);
+      box-shadow: 0 22px 48px rgba(212, 140, 70, 0.24);
+    }
+
+    .portal-card.style-c1:hover {
+      border-color: var(--neon-gold);
+      box-shadow: 0 22px 48px rgba(255, 209, 102, 0.24);
+    }
+
+    .portal-cover {
+      position: relative;
+      height: 210px;
+      overflow: hidden;
+      background: #0d101d;
+    }
+
+    .portal-cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+
+    .portal-card:hover .portal-cover img {
+      transform: scale(1.06);
+    }
+
+    .portal-cover::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(8, 9, 17, 0.15) 0%, rgba(14, 17, 30, 0.88) 100%);
+      pointer-events: none;
+    }
+
+    .portal-badge-top {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .style-chip {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    }
+
+    .live-save-pill {
+      position: absolute;
+      bottom: 12px;
+      left: 14px;
+      right: 14px;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 12px;
+      border-radius: 10px;
+      background: rgba(9, 11, 20, 0.82);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--neon-gold);
+    }
+
+    .portal-body {
+      padding: 20px 22px 22px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      gap: 12px;
+    }
+
+    .portal-title {
+      font-size: 19px;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.3;
+    }
+
+    .portal-desc {
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: var(--text-sub);
+      flex: 1;
+    }
+
+    .portal-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .portal-tag {
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #d6e0f5;
+    }
+
+    .portal-enter-btn {
+      margin-top: 4px;
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 800;
+      text-align: center;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #fff;
+      background: linear-gradient(135deg, rgba(255, 42, 133, 0.9), rgba(123, 44, 191, 0.9));
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      transition: filter 0.18s ease, transform 0.18s ease;
+    }
+
+    .portal-enter-btn:hover {
+      filter: brightness(1.14);
+    }
+
+    .portal-card.style-b2 .portal-enter-btn {
+      background: linear-gradient(135deg, #c87d3b, #7d451b);
+    }
+
+    .portal-card.style-c1 .portal-enter-btn {
+      background: linear-gradient(135deg, #ff1493, #ff7b00);
+    }
+
+    .portal-card.style-core .portal-enter-btn {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    }
+
+    .hub-footer {
+      text-align: center;
+      padding: 24px 16px 8px;
+      color: var(--text-muted);
+      font-size: 12.5px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    @media (max-width: 1180px) {
+      .hero-banner {
+        grid-template-columns: 1fr;
+      }
+      .telemetry-cards-grid,
+      .portal-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .medals-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .hub-topbar {
+        padding: 12px 16px;
+      }
+      .hub-container {
+        padding: 18px 16px 0;
+      }
+      .hero-banner {
+        padding: 24px 20px;
+      }
+      .hero-showcase-stack {
+        grid-template-columns: 1fr;
+      }
+      .telemetry-cards-grid,
+      .portal-grid,
+      .medals-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="arcade-bg-grid" aria-hidden="true"></div>
+
+  <!-- ================= 顶部全局导航栏 ================= -->
+  <header class="hub-topbar">
+    <div class="brand-cluster">
+      <div class="brand-icon">🕹️</div>
+      <div class="brand-text">
+        <h1>
+          像素离散·放学后的街机厅 &amp; 创意馆
+          <span class="brand-pill">PXLSAN ARCADE HUB</span>
+        </h1>
+        <p>三款全新二次元街机小游戏 + 换装主剧场 + 日常小城 + 实时 UI 样机实验室一站式总控门户</p>
+      </div>
+    </div>
+
+    <nav class="topbar-links" aria-label="快捷入口">
+      <a href="tag-alchemist.html" class="nav-chip primary">🎴 炼丹工坊</a>
+      <a href="midnight-cafe.html" class="nav-chip primary">☕ 深夜咖啡馆</a>
+      <a href="neon-beat.html" class="nav-chip primary">🎵 次元节拍</a>
+      <a href="city.html" class="nav-chip">🌆 返回小城</a>
+      <a href="dressup.html" class="nav-chip">👗 换装剧场</a>
+      <a href="art-style-lab.html" class="nav-chip">🎨 美术实验室</a>
+      <a href="https://pxlsan.cn/game.html" class="nav-chip">🏠 主站游戏中心</a>
+    </nav>
+  </header>
+
+  <main class="hub-container">
+    <!-- ================= HERO 主视觉区 ================= -->
+    <section class="hero-banner">
+      <div>
+        <span class="hero-kicker">✨ NEW SEASON ARCADE LINEUP · 放学后的秘密基地</span>
+        <h2 class="hero-title">欢迎来到放学后的街机厅与创意馆</h2>
+        <p class="hero-desc">
+          在放学后的小城街角，推开霓虹闪烁的街机厅木门——你可以在 <strong>A1 全息牌桌</strong> 组合词条爆出 SSR 神图，在 <strong>B2 胡桃木吧台</strong> 伴着雨声为女主手绘拉花，或是跃入 <strong>C1 糖果波普音游舞台</strong> 触发全屏漫画 Cut-in！所有游玩进度与勋章均实时保存在当前浏览器。
+        </p>
+        <div class="hero-cta-row">
+          <a href="tag-alchemist.html" class="hero-btn neon-primary">🎴 立即开局：炼丹工坊</a>
+          <a href="midnight-cafe.html" class="hero-btn neon-secondary">☕ 进入吧台：深夜咖啡馆</a>
+          <a href="neon-beat.html" class="hero-btn neon-secondary">🎵 开始打歌：次元节拍</a>
+          <a href="art-style-lab.html" class="hero-btn neon-secondary">🎨 9套美术风格实验室</a>
+        </div>
+      </div>
+
+      <div class="hero-showcase-stack">
+        <a href="tag-alchemist.html" class="mini-poster" title="进入《Pxlsan 炼丹工坊》">
+          <img src="dressup/assets/gacha/up-ssr-takagi-qipao-wide.webp" alt="Pxlsan 炼丹工坊" />
+          <div class="mini-poster-tag">🎴 A1 · 炼丹工坊</div>
+        </a>
+        <a href="midnight-cafe.html" class="mini-poster" title="进入《放学以后的深夜咖啡馆》">
+          <img src="dressup/scenes/cafe_rain_night.webp" alt="放学以后的深夜咖啡馆" />
+          <div class="mini-poster-tag">☕ B2 · 深夜咖啡馆</div>
+        </a>
+        <a href="neon-beat.html" class="mini-poster" title="进入《次元节拍：糖果风暴》">
+          <img src="dressup/assets/gacha/up-ssr-takako-jingyong-wide.webp" alt="次元节拍：糖果风暴" />
+          <div class="mini-poster-tag">🎵 C1 · 次元节拍</div>
+        </a>
+      </div>
+    </section>
+
+    <!-- ================= 街机生涯总览勋章墙 ================= -->
+    <section class="career-wall-section" id="careerWallSection" aria-labelledby="careerWallTitle">
+      <div class="career-wall-header">
+        <div class="career-title-cluster">
+          <div class="career-trophy-badge">🏆</div>
+          <div>
+            <h2 id="careerWallTitle">
+              街机生涯总览勋章墙
+              <span class="brand-pill" id="totalMedalsBadge">勋章点亮 0 / 6</span>
+            </h2>
+            <p>实时读取 localStorage 三大街机存档（<code>pxlsan-game:arcade:alchemist</code> / <code>cafe</code> / <code>neonbeat</code>）</p>
+          </div>
+        </div>
+        <div class="career-actions">
+          <button type="button" class="sync-pill-btn" id="btnRefreshCareer">🔄 刷新实时存档数据</button>
+        </div>
+      </div>
+
+      <!-- 三款新小游戏实时进度卡片 -->
+      <div class="telemetry-cards-grid">
+        <!-- 游戏 A：炼丹工坊 -->
+        <div class="telemetry-card alchemist">
+          <div class="tele-card-head">
+            <span class="tele-game-name">🎴 炼丹工坊：AI 画师模拟器</span>
+            <span class="tele-storage-key">arcade:alchemist</span>
+          </div>
+          <div class="tele-metrics-row">
+            <div class="tele-metric-box">
+              <span class="tele-metric-label">最高单次算力</span>
+              <strong class="tele-metric-val" id="statAlchBestScore">0</strong>
+            </div>
+            <div class="tele-metric-box">
+              <span class="tele-metric-label">神图图鉴解锁</span>
+              <strong class="tele-metric-val" id="statAlchCgCount">1 / 18</strong>
+            </div>
+            <div class="tele-metric-box">
+              <span class="tele-metric-label">最高突破关卡</span>
+              <strong class="tele-metric-val" id="statAlchStage">第 0 关</strong>
+            </div>
+          </div>
+          <div class="tele-progress-bar-wrap">
+            <div class="tele-progress-label">
+              <span>SSR 神图收集率</span>
+              <strong id="statAlchPercent">6%</strong>
+            </div>
+            <div class="tele-progress-track">
+              <div class="tele-progress-fill" id="barAlchFill" style="width: 6%; background: linear-gradient(90deg, #ff2a85, #00f0ff);"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 游戏 B：深夜咖啡馆 -->
+        <div class="telemetry-card cafe">
+          <div class="tele-card-head">
+            <span class="tele-game-name">☕ 放学以后的深夜咖啡馆</span>
+            <span class="tele-storage-key">arcade:cafe</span>
+          </div>
+          <div class="tele-metrics-row">
+            <div class="tele-metric-box">
+              <span class="tele-metric-label">秘密特调手账</span>
+              <strong class="tele-metric-val" id="statCafeRecipes">2 / 18</strong>
+            </div>
+            <div class="tele-metric-box">
+              <span class="tele-metric-label">营业夜数 / 资金</span>
+              <strong class="tele-metric-val" id="statCafeNightCoins">D1 · ¥320</strong>
+            </div>
+            <div class="tele-metric-box">
+              <span class="tele-metric-label">女主纪念寄语</span>
+              <strong class="tele-metric-val" id="statCafePostcards">0 / 12</strong>
+            </div>
+          </div>
+          <div class="tele-progress-bar-wrap">
+            <div class="tele-progress-label">
+              <span>秘密特调研发进度</span>
+              <strong id="statCafePercent">11%</strong>
+            </div>
+            <div class="tele-progress-track">
+              <div class="tele-progress-fill" id="barCafeFill" style="width: 11%; background: linear-gradient(90deg, #d48c46, #ffd166);"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 游戏 C：次元节拍 -->
+        <div class="telemetry-card neonbeat">
+          <div class="tele-card-head">
+            <span class="tele-game-name">🎵 次元节拍：糖果风暴</span>
+            <span class="tele-storage-key">arcade:neonbeat</span>
+          </div>
+          <div class="tele-metrics-row">
+            <div class="tele-metric-box">
+              <span class="tele-metric-label">最高打歌得分</span>
+              <strong class="tele-metric-val" id="statBeatBestScore">0</strong>
+            </div>
+            <div class="tele-metric-box">
+              <span class="tele-metric-label">最高连击纪录</span>
+              <strong class="tele-metric-val" id="statBeatMaxCombo">0 COMBO</strong>
+            </div>
+            <div class="tele-metric-box">
+              <span class="tele-metric-label">最佳街机评级</span>
+              <strong class="tele-metric-val" id="statBeatBestRank">待首通</strong>
+            </div>
+          </div>
+          <div class="tele-progress-bar-wrap">
+            <div class="tele-progress-label">
+              <span>已留名高分谱面数</span>
+              <strong id="statBeatCleared">0 张谱面</strong>
+            </div>
+            <div class="tele-progress-track">
+              <div class="tele-progress-fill" id="barBeatFill" style="width: 0%; background: linear-gradient(90deg, #00f0ff, #ff1493);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6 枚街机生涯成就勋章 -->
+      <div class="medal-rack-title">
+        <span>🎖️ 街机生涯荣耀勋章（达成条件后自动点亮鎏金边框）</span>
+        <span id="careerSummaryHint">快去体验三款新游点亮你的专属勋章吧！</span>
+      </div>
+      <div class="medals-grid" id="medalsGrid">
+        <div class="medal-badge-card" id="medal-alch-1">
+          <div class="medal-icon">🃏</div>
+          <div class="medal-info">
+            <h4>全息炼丹师</h4>
+            <p>炼丹工坊单次算力达到 1,500+ 或通关第 1 关</p>
+          </div>
+        </div>
+        <div class="medal-badge-card" id="medal-alch-2">
+          <div class="medal-icon">🖼️</div>
+          <div class="medal-info">
+            <h4>神图馆藏家</h4>
+            <p>炼丹工坊累计解锁 4 张以上本地 SSR 神图</p>
+          </div>
+        </div>
+        <div class="medal-badge-card" id="medal-cafe-1">
+          <div class="medal-icon">☕</div>
+          <div class="medal-info">
+            <h4>深夜主理人</h4>
+            <p>深夜咖啡馆解锁 3 款以上秘密特调配方</p>
+          </div>
+        </div>
+        <div class="medal-badge-card" id="medal-cafe-2">
+          <div class="medal-icon">💌</div>
+          <div class="medal-info">
+            <h4>雨夜倾听者</h4>
+            <p>收获至少 1 位女主的雨夜手写纪念寄语</p>
+          </div>
+        </div>
+        <div class="medal-badge-card" id="medal-beat-1">
+          <div class="medal-icon">🎸</div>
+          <div class="medal-info">
+            <h4>糖果风暴音浪</h4>
+            <p>次元节拍完成任意曲目并取得高分纪录</p>
+          </div>
+        </div>
+        <div class="medal-badge-card" id="medal-beat-2">
+          <div class="medal-icon">👑</div>
+          <div class="medal-info">
+            <h4>街机全制霸</h4>
+            <p>三款街机小游戏全部留下游玩存档纪录</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 6 大街机与创意馆门户矩阵 ================= -->
+    <div class="section-heading">
+      <div>
+        <h2>🕹️ 街机厅与放学后宇宙 · 全模块直达</h2>
+        <p>点击任意机台卡片立即启动对应游戏或创意工具</p>
+      </div>
+    </div>
+
+    <section class="portal-grid" aria-label="街机厅游戏与模块列表">
+      <!-- 1. 游戏 A：Pxlsan 炼丹工坊 -->
+      <article class="portal-card style-a1">
+        <a href="tag-alchemist.html" class="portal-cover">
+          <div class="portal-badge-top">
+            <span class="style-chip" style="background: linear-gradient(135deg, #ff2a85, #7b2cbf);">NEW · 游戏 A</span>
+            <span class="style-chip" style="background: rgba(0, 0, 0, 0.72); border: 1px solid #00f0ff; color: #00f0ff;">A1 赛博 CRT 全息牌桌风</span>
+          </div>
+          <img src="dressup/assets/gacha/up-ssr-takagi-qipao-wide.webp" alt="Pxlsan 炼丹工坊：AI 画师模拟器" />
+          <div class="live-save-pill">
+            <span>📊 本地进度</span>
+            <span id="cardAlchLiveText">神图 1/18 · 最高算力 0</span>
+          </div>
+        </a>
+        <div class="portal-body">
+          <h3 class="portal-title">🎴 《Pxlsan 炼丹工坊：AI 画师模拟器》</h3>
+          <p class="portal-desc">
+            Balatro 小丑牌式全息词条构筑 Roguelike！自由组合「角色穿搭 + 光影氛围 + 微表情」触发 8 大黄金构图羁绊，挂载 Anima 1.4 与 ADetailer 插件镇压六指恶魔，在 CRT 监视器爆出 18 张本地高清 SSR 神图！
+          </p>
+          <div class="portal-tags">
+            <span class="portal-tag">🃏 全息闪卡构筑</span>
+            <span class="portal-tag">⚡ 像素×倍率跳字</span>
+            <span class="portal-tag">🖼️ 18张神图图鉴</span>
+          </div>
+          <a href="tag-alchemist.html" class="portal-enter-btn">🚀 立即进入《炼丹工坊》 ▸</a>
+        </div>
+      </article>
+
+      <!-- 2. 游戏 B：放学以后的深夜咖啡馆 -->
+      <article class="portal-card style-b2">
+        <a href="midnight-cafe.html" class="portal-cover">
+          <div class="portal-badge-top">
+            <span class="style-chip" style="background: linear-gradient(135deg, #d48c46, #8a5629);">NEW · 游戏 B</span>
+            <span class="style-chip" style="background: rgba(0, 0, 0, 0.72); border: 1px solid #ffd166; color: #ffd166;">B2 暖调胡桃木 Lo-Fi 风</span>
+          </div>
+          <img src="dressup/scenes/cafe_rain_night.webp" alt="放学以后的深夜咖啡馆" />
+          <div class="live-save-pill">
+            <span>📊 本地进度</span>
+            <span id="cardCafeLiveText">配方 2/18 · 第 1 夜</span>
+          </div>
+        </a>
+        <div class="portal-body">
+          <h3 class="portal-title">☕ 《放学以后的深夜咖啡馆》</h3>
+          <p class="portal-desc">
+            伴着窗外淅沥夜雨与 WebAudio 电钢琴 Lo-Fi 和弦，在胡桃木吧台接待 12 位放学后到访的女主。体验「精选配料 ▸ 黄金温区萃取 ▸ 交互式奶泡手绘拉花」三步调饮，收集 18 款秘密特调与雨夜手写寄语！
+          </p>
+          <div class="portal-tags">
+            <span class="portal-tag">☕ 三步调饮 &amp; 手绘拉花</span>
+            <span class="portal-tag">🌧️ 12位女主夜谈</span>
+            <span class="portal-tag">📖 18款秘密特调</span>
+          </div>
+          <a href="midnight-cafe.html" class="portal-enter-btn">☕ 立即进入《深夜咖啡馆》 ▸</a>
+        </div>
+      </article>
+
+      <!-- 3. 游戏 C：次元节拍：糖果风暴 -->
+      <article class="portal-card style-c1">
+        <a href="neon-beat.html" class="portal-cover">
+          <div class="portal-badge-top">
+            <span class="style-chip" style="background: linear-gradient(135deg, #ff1493, #ff7b00);">NEW · 游戏 C</span>
+            <span class="style-chip" style="background: rgba(0, 0, 0, 0.72); border: 1px solid #ffe600; color: #ffe600;">C1 高饱和糖果波普漫改风</span>
+          </div>
+          <img src="dressup/assets/gacha/up-ssr-takako-jingyong-wide.webp" alt="次元节拍：糖果风暴" />
+          <div class="live-save-pill">
+            <span>📊 本地进度</span>
+            <span id="cardBeatLiveText">最高分 0 · 待首通</span>
+          </div>
+        </a>
+        <div class="portal-body">
+          <h3 class="portal-title">🎵 《次元节拍：糖果风暴》</h3>
+          <p class="portal-desc">
+            Muse Dash × Hi-Fi RUSH 高多巴胺波普漫画音游！支持「横版双轨跑酷闪避 (F/J)」与「4K 下落式街机 (D/F/J/K)」双模式一键切换，内置 5 首合成器电音曲目并支持拖入本地音频自动生成谱面，满连击触发看板娘全屏斜切 SKILL CUT-IN！
+          </p>
+          <div class="portal-tags">
+            <span class="portal-tag">🏃‍♀️ 双轨跑酷 + 4K街机</span>
+            <span class="portal-tag">💥 漫画斜切 Cut-in</span>
+            <span class="portal-tag">💿 本地音乐生成谱面</span>
+          </div>
+          <a href="neon-beat.html" class="portal-enter-btn">🎵 立即进入《次元节拍》 ▸</a>
+        </div>
+      </article>
+
+      <!-- 4. 换装与视觉小说主舞台 -->
+      <article class="portal-card style-core">
+        <a href="dressup.html" class="portal-cover">
+          <div class="portal-badge-top">
+            <span class="style-chip" style="background: linear-gradient(135deg, #ec4899, #8b5cf6);">CORE · 旗舰主舞台</span>
+          </div>
+          <img src="dressup/assets/loading/loading_takagi_school.webp" alt="放学以后·换装与视觉小说主舞台" />
+          <div class="live-save-pill">
+            <span>👗 旗舰核心体验</span>
+            <span>11 角色 · 242 套服装 · 66 章剧情</span>
+          </div>
+        </a>
+        <div class="portal-body">
+          <h3 class="portal-title">👗 《放学以后·换装与视觉小说主舞台》</h3>
+          <p class="portal-desc">
+            与高木、长瀞、爱莉、千鹤、海梦、辉夜等 11 位女主共度放学后的心动时光！体验 242 套全身立绘换装、4 部位触摸语音互动、Lv.0~Lv.10 好感度培养、66 章多分支剧情与限定卡池抽卡。
+          </p>
+          <div class="portal-tags">
+            <span class="portal-tag">👗 242套华丽换装</span>
+            <span class="portal-tag">📖 66章多结局视觉小说</span>
+            <span class="portal-tag">🎙️ 声优级日语配音</span>
+          </div>
+          <a href="dressup.html" class="portal-enter-btn">👗 进入《换装与主线剧场》 ▸</a>
+        </div>
+      </article>
+
+      <!-- 5. 放学以后的城市·大地图探索 -->
+      <article class="portal-card style-core">
+        <a href="city.html" class="portal-cover">
+          <div class="portal-badge-top">
+            <span class="style-chip" style="background: linear-gradient(135deg, #06b6d4, #3b82f6);">CITY · 等距大地图</span>
+          </div>
+          <img src="dressup/map/environment/urban-map-v2.webp" alt="放学以后的城市·大地图探索" />
+          <div class="live-save-pill">
+            <span>🌆 日常小城漫步</span>
+            <span id="cardCityLiveText">9 女主视角 · 昼夜切换 · 手账信箱</span>
+          </div>
+        </a>
+        <div class="portal-body">
+          <h3 class="portal-title">🌆 《放学以后的城市·大地图探索》</h3>
+          <p class="portal-desc">
+            有些故事，走到那里才会发生。在果冻卡通渲染的日常小城中自由拖动地图，探索教学楼、图书馆、美术室、游乐园与商店街，体验 9 位女主的文化周主线、跨角色偶遇、海滩/温泉番外与每日手写信箱！
+          </p>
+          <div class="portal-tags">
+            <span class="portal-tag">🗺️ 6大街区昼夜切换</span>
+            <span class="portal-tag">✨ 39张事件CG与微剧场</span>
+            <span class="portal-tag">📮 每日便条信箱</span>
+          </div>
+          <a href="city.html" class="portal-enter-btn">🌆 进入《放学以后的城市》 ▸</a>
+        </div>
+      </article>
+
+      <!-- 6. 美术风格与动态 UI 样机实验室 -->
+      <article class="portal-card style-core">
+        <a href="art-style-lab.html" class="portal-cover">
+          <div class="portal-badge-top">
+            <span class="style-chip" style="background: linear-gradient(135deg, #10b981, #0ea5e9);">CREATIVE LAB · 样机工坊</span>
+          </div>
+          <img src="dressup/assets/gacha/up-ssr-aili-catgirl-wide.webp" alt="美术风格与动态 UI 样机实验室" />
+          <div class="live-save-pill">
+            <span>🎨 交互式视觉参考</span>
+            <span>3 款新游 × 9 套动态 UI 样机</span>
+          </div>
+        </a>
+        <div class="portal-body">
+          <h3 class="portal-title">🎨 《美术风格与动态 UI 样机实验室》</h3>
+          <p class="portal-desc">
+            直观对比 3 款街机新游的 9 套候选美术基因方案（A1 全息牌桌 / A2 绝区零撞色 / A3 蔚蓝档案毛玻璃 / B1 赛博酒馆 / B2 胡桃木咖啡 / B3 昭和纯喫茶 / C1 糖果漫改 / C2 空灵轨道 / C3 涩谷街机），支持实时交互与色板取色！
+          </p>
+          <div class="portal-tags">
+            <span class="portal-tag">🎨 9套实时UI视口</span>
+            <span class="portal-tag">🌈 45色HEX取色器</span>
+            <span class="portal-tag">⚡ 一键动效演出</span>
+          </div>
+          <a href="art-style-lab.html" class="portal-enter-btn">🎨 进入《美术风格实验室》 ▸</a>
+        </div>
+      </article>
+    </section>
+
+    <footer class="hub-footer">
+      <p>像素离散 Pxlsan Arcade Hub · 本地存档自动同步 · 支持桌面端与移动端触屏畅玩</p>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const KEYS = {
+        alchemist: 'pxlsan-game:arcade:alchemist',
+        cafe: 'pxlsan-game:arcade:cafe',
+        neonbeat: 'pxlsan-game:arcade:neonbeat',
+        city: 'pxlsan:city:prototype:v1'
+      };
+
+      function safeParse(key) {
+        try {
+          const raw = localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : null;
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function renderCareerDashboard() {
+        // 1. 读取《炼丹工坊》存档
+        const alch = safeParse(KEYS.alchemist);
+        const alchBestScore = alch ? (Number(alch.bestHandScore) || 0) : 0;
+        const alchUnlockedCgs = (alch && Array.isArray(alch.unlockedCgs)) ? alch.unlockedCgs.length : 1;
+        const alchBestStage = alch ? (Number(alch.bestStageCleared) || 0) : 0;
+        const alchPct = Math.min(100, Math.round((alchUnlockedCgs / 18) * 100));
+
+        document.getElementById('statAlchBestScore').textContent = alchBestScore.toLocaleString();
+        document.getElementById('statAlchCgCount').textContent = `${alchUnlockedCgs} / 18`;
+        document.getElementById('statAlchStage').textContent = alchBestStage > 0 ? `第 ${alchBestStage} 关` : '待挑战';
+        document.getElementById('statAlchPercent').textContent = `${alchPct}%`;
+        document.getElementById('barAlchFill').style.width = `${alchPct}%`;
+        document.getElementById('cardAlchLiveText').textContent =
+          `神图 ${alchUnlockedCgs}/18 · 最高算力 ${alchBestScore.toLocaleString()}`;
+
+        // 2. 读取《深夜咖啡馆》存档
+        const cafe = safeParse(KEYS.cafe);
+        const cafeNight = cafe && typeof cafe.night === 'number' ? cafe.night : 1;
+        const cafeCoins = cafe && typeof cafe.coins === 'number' ? cafe.coins : 320;
+        const cafeRecipes = (cafe && Array.isArray(cafe.unlockedRecipes))
+          ? Array.from(new Set(['rec_kaguya', 'rec_takagi', ...cafe.unlockedRecipes])).length
+          : 2;
+        let cafePostcards = 0;
+        if (cafe && cafe.heroineStats && typeof cafe.heroineStats === 'object') {
+          Object.values(cafe.heroineStats).forEach((st) => {
+            if (st && st.unlockedPostcard) cafePostcards += 1;
+          });
+        }
+        const cafePct = Math.min(100, Math.round((cafeRecipes / 18) * 100));
+
+        document.getElementById('statCafeRecipes').textContent = `${cafeRecipes} / 18`;
+        document.getElementById('statCafeNightCoins').textContent = `第${cafeNight}夜 · ¥${cafeCoins.toLocaleString()}`;
+        document.getElementById('statCafePostcards').textContent = `${cafePostcards} / 12`;
+        document.getElementById('statCafePercent').textContent = `${cafePct}%`;
+        document.getElementById('barCafeFill').style.width = `${cafePct}%`;
+        document.getElementById('cardCafeLiveText').textContent =
+          `特调 ${cafeRecipes}/18 · 寄语 ${cafePostcards}/12 · ¥${cafeCoins.toLocaleString()}`;
+
+        // 3. 读取《次元节拍》存档
+        const beatRaw = safeParse(KEYS.neonbeat);
+        const beatEntries = (beatRaw && typeof beatRaw === 'object') ? Object.values(beatRaw) : [];
+        let beatBestScore = 0;
+        let beatMaxCombo = 0;
+        let beatBestRank = '待首通';
+        const rankOrder = { 'S+': 6, 'S': 5, 'A': 4, 'B': 3, 'C': 2, 'D': 1 };
+        let bestRankWeight = 0;
+
+        beatEntries.forEach((rec) => {
+          if (!rec || typeof rec !== 'object') return;
+          const sc = Number(rec.score) || 0;
+          const cb = Number(rec.maxCombo) || 0;
+          if (sc > beatBestScore) beatBestScore = sc;
+          if (cb > beatMaxCombo) beatMaxCombo = cb;
+          const rk = String(rec.rank || '');
+          if ((rankOrder[rk] || 0) > bestRankWeight) {
+            bestRankWeight = rankOrder[rk];
+            beatBestRank = rk;
+          }
+        });
+
+        const beatClearedCount = beatEntries.length;
+        const beatPct = Math.min(100, Math.round((beatClearedCount / 10) * 100));
+
+        document.getElementById('statBeatBestScore').textContent = beatBestScore.toLocaleString();
+        document.getElementById('statBeatMaxCombo').textContent = `${beatMaxCombo} COMBO`;
+        document.getElementById('statBeatBestRank').textContent = beatBestRank;
+        document.getElementById('statBeatCleared').textContent = `${beatClearedCount} 张谱面`;
+        document.getElementById('barBeatFill').style.width = `${beatPct}%`;
+        document.getElementById('cardBeatLiveText').textContent =
+          beatClearedCount > 0
+            ? `最高 ${beatBestScore.toLocaleString()} (${beatBestRank}) · ${beatMaxCombo}连击`
+            : '最高分 0 · 待首通摘冠';
+
+        // 4. 读取《日常小城》存档展示
+        const city = safeParse(KEYS.city);
+        if (city && typeof city === 'object') {
+          const day = Number(city.day) || 1;
+          const completed = Array.isArray(city.completed) ? city.completed.length : 0;
+          document.getElementById('cardCityLiveText').textContent =
+            `当前第 ${day} 天 · 已经历 ${completed} 段小城故事`;
+        }
+
+        // 5. 计算 6 枚勋章点亮状态
+        const medalStates = {
+          'medal-alch-1': alchBestScore >= 1500 || alchBestStage >= 1,
+          'medal-alch-2': alchUnlockedCgs >= 4,
+          'medal-cafe-1': cafeRecipes >= 3,
+          'medal-cafe-2': cafePostcards >= 1,
+          'medal-beat-1': beatBestScore > 0 || beatClearedCount >= 1,
+          'medal-beat-2': Boolean(alch && cafe && beatClearedCount > 0)
+        };
+
+        let unlockedMedals = 0;
+        Object.entries(medalStates).forEach(([id, isUnlocked]) => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.classList.toggle('unlocked', isUnlocked);
+          }
+          if (isUnlocked) unlockedMedals += 1;
+        });
+
+        document.getElementById('totalMedalsBadge').textContent = `勋章点亮 ${unlockedMedals} / 6`;
+        const hintEl = document.getElementById('careerSummaryHint');
+        if (unlockedMedals === 6) {
+          hintEl.textContent = '🌟 大满贯达成！你已集齐放学后街机厅全部荣耀勋章！';
+        } else if (unlockedMedals > 0) {
+          hintEl.textContent = `✨ 已点亮 ${unlockedMedals} 枚街机勋章，继续探索解锁全满贯吧！`;
+        } else {
+          hintEl.textContent = '💡 点击下方任意游戏开玩，返回本页即可实时点亮勋章墙！';
+        }
+      }
+
+      document.getElementById('btnRefreshCareer').addEventListener('click', renderCareerDashboard);
+      window.addEventListener('storage', renderCareerDashboard);
+      window.addEventListener('pageshow', renderCareerDashboard);
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', renderCareerDashboard, { once: true });
+      } else {
+        renderCareerDashboard();
+      }
+    })();
+  </script>
+</body>
+</html>
