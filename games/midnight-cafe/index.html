@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>放学以后的深夜咖啡馆 · 第一人称咖啡师料理台 (Pxlsan Midnight Cafe)</title>
   <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
-  <link rel="stylesheet" href="src/arcade/midnight-cafe.css?v=4" />
+  <link rel="stylesheet" href="src/arcade/midnight-cafe.css?v=5" />
 </head>
 <body class="pov-cafe-body">
   <!-- 暖钨丝灯环境光晕与暗角层 -->
@@ -33,28 +33,28 @@
       </div>
     </div>
 
-    <!-- 营业时段切换器 (3个时段) -->
+    <!-- 营业时段切换器 (白天 / 下午夕阳 / 深夜雨夜 3个时段) -->
     <div class="beam-center">
       <div class="shift-selector" role="tablist" aria-label="营业时段切换">
-        <button class="shift-pill active" data-shift="dusk" role="tab" aria-selected="true">
-          <span class="shift-icon">🌇</span>
+        <button class="shift-pill" data-shift="dusk" role="tab" aria-selected="false">
+          <span class="shift-icon">☀️</span>
           <span class="shift-info">
-            <strong>黄昏放学档</strong>
-            <small>17:30 · 夕阳</small>
+            <strong>白天晴朗档</strong>
+            <small>11:30 · 晴空暖阳</small>
           </span>
         </button>
-        <button class="shift-pill" data-shift="rain" role="tab" aria-selected="false">
-          <span class="shift-icon">🌧️</span>
+        <button class="shift-pill active" data-shift="rain" role="tab" aria-selected="true">
+          <span class="shift-icon">🌇</span>
           <span class="shift-info">
-            <strong>雨夜自习档</strong>
-            <small>20:00 · 夜雨</small>
+            <strong>下午夕阳档</strong>
+            <small>17:30 · 放学余晖</small>
           </span>
         </button>
         <button class="shift-pill" data-shift="late" role="tab" aria-selected="false">
-          <span class="shift-icon">🌙</span>
+          <span class="shift-icon">🌧️</span>
           <span class="shift-info">
-            <strong>打烊微醺档</strong>
-            <small>22:30 · 静夜</small>
+            <strong>晚上雨夜档</strong>
+            <small>21:30 · 霓虹夜雨</small>
           </span>
         </button>
       </div>
@@ -104,7 +104,7 @@
       <img
         id="scene-backdrop-img"
         class="scene-backdrop-img"
-        src="assets/cafe/props/bg_first_person_counter.webp?v=4"
+        src="assets/cafe/props/bg_pov_sunset.webp?v=5"
         alt="第一人称深夜咖啡馆吧台全景"
       />
       <div class="window-tint-layer" id="window-tint-layer"></div>
@@ -273,7 +273,7 @@
             <div class="espresso-machine-rig" id="espresso-machine-rig">
               <div class="machine-img-wrap" id="btn-brew-hold" title="按住或点击启动意式高压黄金萃取 (+25% 风味)">
                 <img
-                  src="assets/cafe/props/prop_espresso_machine.webp"
+                  src="assets/cafe/props/prop_espresso_machine.webp?v=5"
                   alt="双头意式浓缩咖啡机"
                   class="prop-machine-img"
                 />
@@ -669,7 +669,7 @@
     <span class="hand-held-prop-label" id="hand-held-prop-label">大吉岭红茶</span>
   </div>
 
-  <script src="src/arcade/spine-rig-player.js?v=3"></script>
-  <script src="src/arcade/midnight-cafe.js?v=3"></script>
+  <script src="src/arcade/spine-rig-player.js?v=5"></script>
+  <script src="src/arcade/midnight-cafe.js?v=5"></script>
 </body>
 </html>

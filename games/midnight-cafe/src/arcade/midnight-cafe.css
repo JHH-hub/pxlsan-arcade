@@ -3741,3 +3741,27 @@ body.pov-cafe-body {
 .pov-customer-center-stage {
   padding-bottom: 0 !important;
 }
+
+
+/* V5: 正面大号意式浓缩咖啡机尺寸放大与正面双嘴液流对齐 */
+.pov-stations-deck {
+  grid-template-columns: 1.24fr 1.12fr 1.22fr 1.28fr !important;
+}
+
+.station-machine-row {
+  grid-template-columns: 1.48fr 0.72fr !important;
+  gap: 6px !important;
+}
+
+.prop-machine-img {
+  max-height: 206px !important;
+  width: auto !important;
+  transform: scale(1.06);
+}
+
+.machine-espresso-stream {
+  left: 50% !important;
+  top: 63% !important;
+  width: 8px !important;
+  transform: translateX(-50%);
+}

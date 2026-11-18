@@ -20,36 +20,36 @@
   const SHIFTS = {
     dusk: {
       id: 'dusk',
-      name: '黄昏放学档',
-      time: '17:30',
-      sceneImg: 'assets/cafe/props/bg_first_person_counter.webp?v=4',
-      tint: 'linear-gradient(180deg, rgba(160, 74, 24, 0.26) 0%, rgba(30, 19, 12, 0.55) 100%)',
-      weatherIcon: '🌇',
-      weatherText: '暮色微风 · 放学铃声刚落 · 第一人称吧台视角',
-      rainDensity: 22,
-      bokehColors: ['rgba(255, 179, 71, 0.28)', 'rgba(255, 125, 80, 0.24)', 'rgba(245, 215, 140, 0.22)']
+      name: '白天晴朗档',
+      time: '11:30',
+      sceneImg: 'assets/cafe/props/bg_pov_day.webp?v=5',
+      tint: 'linear-gradient(180deg, rgba(255, 245, 220, 0.06) 0%, rgba(40, 24, 14, 0.14) 100%)',
+      weatherIcon: '☀️',
+      weatherText: '晴空暖阳 · 街角绿树微风 · 第一人称吧台视角',
+      rainDensity: 0,
+      bokehColors: ['rgba(255, 235, 160, 0.24)', 'rgba(255, 255, 220, 0.20)', 'rgba(180, 235, 255, 0.18)']
     },
     rain: {
       id: 'rain',
-      name: '雨夜自习档',
-      time: '20:00',
-      sceneImg: 'assets/cafe/props/bg_first_person_counter.webp?v=4',
-      tint: 'linear-gradient(180deg, rgba(16, 28, 38, 0.30) 0%, rgba(28, 17, 11, 0.58) 100%)',
-      weatherIcon: '🌧️',
-      weatherText: '窗外细雨淅沥 · 第一人称胡桃木吧台视角',
-      rainDensity: 68,
-      bokehColors: ['rgba(255, 185, 90, 0.26)', 'rgba(120, 195, 220, 0.20)', 'rgba(212, 140, 70, 0.25)']
+      name: '下午夕阳档',
+      time: '17:30',
+      sceneImg: 'assets/cafe/props/bg_pov_sunset.webp?v=5',
+      tint: 'linear-gradient(180deg, rgba(255, 140, 60, 0.08) 0%, rgba(35, 18, 10, 0.18) 100%)',
+      weatherIcon: '🌇',
+      weatherText: '放学夕阳余晖 · 金色霞光洒满木吧台',
+      rainDensity: 0,
+      bokehColors: ['rgba(255, 179, 71, 0.28)', 'rgba(255, 115, 75, 0.24)', 'rgba(255, 215, 130, 0.22)']
     },
     late: {
       id: 'late',
-      name: '打烊微醺档',
-      time: '22:30',
-      sceneImg: 'assets/cafe/props/bg_first_person_counter.webp?v=4',
-      tint: 'linear-gradient(180deg, rgba(32, 14, 42, 0.38) 0%, rgba(24, 13, 9, 0.68) 100%)',
-      weatherIcon: '🌙',
-      weatherText: '夜深雨歇 · 钨丝灯琥珀微醺 · 第一人称吧台视角',
-      rainDensity: 36,
-      bokehColors: ['rgba(255, 179, 71, 0.30)', 'rgba(195, 120, 210, 0.18)', 'rgba(240, 160, 85, 0.25)']
+      name: '晚上雨夜档',
+      time: '21:30',
+      sceneImg: 'assets/cafe/props/bg_first_person_counter.webp?v=5',
+      tint: 'linear-gradient(180deg, rgba(16, 28, 38, 0.15) 0%, rgba(24, 13, 9, 0.25) 100%)',
+      weatherIcon: '🌧️',
+      weatherText: '窗外细雨淅沥 · 钨丝灯琥珀微醺 · 深夜吧台',
+      rainDensity: 64,
+      bokehColors: ['rgba(255, 179, 71, 0.30)', 'rgba(120, 200, 235, 0.22)', 'rgba(240, 160, 85, 0.25)']
     }
   };
 
