@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>放学以后的深夜咖啡馆 · 第一人称咖啡师料理台 (Pxlsan Midnight Cafe)</title>
   <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
-  <link rel="stylesheet" href="src/arcade/midnight-cafe.css?v=6" />
+  <link rel="stylesheet" href="src/arcade/midnight-cafe.css?v=7" />
 </head>
 <body class="pov-cafe-body">
   <!-- 暖钨丝灯环境光晕与暗角层 -->
@@ -72,6 +72,10 @@
       </div>
 
       <div class="cafe-stats-ledger">
+        <div class="stat-chip" title="当前连击出餐加成">
+          <span class="stat-icon">🔥</span>
+          <span>连击 <strong id="stat-combo">0</strong></span>
+        </div>
         <div class="stat-chip" title="当前营业夜数">
           <span class="stat-icon">📅</span>
           <span>第 <strong id="stat-night">1</strong> 夜</span>
@@ -87,6 +91,9 @@
       </div>
 
       <div class="beam-action-group">
+        <button class="wood-action-btn highlight-tut-btn" id="btn-open-tutorial" title="查看30秒图文上手教程与咖啡机萃取用法">
+          <span>❓ 玩法教程</span>
+        </button>
         <button class="wood-action-btn" id="btn-open-recipes" title="查看18款秘密特调手账">
           <span>📖 特调手账</span>
         </button>
@@ -127,106 +134,67 @@
         </div>
       </div>
 
-      <!-- 左上环境天气与顾客快捷工具条 -->
+      <!-- 左上环境天气与多客冲刺控制栏 -->
       <div class="pov-top-hud-bar">
         <div class="window-weather-badge">
-          <span id="weather-icon">🌧️</span>
-          <span id="weather-text">窗外细雨 · 第一人称吧台视角</span>
+          <span id="weather-icon">🌇</span>
+          <span id="weather-text">放学夕阳余晖 · 第一人称吧台视角</span>
+        </div>
+
+        <!-- 实时下一步手把手教学指引横幅 -->
+        <div class="live-step-guide-banner" id="live-step-guide-banner">
+          <span class="guide-step-pulse">👆 下一步指引</span>
+          <span class="guide-step-text" id="live-step-guide-text">按住左键拿起闪金光的【大吉岭红茶壶】移到中央杯子倾倒！</span>
         </div>
 
         <div class="counter-guest-toolbar">
+          <button class="mini-wood-btn active-rush-pill" id="btn-toggle-rush-mode" title="开启/暂停多客人耐心倒计时冲刺模式">
+            ⏱️ 倒计时冲刺: ON
+          </button>
+          <button class="mini-wood-btn" id="btn-spawn-extra-guest" title="立即摇铃再招揽一位客人上吧台排队 (最多3位同时点单)">
+            ➕ 加客排队
+          </button>
+          <button class="mini-wood-btn" id="btn-autofill-order" title="按当前选中客人的配方一键自动做好饮品">
+            ✨ 一键代做
+          </button>
           <button class="mini-wood-btn" id="btn-invite-modal" title="指定邀约12位女主中的任意一位">
             🛎️ 指定邀约
           </button>
-          <button class="mini-wood-btn" id="btn-next-random-guest" title="摇响吧台铜铃，迎接下一位客人">
-            🔄 换一位客人
-          </button>
-          <button class="mini-wood-btn" id="btn-switch-outfit" title="切换当前女主的吧台穿搭立绘">
-            👗 切换穿搭
-          </button>
-          <button class="mini-wood-btn" id="btn-small-talk" title="递上热毛巾与客人闲聊几句">
-            💬 吧台寒暄
-          </button>
-          <button class="mini-wood-btn" id="btn-toggle-cafe-bones" title="显示/隐藏 Spine 骨骼">
-            🦴 骨骼: OFF
+          <button class="mini-wood-btn" id="btn-switch-outfit" title="切换当前选中客人的穿搭造型">
+            👗 换装
           </button>
         </div>
       </div>
 
-      <!-- 顾客立绘舞台（站/坐在胡桃木吧台正对面，支持拖拽饮品直接递给她！） -->
+      <!-- 多席位吧台迎客舞台：支持 1 ~ 3 位客人同时在吧台前点单 + 各自独立耐心倒计时条与图标配方卡！ -->
       <div class="pov-customer-center-stage">
-        <div class="heroine-stage-box" id="heroine-stage-box" title="点击与客人寒暄，或将做好的饮品拖给她奉茶">
-          <div class="heroine-Warm-halo"></div>
-          <canvas id="cafeHeroineSpineCanvas" class="cafe-spine-canvas" width="380" height="410"></canvas>
-          <img
-            id="heroine-portrait-img"
-            class="heroine-portrait-img"
-            src="assets/cafe/characters/kaguya_normal.webp"
-            alt="吧台熟客立绘"
-          />
-          <div class="emotion-bubble" id="emotion-bubble">💭 思索点单中</div>
-          <div class="drop-to-serve-hint" id="drop-to-serve-hint">🛎️ 松手奉上特调！</div>
+        <div class="multi-customer-seats-row" id="multi-customer-stage">
+          <!-- 由 JS 动态渲染 1~3 个吧台客席 (Seat 0 / Seat 1 / Seat 2)，每个客席含立绘、耐心倒计时条、可视化图标配方小票、支持直接把杯子拖给她！ -->
         </div>
 
-        <!-- 顾客右侧悬浮：点单心事对话气泡 + 挂单推理小票夹 -->
-        <div class="pov-customer-order-board">
-          <div class="dialogue-header-row">
-            <div class="guest-profile-pill">
-              <img
-                id="guest-avatar-img"
-                class="guest-avatar-img"
-                src="assets/cafe/characters/avatar_kaguya.webp"
-                alt="头像"
-              />
-              <div class="guest-title-meta">
-                <div class="guest-name-line">
-                  <span class="guest-name" id="guest-name">四宫辉夜</span>
-                  <span class="guest-role-tag" id="guest-role-tag">秀知院学生会副会长</span>
-                </div>
-                <div class="guest-affection-line">
-                  <span>好感：</span>
-                  <span class="heart-meter" id="guest-heart-meter">♥♥♥♡♡</span>
-                  <span class="visit-count" id="guest-visit-count">到店 1 次</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="dialogue-utility-btns">
-              <button class="chalk-hint-btn" id="btn-toggle-clue" title="折叠/展开点单配方小票">
-                📋 点单小票
-              </button>
-              <button class="clue-autofill-btn" id="btn-autofill-order" title="按店长推理自动倒好基底、配料与拉花">
-                ✨ 自动制作
-              </button>
-            </div>
+        <!-- 保留隐藏兼容节点供旧逻辑安全引用 -->
+        <div class="hidden" aria-hidden="true">
+          <div id="heroine-stage-box">
+            <canvas id="cafeHeroineSpineCanvas" width="380" height="410"></canvas>
+            <img id="heroine-portrait-img" src="assets/cafe/characters/kaguya_normal.webp" alt="" />
+            <div id="emotion-bubble"></div>
+            <div id="drop-to-serve-hint"></div>
           </div>
-
-          <!-- 客人点单原话气泡 -->
-          <div class="dialogue-body-box" id="dialogue-body-box">
-            <p class="dialogue-text" id="dialogue-text">
-              「今天学生会的预算案真是让人头疼……请给我一杯<strong>温热的、基底醇厚、带着一抹清雅茶香但绝不甜腻</strong>的饮品吧。」
-            </p>
-          </div>
-
-          <!-- 实体感吧台点单推理小票 -->
-          <div class="order-clue-drawer" id="order-clue-drawer">
-            <div class="clue-drawer-header">
-              <span class="clue-badge">🧾 吧台点单小票</span>
-              <span class="clue-order-title" id="clue-order-title">委托：《学生会长的雨夜静心茶》</span>
-              <span class="match-forecast-badge" id="match-forecast-badge">等待投料</span>
-            </div>
-            <div class="clue-tags-row" id="clue-tags-row">
-              <span class="clue-pill">🌡️ 温度：🔥 热饮 (Hot)</span>
-              <span class="clue-pill">🍵 基底偏好：宇治一番抹茶 / 大吉岭红茶</span>
-              <span class="clue-pill">🌿 风味线索：清凉薄荷 / 海盐芝士奶盖</span>
-            </div>
-          </div>
-
-          <!-- 品鉴完成后的夜谈互动选项区 -->
-          <div class="night-talk-choices hidden" id="night-talk-choices">
-            <div class="choices-prompt">🌙 深夜走心夜谈 · 选择你的回应：</div>
-            <div class="choices-list" id="choices-list"></div>
-          </div>
+          <img id="guest-avatar-img" src="assets/cafe/characters/avatar_kaguya.webp" alt="" />
+          <span id="guest-name"></span>
+          <span id="guest-role-tag"></span>
+          <span id="guest-heart-meter"></span>
+          <span id="guest-visit-count"></span>
+          <p id="dialogue-text"></p>
+          <span id="clue-order-title"></span>
+          <span id="match-forecast-badge"></span>
+          <div id="clue-tags-row"></div>
+          <div id="order-clue-drawer"></div>
+          <div id="night-talk-choices"><div id="choices-list"></div></div>
+          <button id="btn-toggle-clue"></button>
+          <button id="btn-next-random-guest"></button>
+          <button id="btn-small-talk"></button>
+          <button id="btn-toggle-cafe-bones"></button>
         </div>
       </div>
 
@@ -670,6 +638,59 @@
     </div>
   </div>
 
+  <!-- ================= 模态弹窗 4：30秒图文上手教程 & 咖啡机萃取用法说明 ================= -->
+  <div class="cafe-modal-backdrop hidden" id="modal-how-to-play" role="dialog" aria-modal="true">
+    <div class="cafe-modal-card wide-modal tutorial-modal-card">
+      <div class="modal-top-bar">
+        <div>
+          <span class="modal-kicker">BARISTA QUICK TUTORIAL · 30秒上手说明书</span>
+          <h2>❓ 第一人称咖啡师操作台 &amp; 咖啡机黄金加压教程</h2>
+        </div>
+        <button class="modal-close-btn" data-close-modal="modal-how-to-play">✕</button>
+      </div>
+
+      <div class="tutorial-steps-grid">
+        <div class="tut-step-card">
+          <div class="tut-step-num">STEP 1 · 看头顶配方单与倒计时</div>
+          <div class="tut-step-body">
+            <strong>👀 1~3 位客人同台排队点单</strong>
+            <p>每位客人身旁都有一张<strong>【图标配方小票】</strong>（例如 <code>🔥热杯 + 🫖大吉岭红茶 + 🌿清凉薄荷</code>）以及<strong>⏱️ 彩色耐心倒计时条</strong>。点击任意客人可切换当前指引目标！</p>
+          </div>
+        </div>
+
+        <div class="tut-step-card">
+          <div class="tut-step-num">STEP 2 · 按住鼠标左键拿壶倒茶</div>
+          <div class="tut-step-body">
+            <strong>🖐️ 跟着金色闪烁【👆 下一步】拿器具</strong>
+            <p>桌面上需要用到的茶壶、糖浆瓶或冰桶会<strong>自动闪烁金光并标出 <code>👆 下一步</code></strong>！<strong>按住鼠标左键</strong>把它拿在手里，移到正中央的杯口上方，茶壶就会自动倾斜 42° 倒入杯中！</p>
+          </div>
+        </div>
+
+        <div class="tut-step-card highlight">
+          <div class="tut-step-num">STEP 3 · 左侧咖啡机「萃取 / 蒸汽加压」怎么用？</div>
+          <div class="tut-step-body">
+            <strong>☕ 两种核心用法（必拿 +25% 暴击小费！）</strong>
+            <p>1️⃣ <strong>直接萃咖啡</strong>：当客人点单需要<strong>「☕ 深烘意式浓缩」</strong>时，按住左侧大咖啡机即可直接萃出浓缩咖啡底！<br/>2️⃣ <strong>黄金蒸汽加压（所有茶/奶饮品通用）</strong>：<strong>按住左侧大咖啡机不放</strong>，下方压力表指针会左右摆动，等指针走到<strong>中间金色区域 (62%~78%) 时松开左键</strong>，整杯饮品立即获得 <strong><code>✨ +25% 完美黄金风味与高额小费加成</code></strong>！</p>
+          </div>
+        </div>
+
+        <div class="tut-step-card">
+          <div class="tut-step-num">STEP 4 · 按住中央杯子递给对应客人</div>
+          <div class="tut-step-body">
+            <strong>🛎️ 拖拽奉茶 &amp; 🔥 连击 COMBO 狂飙</strong>
+            <p>杯旁容量管注满后，可拿起<strong>拉花钢杯</strong>压印拉花，最后<strong>按住正中央的成品杯直接往上拖给点这杯饮品的客人</strong>！在倒计时耗尽前连续出餐可叠加 <strong><code>🔥 连击 COMBO</code></strong>，获得额外连击赏金！</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tutorial-modal-footer">
+        <button class="primary-wood-cta" data-close-modal="modal-how-to-play">
+          <span>👌 学会了，开始做饮品！</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- 轻提示 Toast -->
   <div class="cafe-toast-container" id="cafe-toast-container" aria-live="polite"></div>
 
@@ -680,7 +701,7 @@
     <span class="hand-held-prop-label" id="hand-held-prop-label">大吉岭红茶</span>
   </div>
 
-  <script src="src/arcade/spine-rig-player.js?v=6"></script>
-  <script src="src/arcade/midnight-cafe.js?v=6"></script>
+  <script src="src/arcade/spine-rig-player.js?v=7"></script>
+  <script src="src/arcade/midnight-cafe.js?v=7"></script>
 </body>
 </html>
