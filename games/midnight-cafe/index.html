@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>放学以后的深夜咖啡馆 · 第一人称咖啡师料理台 (Pxlsan Midnight Cafe)</title>
   <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
-  <link rel="stylesheet" href="src/arcade/midnight-cafe.css?v=2" />
+  <link rel="stylesheet" href="src/arcade/midnight-cafe.css?v=3" />
 </head>
 <body class="pov-cafe-body">
   <!-- 暖钨丝灯环境光晕与暗角层 -->
@@ -236,15 +236,22 @@
 
     <!-- ================= 下半屏：第一人称咖啡师实体料理操作台 (First-Person Barista Cooking Workbench) ================= -->
     <section class="pov-lower-workbench" aria-label="第一人称咖啡师实体操作台">
-      <!-- 顶部操作提示与当前杯内配方即时灯牌 -->
+      <!-- 顶部操作提示与当前吧台等级/杯内配方即时灯牌 -->
       <div class="workbench-hud-strip">
         <div class="hud-strip-left">
-          <span class="pov-guide-pill">👋 玩法：点击或拖拽桌上的<strong>杯子、冰桶、基底茶壶、咖啡机手柄、糖浆按压瓶、拉花缸</strong>制作饮品，完成后推给客人！</span>
+          <div class="barista-level-badge" id="barista-level-badge" title="完成客人订单可自动升级吧台，逐步解锁更多茶底与配料">
+            <span class="lv-tag" id="barista-lv-tag">Lv.1 新手吧台 (已服务 0 杯)</span>
+            <span class="lv-next-hint" id="barista-lv-next">再完成 1 杯解锁【意式浓缩 &amp; 宇治抹茶 &amp; 焦糖】</span>
+          </div>
+          <button type="button" class="mini-wood-btn unlock-all-props-btn" id="btn-toggle-all-props" title="一键解锁或恢复渐进教学模式">
+            🔓 解锁全部器具
+          </button>
         </div>
         <div class="hud-strip-center">
+          <span class="pov-guide-pill">🖐️ <strong>按住左键</strong>拿起茶壶/糖浆瓶移到杯口倾倒，做完<strong>按住杯子</strong>递给客人！</span>
           <span class="chalk-drink-label">当前杯中：</span>
           <strong class="chalk-drink-name" id="live-drink-name">暖心·纯享大吉岭红茶</strong>
-          <span class="quality-chip" id="chip-extract-bonus">⏱️ 萃取：待冲泡 (+0%)</span>
+          <span class="quality-chip" id="chip-extract-bonus">⏱️ 萃取：+0%</span>
           <span class="quality-chip" id="chip-latte-score">🎨 拉花：60分</span>
         </div>
         <div class="hud-strip-right">
@@ -655,7 +662,14 @@
   <!-- 轻提示 Toast -->
   <div class="cafe-toast-container" id="cafe-toast-container" aria-live="polite"></div>
 
-  <script src="src/arcade/spine-rig-player.js?v=2"></script>
-  <script src="src/arcade/midnight-cafe.js?v=2"></script>
+  <!-- 第一人称按住左键「手持实体道具」实时跟随鼠标浮层 -->
+  <div class="hand-held-prop-follower hidden" id="hand-held-prop-follower" aria-hidden="true">
+    <img id="hand-held-prop-img" src="assets/cafe/props/prop_base_black_tea.webp" alt="手持道具" />
+    <div class="hand-held-pour-stream hidden" id="hand-held-pour-stream"></div>
+    <span class="hand-held-prop-label" id="hand-held-prop-label">大吉岭红茶</span>
+  </div>
+
+  <script src="src/arcade/spine-rig-player.js?v=3"></script>
+  <script src="src/arcade/midnight-cafe.js?v=3"></script>
 </body>
 </html>

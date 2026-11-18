@@ -3281,3 +3281,217 @@ body.pov-cafe-body {
 .latte-loupe-footer-btns .serve-bell-cta {
   flex: 1;
 }
+
+
+/* ============================================================================
+   V3 UPGRADE: 超大号实体道具 + 按住左键拿起实时跟随倾倒 + Lv.1~Lv.4 渐进解锁
+   ============================================================================ */
+
+/* 顶部吧台等级与下一级解锁提示徽章 */
+.hud-strip-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.barista-level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(212, 140, 70, 0.28), rgba(74, 38, 18, 0.85));
+  border: 1.5px solid #ffb347;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+
+.barista-level-badge .lv-tag {
+  font-size: 12.5px;
+  font-weight: 900;
+  color: #ffe082;
+}
+
+.barista-level-badge .lv-next-hint {
+  font-size: 11.5px;
+  color: #f3DEC6;
+  padding-left: 10px;
+  border-left: 1px solid rgba(255, 209, 102, 0.38);
+}
+
+.unlock-all-props-btn {
+  padding: 5px 12px !important;
+  font-size: 11.5px !important;
+  border-color: rgba(255, 209, 102, 0.6) !important;
+  color: #ffe082 !important;
+}
+
+/* 大幅放大所有桌面道具尺寸 */
+.prop-machine-img {
+  max-height: 164px !important;
+}
+
+.prop-cup-switch-btn img {
+  width: 56px !important;
+  height: 56px !important;
+}
+
+.latte-pitcher-trigger-btn img {
+  width: 58px !important;
+  height: 58px !important;
+}
+
+.center-interactive-cup-wrap .live-cup-vessel {
+  width: 148px !important;
+  height: 164px !important;
+}
+
+.center-interactive-cup-wrap .vessel-inner {
+  width: 76px !important;
+  height: 96px !important;
+}
+
+/* 根据当前已解锁道具数量自动放大网格与器具图标 (Lv.1 初期 2茶2料 超大立体陈列！) */
+#base-grid[data-unlocked-count="2"],
+#addon-grid[data-unlocked-count="2"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+#base-grid[data-unlocked-count="2"] .pov-prop-thumb-wrap,
+#addon-grid[data-unlocked-count="2"] .pov-prop-thumb-wrap {
+  width: 112px !important;
+  height: 112px !important;
+}
+
+#base-grid[data-unlocked-count="4"] .pov-prop-thumb-wrap,
+#addon-grid[data-unlocked-count="4"] .pov-prop-thumb-wrap,
+#base-grid[data-unlocked-count="5"] .pov-prop-thumb-wrap {
+  width: 92px !important;
+  height: 92px !important;
+}
+
+/* 满级 6茶 7料 时也保持 84px 大图标 (比原先 58px 放大近 1.5 倍！) */
+.pov-prop-thumb-wrap {
+  width: 84px !important;
+  height: 84px !important;
+}
+
+.ing-card.pov-prop-item {
+  padding: 6px 4px !important;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+.ing-card.pov-prop-item .ing-name {
+  font-size: 12.5px !important;
+  font-weight: 900 !important;
+}
+
+/* 被按住左键拿在手里的原位半透明残影 */
+.is-picked-up-ghost {
+  opacity: 0.25 !important;
+  transform: scale(0.92) !important;
+  filter: grayscale(0.5);
+}
+
+/* 下一级待解锁剪影预告卡 */
+.ing-card.pov-prop-item.locked-prop-teaser {
+  opacity: 0.58;
+  cursor: not-allowed;
+  border-style: dashed;
+  border-color: rgba(212, 140, 70, 0.35);
+  background: rgba(15, 9, 6, 0.55);
+}
+
+.ing-card.pov-prop-item.locked-prop-teaser:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.pov-prop-img.locked-silhouette {
+  filter: brightness(0.25) sepia(0.6) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
+}
+
+.lock-overlay-badge {
+  position: absolute;
+  inset: auto auto 6px auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(18, 10, 6, 0.92);
+  border: 1px solid #ffb347;
+  color: #ffd88a;
+  font-size: 10.5px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+/* 当手持道具时，中央杯垫发光引导圈 */
+.station-center-prep-mat.awaiting-prop-drop {
+  border-color: #ffd166;
+  box-shadow: 0 0 22px rgba(255, 209, 102, 0.38);
+}
+
+/* ================= 按住左键「手持实体道具」60FPS 跟随鼠标浮层 ================= */
+.hand-held-prop-follower {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 146px;
+  height: 146px;
+  transform: translate(-50%, -62%) rotate(var(--hand-tilt, -10deg)) scale(1.16);
+  pointer-events: none;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.hand-held-prop-follower.hidden {
+  display: none !important;
+}
+
+.hand-held-prop-follower img {
+  width: 136px;
+  height: 136px;
+  object-fit: contain;
+  filter: drop-shadow(0 22px 28px rgba(0, 0, 0, 0.82)) drop-shadow(0 0 14px rgba(255, 179, 71, 0.42));
+}
+
+/* 当手持茶壶/糖浆瓶移到中央杯口上方时，自动倾斜 44 度倒出液流！ */
+.hand-held-prop-follower.pouring-in-hand {
+  transform: translate(-58%, -72%) rotate(42deg) scale(1.22) !important;
+}
+
+.hand-held-pour-stream {
+  position: absolute;
+  top: 78%;
+  left: 68%;
+  width: 8px;
+  height: 82px;
+  border-radius: 99px;
+  transform: rotate(-42deg);
+  transform-origin: top center;
+  animation: streamPulse 0.16s infinite alternate;
+}
+
+@keyframes streamPulse {
+  0% { width: 7px; opacity: 0.92; }
+  100% { width: 10px; opacity: 1; }
+}
+
+.hand-held-prop-label {
+  margin-top: -4px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: rgba(20, 11, 7, 0.94);
+  border: 1.5px solid #ffb347;
+  color: #ffe5a8;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.75);
+}

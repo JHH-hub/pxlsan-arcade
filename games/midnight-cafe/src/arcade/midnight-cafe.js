@@ -53,13 +53,40 @@
     }
   };
 
-  // ==================== 2. 精选基底 (6款实体手冲壶/茶碗) & 辅料风味 (7款实体糖浆泵瓶/顶料罐) ====================
+  // ==================== 2. 精选基底 (6款实体手冲壶/茶碗 · 按 Lv.1~Lv.4 渐进解锁) & 辅料风味 (7款实体糖浆泵瓶/顶料罐) ====================
   const BASES = [
+    {
+      id: 'black_tea',
+      name: '大吉岭红茶',
+      nameEn: 'Black Tea',
+      icon: '🫖',
+      unlockLevel: 1,
+      propImg: 'assets/cafe/props/prop_base_black_tea.webp',
+      color: '#8C3B1E',
+      cremaColor: '#C86D44',
+      tags: ['茶香', '醇厚', '温润'],
+      sfx: 'pour',
+      desc: '带有麝香葡萄与木质尾韵的庄园红茶，清雅不腻'
+    },
+    {
+      id: 'warm_milk',
+      name: '北海道鲜牛乳',
+      nameEn: 'Hokkaido Milk',
+      icon: '🥛',
+      unlockLevel: 1,
+      propImg: 'assets/cafe/props/prop_base_warm_milk.webp',
+      color: '#EBD8C0',
+      cremaColor: '#FFF6EB',
+      tags: ['奶香', '温柔', '安神'],
+      sfx: 'steam',
+      desc: '牧场直送生牛乳蒸汽打发，像夕阳一样暖洋洋'
+    },
     {
       id: 'espresso',
       name: '深烘意式浓缩',
       nameEn: 'Espresso',
       icon: '☕',
+      unlockLevel: 2,
       propImg: 'assets/cafe/props/prop_base_espresso.webp',
       color: '#3B1E0E',
       cremaColor: '#B87338',
@@ -72,6 +99,7 @@
       name: '宇治一番抹茶',
       nameEn: 'Matcha',
       icon: '🍵',
+      unlockLevel: 2,
       propImg: 'assets/cafe/props/prop_base_matcha.webp',
       color: '#4A7C59',
       cremaColor: '#76A882',
@@ -80,22 +108,11 @@
       desc: '石臼慢磨一番茶粉，茶竹茶筅打出细腻翡翠泡沫'
     },
     {
-      id: 'black_tea',
-      name: '大吉岭红茶',
-      nameEn: 'Black Tea',
-      icon: '🫖',
-      propImg: 'assets/cafe/props/prop_base_black_tea.webp',
-      color: '#8C3B1E',
-      cremaColor: '#C86D44',
-      tags: ['茶香', '醇厚', '温润'],
-      sfx: 'pour',
-      desc: '带有麝香葡萄与木质尾韵的庄园红茶，清雅不腻'
-    },
-    {
       id: 'cocoa',
       name: '法式可可',
       nameEn: 'French Cocoa',
       icon: '🍫',
+      unlockLevel: 3,
       propImg: 'assets/cafe/props/prop_base_cocoa.webp',
       color: '#522B18',
       cremaColor: '#9E6240',
@@ -108,59 +125,22 @@
       name: '清爽气泡苏打',
       nameEn: 'Sparkling Soda',
       icon: '🫧',
+      unlockLevel: 4,
       propImg: 'assets/cafe/props/prop_base_sparkling.webp',
       color: '#5BA4B8',
       cremaColor: '#A8DCE8',
       tags: ['清爽', '微泡', '解乏'],
       sfx: 'ice',
       desc: '山泉充入绵密气泡，碰撞杯壁发出沙沙微响'
-    },
-    {
-      id: 'warm_milk',
-      name: '北海道鲜牛乳',
-      nameEn: 'Hokkaido Milk',
-      icon: '🥛',
-      propImg: 'assets/cafe/props/prop_base_warm_milk.webp',
-      color: '#EBD8C0',
-      cremaColor: '#FFF6EB',
-      tags: ['奶香', '温柔', '安神'],
-      sfx: 'steam',
-      desc: '牧场直送生牛乳蒸汽打发，像夕阳一样暖洋洋'
     }
   ];
 
   const ADDONS = [
     {
-      id: 'caramel',
-      name: '焦糖糖浆',
-      icon: '🍯',
-      propImg: 'assets/cafe/props/prop_addon_caramel.webp',
-      color: '#D48C46',
-      tags: ['焦糖', '温柔', '甜香'],
-      desc: '铜锅慢熬琥珀焦糖，带来温暖微甜的尾韵'
-    },
-    {
-      id: 'honey',
-      name: '野生蜂蜜',
-      icon: '🐝',
-      propImg: 'assets/cafe/props/prop_addon_honey.webp',
-      color: '#F2B84B',
-      tags: ['清甜', '润泽', '花香'],
-      desc: '金合欢百花蜜，温润甘甜不刺喉'
-    },
-    {
-      id: 'raspberry',
-      name: '覆盆子果露',
-      icon: '🍓',
-      propImg: 'assets/cafe/props/prop_addon_raspberry.webp',
-      color: '#D9536F',
-      tags: ['莓果', '草莓', '酸甜'],
-      desc: '树莓与红颜草莓慢熬果露，色泽绯红明艳'
-    },
-    {
       id: 'mint',
       name: '清凉薄荷',
       icon: '🌿',
+      unlockLevel: 1,
       propImg: 'assets/cafe/props/prop_addon_mint.webp',
       color: '#58B08C',
       tags: ['清凉', '醒脑', '草本'],
@@ -170,15 +150,47 @@
       id: 'cheese_foam',
       name: '海盐芝士奶盖',
       icon: '🧀',
+      unlockLevel: 1,
       propImg: 'assets/cafe/props/prop_addon_cheese_foam.webp',
       color: '#F5E6D3',
       tags: ['咸甜', '醇厚', '绵密'],
       desc: '冲绳海盐配马斯卡彭芝士打发，咸甜交织'
     },
     {
+      id: 'caramel',
+      name: '焦糖糖浆',
+      icon: '🍯',
+      unlockLevel: 2,
+      propImg: 'assets/cafe/props/prop_addon_caramel.webp',
+      color: '#D48C46',
+      tags: ['焦糖', '温柔', '甜香'],
+      desc: '铜锅慢熬琥珀焦糖，带来温暖微甜的尾韵'
+    },
+    {
+      id: 'honey',
+      name: '野生蜂蜜',
+      icon: '🐝',
+      unlockLevel: 2,
+      propImg: 'assets/cafe/props/prop_addon_honey.webp',
+      color: '#F2B84B',
+      tags: ['清甜', '润泽', '花香'],
+      desc: '金合欢百花蜜，温润甘甜不刺喉'
+    },
+    {
+      id: 'raspberry',
+      name: '覆盆子果露',
+      icon: '🍓',
+      unlockLevel: 3,
+      propImg: 'assets/cafe/props/prop_addon_raspberry.webp',
+      color: '#D9536F',
+      tags: ['莓果', '草莓', '酸甜'],
+      desc: '树莓与红颜草莓慢熬果露，色泽绯红明艳'
+    },
+    {
       id: 'vanilla_cream',
       name: '香草奶油顶',
       icon: '🍦',
+      unlockLevel: 3,
       propImg: 'assets/cafe/props/prop_addon_vanilla_cream.webp',
       color: '#FFF8EE',
       tags: ['奶油', '双倍甜蜜', '华丽'],
@@ -188,6 +200,7 @@
       id: 'cinnamon',
       name: '肉桂粉',
       icon: '🍂',
+      unlockLevel: 4,
       propImg: 'assets/cafe/props/prop_addon_cinnamon.webp',
       color: '#9C5227',
       tags: ['木质香', '暖身', '辛香'],
@@ -1533,6 +1546,8 @@
     shift: 'rain',
     night: 1,
     coins: 320,
+    servedCount: 0, // 累计完成奉茶杯数，驱动 Lv.1 -> Lv.4 渐进解锁
+    unlockAllProps: false, // 是否开启自由全解锁模式
     unlockedRecipes: ['rec_kaguya', 'rec_takagi'],
     heroineStats: {},
     currentHeroineId: 'kaguya',
@@ -1558,6 +1573,24 @@
     brewDir: 1
   };
 
+  function getBaristaLevel() {
+    if (state.unlockAllProps) return 4;
+    if (state.servedCount >= 5) return 4;
+    if (state.servedCount >= 3) return 3;
+    if (state.servedCount >= 1) return 2;
+    return 1;
+  }
+
+  function getUnlockedBases() {
+    const lv = getBaristaLevel();
+    return BASES.filter((b) => (b.unlockLevel || 1) <= lv);
+  }
+
+  function getUnlockedAddons() {
+    const lv = getBaristaLevel();
+    return ADDONS.filter((a) => (a.unlockLevel || 1) <= lv);
+  }
+
   // 初始化12位女主统计
   function initHeroineStats() {
     HEROINES.forEach((h) => {
@@ -1580,6 +1613,8 @@
       const parsed = JSON.parse(raw);
       if (typeof parsed.night === 'number') state.night = parsed.night;
       if (typeof parsed.coins === 'number') state.coins = parsed.coins;
+      if (typeof parsed.servedCount === 'number') state.servedCount = parsed.servedCount;
+      if (typeof parsed.unlockAllProps === 'boolean') state.unlockAllProps = parsed.unlockAllProps;
       if (Array.isArray(parsed.unlockedRecipes)) {
         state.unlockedRecipes = Array.from(new Set(['rec_kaguya', 'rec_takagi', ...parsed.unlockedRecipes]));
       }
@@ -1603,6 +1638,8 @@
       const payload = {
         night: state.night,
         coins: state.coins,
+        servedCount: state.servedCount,
+        unlockAllProps: state.unlockAllProps,
         unlockedRecipes: state.unlockedRecipes,
         heroineStats: state.heroineStats,
         currentHeroineId: state.currentHeroineId,
@@ -2046,13 +2083,67 @@
 
   function getCurrentOrder() {
     const heroine = getCurrentHeroine();
-    return heroine.orders[state.currentOrderIdx % heroine.orders.length];
+    const rawOrder = heroine.orders[state.currentOrderIdx % heroine.orders.length];
+    const lv = getBaristaLevel();
+    if (lv >= 4) return rawOrder;
+
+    // 渐进难度适配：在 Lv.1 ~ Lv.3 时，客人点单只要求当前桌面上已解锁的基底与配料！
+    const unlockedBases = getUnlockedBases();
+    const unlockedAddons = getUnlockedAddons();
+    const validBases = rawOrder.idealBases.filter((id) => unlockedBases.some((b) => b.id === id));
+    const finalBases = validBases.length ? validBases : [unlockedBases[0].id];
+
+    const validAddons = rawOrder.idealAddons.filter((id) => unlockedAddons.some((a) => a.id === id));
+    const maxAddonNeeded = lv === 1 ? 1 : 2;
+    const finalAddons = (validAddons.length ? validAddons : unlockedAddons.map((a) => a.id)).slice(0, maxAddonNeeded);
+
+    const baseNames = finalBases.map((id) => BASES.find((b) => b.id === id)?.name).filter(Boolean).join(' / ');
+    const addonNames = finalAddons.map((id) => ADDONS.find((a) => a.id === id)?.name).filter(Boolean).join(' + ');
+
+    return {
+      ...rawOrder,
+      idealBases: finalBases,
+      idealAddons: finalAddons,
+      requiredAddonCount: maxAddonNeeded,
+      clues: [
+        `🌡️ 温度：${rawOrder.temp === 'hot' ? '🔥 热饮陶瓷杯' : '🧊 冰饮玻璃杯'}`,
+        `🫖 基底：${baseNames}`,
+        `🌿 配料 (${maxAddonNeeded}项即可)：${addonNames}`
+      ]
+    };
+  }
+
+  function renderBaristaLevelHUD() {
+    const lv = getBaristaLevel();
+    const tagEl = document.getElementById('barista-lv-tag');
+    const nextEl = document.getElementById('barista-lv-next');
+    const toggleBtn = document.getElementById('btn-toggle-all-props');
+
+    const levelTitles = {
+      1: '🌱 Lv.1 见习吧台 (极简2茶2料)',
+      2: '☕ Lv.2 进阶茶咖 (4茶4料)',
+      3: '🍫 Lv.3 特调工坊 (5茶6料)',
+      4: '👑 Lv.4 深夜主理人 (全器具满贯)'
+    };
+    const nextHints = {
+      1: `再完成 ${Math.max(1, 1 - state.servedCount)} 杯 ➔ 解锁【意式浓缩 & 宇治抹茶 & 焦糖/蜂蜜】`,
+      2: `再完成 ${Math.max(1, 3 - state.servedCount)} 杯 ➔ 解锁【法式可可 & 覆盆子果露/香草奶油】`,
+      3: `再完成 ${Math.max(1, 5 - state.servedCount)} 杯 ➔ 解锁【气泡苏打 & 锡兰肉桂粉】`,
+      4: `已解锁全部 6 款基底壶与 7 款配料瓶 (已服务 ${state.servedCount} 杯)`
+    };
+
+    if (tagEl) tagEl.textContent = levelTitles[lv] || levelTitles[1];
+    if (nextEl) nextEl.textContent = state.unlockAllProps ? '自由全开模式 · 全部器具已摆上吧台' : nextHints[lv];
+    if (toggleBtn) {
+      toggleBtn.textContent = state.unlockAllProps ? '🌱 切回渐进解锁' : '🔓 解锁全部器具';
+    }
   }
 
   function renderTopStats() {
     document.getElementById('stat-night').textContent = String(state.night);
     document.getElementById('stat-coins').textContent = String(state.coins);
     document.getElementById('stat-recipes').textContent = String(state.unlockedRecipes.length);
+    renderBaristaLevelHUD();
   }
 
   function renderShiftEnvironment() {
@@ -2208,81 +2299,314 @@
     updateLiveChalkboardPreview();
   }
 
-  // 渲染第一人称吧台上的 6 款基底壶与 7 款糖浆按压瓶/顶料罐实体道具
+  // ==================== 第一人称「按住左键拿起道具」实时跟随与杯口悬停倾倒引擎 ====================
+  let activeGrab = null;
+
+  function isPointInsideRect(x, y, el, pad = 18) {
+    if (!el) return false;
+    const r = el.getBoundingClientRect();
+    return x >= r.left - pad && x <= r.right + pad && y >= r.top - pad && y <= r.bottom + pad;
+  }
+
+  function startPointerGrabProp(e, grabInfo) {
+    if (e.button !== undefined && e.button !== 0) return;
+    e.preventDefault();
+
+    const follower = document.getElementById('hand-held-prop-follower');
+    const followerImg = document.getElementById('hand-held-prop-img');
+    const followerStream = document.getElementById('hand-held-pour-stream');
+    const followerLabel = document.getElementById('hand-held-prop-label');
+    const centerDropzone = document.getElementById('center-prep-dropzone');
+    const heroineBox = document.getElementById('heroine-stage-box');
+
+    if (!follower || !followerImg) return;
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const sourceEl = grabInfo.sourceEl;
+    if (sourceEl) sourceEl.classList.add('is-picked-up-ghost');
+
+    followerImg.src = grabInfo.propImg;
+    if (followerLabel) followerLabel.textContent = grabInfo.label || '';
+    if (followerStream) {
+      followerStream.style.background = `linear-gradient(180deg, ${grabInfo.color || '#D48C46'} 0%, rgba(255,255,255,0.5) 50%, ${grabInfo.color || '#D48C46'} 100%)`;
+      followerStream.style.boxShadow = `0 0 14px ${grabInfo.color || '#D48C46'}`;
+      followerStream.classList.add('hidden');
+    }
+
+    follower.style.left = `${startX}px`;
+    follower.style.top = `${startY}px`;
+    follower.classList.remove('hidden', 'pouring-in-hand');
+
+    if (grabInfo.kind === 'serve-cup' && heroineBox) {
+      heroineBox.classList.add('awaiting-serve-drop');
+    } else if (centerDropzone) {
+      centerDropzone.classList.add('awaiting-prop-drop');
+    }
+
+    activeGrab = {
+      ...grabInfo,
+      startX,
+      startY,
+      lastX: startX,
+      lastY: startY,
+      movedDist: 0,
+      overTarget: false,
+      pouredWhileHovering: false,
+      hoverTimer: null
+    };
+
+    const onPointerMove = (ev) => {
+      if (!activeGrab) return;
+      const cx = ev.clientX;
+      const cy = ev.clientY;
+      const dx = cx - activeGrab.lastX;
+      activeGrab.movedDist = Math.hypot(cx - activeGrab.startX, cy - activeGrab.startY);
+      activeGrab.lastX = cx;
+      activeGrab.lastY = cy;
+
+      follower.style.left = `${cx}px`;
+      follower.style.top = `${cy}px`;
+
+      if (activeGrab.kind === 'serve-cup') {
+        const overHeroine = isPointInsideRect(cx, cy, heroineBox, 26);
+        activeGrab.overTarget = overHeroine;
+        if (heroineBox) heroineBox.classList.toggle('hover-serve-drop', overHeroine);
+        const tilt = Math.max(-14, Math.min(14, dx * 0.65));
+        follower.style.setProperty('--hand-tilt', `${tilt}deg`);
+      } else {
+        const overCup = isPointInsideRect(cx, cy, centerDropzone, 20);
+        activeGrab.overTarget = overCup;
+        if (centerDropzone) centerDropzone.classList.toggle('drag-over-cup', overCup);
+
+        if (overCup && (activeGrab.kind === 'base' || activeGrab.kind === 'addon' || activeGrab.kind === 'ice')) {
+          follower.classList.add('pouring-in-hand');
+          if (followerStream && activeGrab.kind !== 'ice') {
+            followerStream.classList.remove('hidden');
+          }
+          // 悬停在杯口上方 240ms 即自动倾倒进杯子，直观有手感！
+          if (!activeGrab.pouredWhileHovering && !activeGrab.hoverTimer) {
+            activeGrab.hoverTimer = setTimeout(() => {
+              if (!activeGrab || !activeGrab.overTarget) return;
+              activeGrab.pouredWhileHovering = true;
+              executeGrabAction(activeGrab, true);
+            }, 240);
+          }
+        } else {
+          follower.classList.remove('pouring-in-hand');
+          if (followerStream) followerStream.classList.add('hidden');
+          if (activeGrab.hoverTimer) {
+            clearTimeout(activeGrab.hoverTimer);
+            activeGrab.hoverTimer = null;
+          }
+          const tilt = Math.max(-18, Math.min(18, -8 + dx * 0.7));
+          follower.style.setProperty('--hand-tilt', `${tilt}deg`);
+        }
+      }
+    };
+
+    const onPointerUp = () => {
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerUp);
+
+      if (!activeGrab) return;
+      const g = activeGrab;
+      activeGrab = null;
+
+      if (g.hoverTimer) clearTimeout(g.hoverTimer);
+      if (g.sourceEl) g.sourceEl.classList.remove('is-picked-up-ghost');
+
+      follower.classList.add('hidden');
+      follower.classList.remove('pouring-in-hand');
+      if (followerStream) followerStream.classList.add('hidden');
+      if (centerDropzone) centerDropzone.classList.remove('drag-over-cup', 'awaiting-prop-drop');
+      if (heroineBox) heroineBox.classList.remove('awaiting-serve-drop', 'hover-serve-drop');
+
+      // 如果悬停时已经倒进去了则不重复触发；如果是松手投放在目标上或原地轻点 (<14px) 则执行动作
+      if (!g.pouredWhileHovering) {
+        if (g.overTarget) {
+          executeGrabAction(g, true);
+        } else if (g.movedDist < 14 && g.kind !== 'serve-cup') {
+          executeGrabAction(g, false);
+        }
+      }
+    };
+
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+  }
+
+  function executeGrabAction(g, fromDropOnTarget) {
+    if (g.kind === 'base') {
+      applyBaseSelection(g.id);
+    } else if (g.kind === 'addon') {
+      applyAddonSelection(g.id, fromDropOnTarget);
+    } else if (g.kind === 'ice') {
+      state.cup.temp = 'iced';
+      audio.playIceClinkSound();
+      triggerIceScoopAnimation();
+      renderStep1Ingredients();
+      updateLiveChalkboardPreview();
+      showToast('🥄 哗啦！从黄铜冰桶铲入晶莹冰块，饮品已冰镇！');
+    } else if (g.kind === 'temp-hot') {
+      state.cup.temp = 'hot';
+      audio.playSteamSound();
+      renderStep1Ingredients();
+      updateLiveChalkboardPreview();
+      showToast('🔥 已换上手作暖白陶瓷热饮杯 (65°C)');
+    } else if (g.kind === 'temp-iced') {
+      state.cup.temp = 'iced';
+      audio.playIceClinkSound();
+      triggerIceScoopAnimation();
+      renderStep1Ingredients();
+      updateLiveChalkboardPreview();
+      showToast('🧊 已换上高透棱纹冰饮玻璃杯 (4°C)');
+    } else if (g.kind === 'latte-pitcher') {
+      const m = document.getElementById('modal-latte-loupe');
+      if (m) m.classList.remove('hidden');
+      audio.playSteamSound();
+    } else if (g.kind === 'serve-cup' && fromDropOnTarget) {
+      serveDrinkToHeroine();
+    }
+  }
+
+  // 渲染第一人称吧台上的基底壶与糖浆按压瓶/顶料罐实体道具（按 Lv.1 ~ Lv.4 渐进解锁）
   function renderStep1Ingredients() {
     const baseGrid = document.getElementById('base-grid');
     const addonGrid = document.getElementById('addon-grid');
     if (!baseGrid || !addonGrid) return;
 
-    baseGrid.innerHTML = BASES.map((b) => {
-      const isSelected = state.cup.base === b.id;
-      return `
-        <button
-          type="button"
-          class="ing-card pov-prop-item ${isSelected ? 'selected' : ''}"
-          data-base-id="${b.id}"
-          draggable="true"
-          title="点击或拖向中央杯子倾倒【${b.name}】：${b.desc}"
-        >
+    const lv = getBaristaLevel();
+    const unlockedBases = getUnlockedBases();
+    const lockedBases = BASES.filter((b) => (b.unlockLevel || 1) > lv);
+    const unlockedAddons = getUnlockedAddons();
+    const lockedAddons = ADDONS.filter((a) => (a.unlockLevel || 1) > lv);
+
+    // 若当前选中的基底尚未解锁，自动切回第一款已解锁基底
+    if (!unlockedBases.some((b) => b.id === state.cup.base) && unlockedBases[0]) {
+      state.cup.base = unlockedBases[0].id;
+    }
+
+    baseGrid.dataset.unlockedCount = String(unlockedBases.length);
+    addonGrid.dataset.unlockedCount = String(unlockedAddons.length);
+
+    const nextLockedBaseHtml = lockedBases.length
+      ? `
+        <div class="ing-card pov-prop-item locked-prop-teaser" title="继续完成客人订单升级吧台即可解锁【${lockedBases[0].name}】">
           <div class="pov-prop-thumb-wrap">
-            <img class="pov-prop-img" src="${b.propImg}" alt="${b.name}" draggable="false" />
-            <span class="prop-color-dot" style="background:${b.color};"></span>
+            <img class="pov-prop-img locked-silhouette" src="${lockedBases[0].propImg}" alt="待解锁" draggable="false" />
+            <span class="lock-overlay-badge">🔒 Lv.${lockedBases[0].unlockLevel}</span>
           </div>
           <div class="ing-meta">
-            <span class="ing-name">${b.name}</span>
-            <span class="ing-tags">${b.tags.slice(0, 2).join('·')}</span>
+            <span class="ing-name">待解锁茶壶</span>
+            <span class="ing-tags">${lockedBases[0].name}</span>
           </div>
-          ${isSelected ? '<span class="ing-slot-badge">当前基底</span>' : ''}
-        </button>
-      `;
-    }).join('');
+        </div>
+      `
+      : '';
+
+    baseGrid.innerHTML =
+      unlockedBases
+        .map((b) => {
+          const isSelected = state.cup.base === b.id;
+          return `
+            <button
+              type="button"
+              class="ing-card pov-prop-item ${isSelected ? 'selected' : ''}"
+              data-base-id="${b.id}"
+              title="按住左键拿起【${b.name}】移到杯口倾倒：${b.desc}"
+            >
+              <div class="pov-prop-thumb-wrap">
+                <img class="pov-prop-img" src="${b.propImg}" alt="${b.name}" draggable="false" />
+                <span class="prop-color-dot" style="background:${b.color};"></span>
+              </div>
+              <div class="ing-meta">
+                <span class="ing-name">${b.name}</span>
+                <span class="ing-tags">${b.tags.slice(0, 2).join('·')}</span>
+              </div>
+              ${isSelected ? '<span class="ing-slot-badge">当前基底</span>' : ''}
+            </button>
+          `;
+        })
+        .join('') + nextLockedBaseHtml;
 
     const slotNames = ['主调', '辅调', '顶料'];
-    addonGrid.innerHTML = ADDONS.map((a) => {
-      const idx = state.cup.addons.indexOf(a.id);
-      const isSelected = idx !== -1;
-      return `
-        <button
-          type="button"
-          class="ing-card pov-prop-item ${isSelected ? 'selected' : ''}"
-          data-addon-id="${a.id}"
-          draggable="true"
-          title="点击或拖向中央杯子加入【${a.name}】：${a.desc}"
-        >
+    const nextLockedAddonHtml = lockedAddons.length
+      ? `
+        <div class="ing-card pov-prop-item locked-prop-teaser" title="继续完成客人订单升级吧台即可解锁【${lockedAddons[0].name}】">
           <div class="pov-prop-thumb-wrap">
-            <img class="pov-prop-img" src="${a.propImg}" alt="${a.name}" draggable="false" />
-            <span class="prop-color-dot" style="background:${a.color};"></span>
+            <img class="pov-prop-img locked-silhouette" src="${lockedAddons[0].propImg}" alt="待解锁" draggable="false" />
+            <span class="lock-overlay-badge">🔒 Lv.${lockedAddons[0].unlockLevel}</span>
           </div>
           <div class="ing-meta">
-            <span class="ing-name">${a.name}</span>
-            <span class="ing-tags">${a.tags.slice(0, 2).join('·')}</span>
+            <span class="ing-name">待解锁配料</span>
+            <span class="ing-tags">${lockedAddons[0].name}</span>
           </div>
-          ${isSelected ? `<span class="ing-slot-badge">${slotNames[idx]}</span>` : ''}
-        </button>
-      `;
-    }).join('');
+        </div>
+      `
+      : '';
+
+    addonGrid.innerHTML =
+      unlockedAddons
+        .map((a) => {
+          const idx = state.cup.addons.indexOf(a.id);
+          const isSelected = idx !== -1;
+          return `
+            <button
+              type="button"
+              class="ing-card pov-prop-item ${isSelected ? 'selected' : ''}"
+              data-addon-id="${a.id}"
+              title="按住左键拿起【${a.name}】移到杯口加入：${a.desc}"
+            >
+              <div class="pov-prop-thumb-wrap">
+                <img class="pov-prop-img" src="${a.propImg}" alt="${a.name}" draggable="false" />
+                <span class="prop-color-dot" style="background:${a.color};"></span>
+              </div>
+              <div class="ing-meta">
+                <span class="ing-name">${a.name}</span>
+                <span class="ing-tags">${a.tags.slice(0, 2).join('·')}</span>
+              </div>
+              ${isSelected ? `<span class="ing-slot-badge">${slotNames[idx]}</span>` : ''}
+            </button>
+          `;
+        })
+        .join('') + nextLockedAddonHtml;
 
     const counterHint = document.getElementById('addon-counter-hint');
-    if (counterHint) counterHint.textContent = `已加 ${state.cup.addons.length} / 3 项 (再次点击可撤回)`;
+    if (counterHint) counterHint.textContent = `已加 ${state.cup.addons.length} / 3 项 (按住左键拿起倾倒)`;
 
     document.getElementById('btn-temp-hot').classList.toggle('active', state.cup.temp === 'hot');
     document.getElementById('btn-temp-iced').classList.toggle('active', state.cup.temp === 'iced');
 
     baseGrid.querySelectorAll('[data-base-id]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        applyBaseSelection(btn.dataset.baseId);
-      });
-      btn.addEventListener('dragstart', (e) => {
-        e.dataTransfer.setData('text/plain', `base:${btn.dataset.baseId}`);
+      const bObj = BASES.find((x) => x.id === btn.dataset.baseId);
+      if (!bObj) return;
+      btn.addEventListener('pointerdown', (e) => {
+        startPointerGrabProp(e, {
+          kind: 'base',
+          id: bObj.id,
+          label: `倾倒：${bObj.name}`,
+          propImg: bObj.propImg,
+          color: bObj.cremaColor || bObj.color,
+          sourceEl: btn
+        });
       });
     });
 
     addonGrid.querySelectorAll('[data-addon-id]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        applyAddonSelection(btn.dataset.addonId, false);
-      });
-      btn.addEventListener('dragstart', (e) => {
-        e.dataTransfer.setData('text/plain', `addon:${btn.dataset.addonId}`);
+      const aObj = ADDONS.find((x) => x.id === btn.dataset.addonId);
+      if (!aObj) return;
+      btn.addEventListener('pointerdown', (e) => {
+        startPointerGrabProp(e, {
+          kind: 'addon',
+          id: aObj.id,
+          label: `加入：${aObj.name}`,
+          propImg: aObj.propImg,
+          color: aObj.color,
+          sourceEl: btn
+        });
       });
     });
   }
@@ -2393,12 +2717,13 @@
       const tempOk = state.cup.temp === order.temp;
       const baseOk = order.idealBases.includes(state.cup.base);
       const addonHits = state.cup.addons.filter((a) => order.idealAddons.includes(a)).length;
-      if (tempOk && baseOk && addonHits >= 2) {
+      const neededAddons = order.requiredAddonCount || 2;
+      if (tempOk && baseOk && addonHits >= neededAddons) {
         forecastText = '⭐⭐⭐ 契合度极高（直击心事！）';
       } else if (tempOk && (baseOk || addonHits >= 1)) {
         forecastText = '⭐⭐ 契合度良好';
       } else {
-        forecastText = '💡 建议参考左侧推理便签';
+        forecastText = '💡 建议参考上方点单小票';
       }
     }
     document.getElementById('match-forecast-badge').textContent = forecastText;
@@ -2497,7 +2822,9 @@
     if (baseMatched) rawScore += 32;
 
     const idealHits = state.cup.addons.filter((a) => order.idealAddons.includes(a)).length;
-    rawScore += Math.min(28, idealHits * 14);
+    const neededAddons = order.requiredAddonCount || 2;
+    const perAddonScore = neededAddons === 1 ? 28 : 14;
+    rawScore += Math.min(28, idealHits * perAddonScore);
 
     const dislikedHits = state.cup.addons.filter((a) =>
       (order.dislikedAddons || []).includes(a)
@@ -2583,7 +2910,9 @@
       newlyUnlockedRecipe = heroRecipe;
     }
 
-    // 更新存档数据
+    // 更新存档数据与吧台渐进升级判定
+    const prevLv = getBaristaLevel();
+    state.servedCount += 1;
     state.coins += coinReward;
     const hStat = state.heroineStats[heroine.id];
     hStat.visits += 1;
@@ -2591,8 +2920,20 @@
     if (tierKey === 'perfect' || hStat.visits >= 2) {
       hStat.unlockedPostcard = true;
     }
+    const newLv = getBaristaLevel();
     saveState();
     renderTopStats();
+    if (newLv > prevLv) {
+      renderStep1Ingredients();
+      const unlockMsgs = {
+        2: '🎉 吧台升至 Lv.2！新解锁【深烘意式浓缩壶、宇治抹茶碗、焦糖按压瓶、野生蜂蜜罐】！',
+        3: '🎉 吧台升至 Lv.3！新解锁【法式热可可铜壶、覆盆子果露瓶、香草奶油喷枪】！',
+        4: '👑 吧台升至 Lv.4 满级！新解锁【清爽气泡苏打虹吸瓶、锡兰肉桂粉筛罐】，全器具满贯！'
+      };
+      setTimeout(() => {
+        showToast(unlockMsgs[newLv] || `🎉 吧台升级到 Lv.${newLv}！新茶壶与配料已摆上吧台！`);
+      }, 450);
+    }
 
     // 填充品鉴结算弹窗
     document.getElementById('tasting-stars').textContent = stars;
@@ -2952,33 +3293,63 @@
     document.getElementById('btn-to-step-2').addEventListener('click', () => switchWorkbenchStep(2));
     document.getElementById('btn-to-step-3').addEventListener('click', () => switchWorkbenchStep(3));
 
-    // 5. 第一人称杯具温度、黄铜冰桶铲冰与清空
-    document.getElementById('btn-temp-hot').addEventListener('click', () => {
-      state.cup.temp = 'hot';
-      audio.playSteamSound();
-      renderStep1Ingredients();
-      updateLiveChalkboardPreview();
-      showToast('🔥 已换上手作暖白陶瓷热饮杯 (65°C)');
-    });
-    document.getElementById('btn-temp-iced').addEventListener('click', () => {
-      state.cup.temp = 'iced';
-      audio.playIceClinkSound();
-      triggerIceScoopAnimation();
-      renderStep1Ingredients();
-      updateLiveChalkboardPreview();
-      showToast('🧊 已换上高透棱纹冰饮玻璃杯 (4°C)');
-    });
-    const iceBucketBtn = document.getElementById('btn-ice-bucket-scoop');
-    if (iceBucketBtn) {
-      iceBucketBtn.addEventListener('click', () => {
-        state.cup.temp = 'iced';
-        audio.playIceClinkSound();
-        triggerIceScoopAnimation();
+    // 5. 第一人称按住左键拿起杯具、黄铜冰桶、拉花缸与成品杯交互
+    const toggleAllPropsBtn = document.getElementById('btn-toggle-all-props');
+    if (toggleAllPropsBtn) {
+      toggleAllPropsBtn.addEventListener('click', () => {
+        state.unlockAllProps = !state.unlockAllProps;
+        saveState();
+        renderTopStats();
+        renderHeroineAndOrder();
         renderStep1Ingredients();
         updateLiveChalkboardPreview();
-        showToast('🥄 哗啦！从黄铜冰桶铲入晶莹冰块，饮品已冰镇！');
+        showToast(
+          state.unlockAllProps
+            ? '🔓 已开启【全器具自由模式】：全部 6 款基底壶与 7 款配料瓶已摆上桌面！'
+            : '🌱 已切回【渐进解锁模式】：随完成订单杯数逐步解锁新茶壶与配料！'
+        );
       });
     }
+
+    const hotCupBtn = document.getElementById('btn-temp-hot');
+    if (hotCupBtn) {
+      hotCupBtn.addEventListener('pointerdown', (e) => {
+        startPointerGrabProp(e, {
+          kind: 'temp-hot',
+          label: '换上：热饮陶瓷杯',
+          propImg: 'assets/cafe/props/prop_cup_hot.webp',
+          color: '#D48C46',
+          sourceEl: hotCupBtn
+        });
+      });
+    }
+
+    const icedCupBtn = document.getElementById('btn-temp-iced');
+    if (icedCupBtn) {
+      icedCupBtn.addEventListener('pointerdown', (e) => {
+        startPointerGrabProp(e, {
+          kind: 'temp-iced',
+          label: '换上：冰饮玻璃杯',
+          propImg: 'assets/cafe/props/prop_cup_iced.webp',
+          color: '#7CE8FF',
+          sourceEl: icedCupBtn
+        });
+      });
+    }
+
+    const iceBucketBtn = document.getElementById('btn-ice-bucket-scoop');
+    if (iceBucketBtn) {
+      iceBucketBtn.addEventListener('pointerdown', (e) => {
+        startPointerGrabProp(e, {
+          kind: 'ice',
+          label: '铲入：晶莹冰块',
+          propImg: 'assets/cafe/props/prop_ice_bucket.webp',
+          color: '#7CE8FF',
+          sourceEl: iceBucketBtn
+        });
+      });
+    }
+
     document.getElementById('btn-reset-ingredients').addEventListener('click', () => {
       state.cup.addons = [];
       state.cup.extractBonus = 0;
@@ -2992,57 +3363,23 @@
       showToast('🗑️ 已将杯中液体倒进吧台水槽，拿取新杯重新调制');
     });
 
-    // 第一人称拖拽投料 (Drag & Drop Props onto Center Prep Mat)
-    const centerDropzone = document.getElementById('center-prep-dropzone');
-    if (centerDropzone) {
-      centerDropzone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        centerDropzone.classList.add('drag-over-cup');
-      });
-      centerDropzone.addEventListener('dragleave', () => {
-        centerDropzone.classList.remove('drag-over-cup');
-      });
-      centerDropzone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        centerDropzone.classList.remove('drag-over-cup');
-        const payload = e.dataTransfer.getData('text/plain') || '';
-        if (payload.startsWith('base:')) {
-          applyBaseSelection(payload.slice(5));
-        } else if (payload.startsWith('addon:')) {
-          applyAddonSelection(payload.slice(6), true);
-        }
-      });
-    }
-
-    // 第一人称拖拽成品杯直接递给吧台对面的女主 (Drag Cup to Customer to Serve)
+    // 按住左键拿起中央成品杯直接递给吧台对面的女主
     const draggableCup = document.getElementById('center-draggable-cup');
-    const heroineBox = document.getElementById('heroine-stage-box');
-    if (draggableCup && heroineBox) {
-      draggableCup.addEventListener('dragstart', (e) => {
-        e.dataTransfer.setData('text/plain', 'serve:cup');
-        heroineBox.classList.add('awaiting-serve-drop');
-      });
-      draggableCup.addEventListener('dragend', () => {
-        heroineBox.classList.remove('awaiting-serve-drop', 'hover-serve-drop');
-      });
-      heroineBox.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        heroineBox.classList.add('hover-serve-drop');
-      });
-      heroineBox.addEventListener('dragleave', () => {
-        heroineBox.classList.remove('hover-serve-drop');
-      });
-      heroineBox.addEventListener('drop', (e) => {
-        e.preventDefault();
-        heroineBox.classList.remove('awaiting-serve-drop', 'hover-serve-drop');
-        const payload = e.dataTransfer.getData('text/plain') || '';
-        if (payload === 'serve:cup') {
-          serveDrinkToHeroine();
-        }
+    if (draggableCup) {
+      draggableCup.addEventListener('pointerdown', (e) => {
+        if (e.target && e.target.closest && e.target.closest('#cup-top-latte-badge')) return;
+        const isIced = state.cup.temp === 'iced';
+        startPointerGrabProp(e, {
+          kind: 'serve-cup',
+          label: '递给吧台客人奉茶 🛎️',
+          propImg: isIced ? 'assets/cafe/props/prop_cup_iced.webp' : 'assets/cafe/props/prop_cup_hot.webp',
+          color: '#FFB347',
+          sourceEl: draggableCup
+        });
       });
     }
 
-    // 俯视杯口拉花放大镜弹窗开关
+    // 俯视杯口拉花放大镜弹窗开关 (拉花钢杯也支持按住左键拿起来移向杯口！)
     const openLatteLoupe = () => {
       const m = document.getElementById('modal-latte-loupe');
       if (m) m.classList.remove('hidden');
@@ -3059,7 +3396,17 @@
     const doneLatteBtn = document.getElementById('btn-done-latte-only');
     const serveFromLatteBtn = document.getElementById('btn-serve-from-latte');
 
-    if (openLoupeBtn) openLoupeBtn.addEventListener('click', openLatteLoupe);
+    if (openLoupeBtn) {
+      openLoupeBtn.addEventListener('pointerdown', (e) => {
+        startPointerGrabProp(e, {
+          kind: 'latte-pitcher',
+          label: '拿起拉花钢杯绘制奶泡 🎨',
+          propImg: 'assets/cafe/props/prop_latte_pitcher.webp',
+          color: '#FFF8EE',
+          sourceEl: openLoupeBtn
+        });
+      });
+    }
     if (topLatteBadge) topLatteBadge.addEventListener('click', openLatteLoupe);
     if (closeLoupeBtn) closeLoupeBtn.addEventListener('click', closeLatteLoupe);
     if (doneLatteBtn) doneLatteBtn.addEventListener('click', closeLatteLoupe);
