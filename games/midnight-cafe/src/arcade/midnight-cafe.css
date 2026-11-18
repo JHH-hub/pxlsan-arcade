@@ -3495,3 +3495,249 @@ body.pov-cafe-body {
   white-space: nowrap;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.75);
 }
+
+
+/* ============================================================================
+   V4 IMMERSIVE BAR COUNTER SCENE: 彻底去除纯色底框，所有器具直接立于手绘胡桃木吧台台面！
+   ============================================================================ */
+
+/* 减轻环境遮罩，让全屏手绘吧台与窗景100%清晰透亮 */
+.ambient-vignette {
+  opacity: 0.35 !important;
+}
+
+.pov-room-bg-layer .scene-backdrop-img {
+  object-position: center center !important;
+  filter: saturate(1.12) contrast(1.04) brightness(1.04) !important;
+}
+
+.pov-room-bg-layer .window-tint-layer {
+  opacity: 0.32 !important;
+}
+
+/* 顶部导航横梁改为半透明木纹毛玻璃，不压暗画面 */
+.cafe-top-beam {
+  background: rgba(24, 14, 9, 0.72) !important;
+  backdrop-filter: blur(10px) !important;
+  border-bottom: 1px solid rgba(255, 190, 105, 0.32) !important;
+}
+
+/* 下半屏操作台：彻底去掉纯色深棕背景块，直接露出全屏背景图下半部分的真实手绘木吧台台面！ */
+.pov-lower-workbench {
+  background: linear-gradient(
+    180deg,
+    rgba(20, 11, 6, 0.0) 0%,
+    rgba(24, 13, 7, 0.18) 22%,
+    rgba(18, 10, 5, 0.32) 100%
+  ) !important;
+  border-top: none !important;
+  box-shadow: none !important;
+  padding: 4px 22px 14px !important;
+}
+
+/* 顶部细长引导条：悬浮半透明胶囊，不遮挡吧台 */
+.workbench-hud-strip {
+  background: rgba(20, 11, 7, 0.62) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 196, 110, 0.35) !important;
+  border-radius: 999px !important;
+  padding: 4px 16px !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* 四大工位容器：去掉所有黑棕色纯色方框与边框，让器具直接摆在木头吧台上！ */
+.pov-station,
+.station-center-prep-mat {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 2px 6px 6px !important;
+  overflow: visible !important;
+}
+
+/* 工位底部增加一道立体木质托盘/台面阴影垫，增强器具立在木桌上的真实感 */
+.pov-station::after {
+  content: "";
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  bottom: 4px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(10, 5, 2, 0.55) 0%, rgba(10, 5, 2, 0) 75%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.pov-station > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* 工位小标题：做成精致的悬浮黄铜铭牌，不占面积 */
+.station-header-tag {
+  align-self: center;
+  display: inline-flex !important;
+  padding: 2px 12px !important;
+  margin-bottom: 2px !important;
+  border-radius: 999px !important;
+  background: rgba(22, 12, 7, 0.68) !important;
+  border: 1px solid rgba(255, 196, 110, 0.42) !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45) !important;
+  font-size: 11.5px !important;
+}
+
+/* ================= 器具去方框化：咖啡机、茶壶、糖浆瓶、杯具直接立在木吧台上 ================= */
+.machine-img-wrap {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.machine-img-wrap:hover {
+  box-shadow: none !important;
+  filter: drop-shadow(0 0 16px rgba(255, 195, 90, 0.65));
+}
+
+.prop-machine-img {
+  max-height: 182px !important;
+  filter: drop-shadow(0 14px 16px rgba(0, 0, 0, 0.82)) !important;
+}
+
+.mini-pressure-gauge {
+  background: rgba(20, 11, 7, 0.72) !important;
+  backdrop-filter: blur(6px) !important;
+  border: 1px solid rgba(255, 190, 100, 0.45) !important;
+}
+
+/* 冷热杯具与黄铜冰桶：无框直接陈列在吧台木面上 */
+.prop-cup-switch-btn {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  text-align: center !important;
+  gap: 2px !important;
+  padding: 2px !important;
+}
+
+.prop-cup-switch-btn img {
+  width: 68px !important;
+  height: 68px !important;
+  filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.8)) !important;
+}
+
+.prop-cup-switch-btn span {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(20, 11, 7, 0.78);
+  border: 1px solid rgba(212, 140, 70, 0.45);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.prop-cup-switch-btn.active img {
+  filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 14px rgba(255, 190, 80, 0.85)) !important;
+  transform: scale(1.08);
+}
+
+.prop-cup-switch-btn.active span {
+  background: linear-gradient(135deg, #d48c46, #7a4216);
+  border-color: #ffe082;
+  color: #fff;
+}
+
+/* 6款基底茶壶 & 7款糖浆泵瓶：去掉纯色方框，直接立在木吧台上 + 底部椭圆桌面接触阴影！ */
+.ing-card.pov-prop-item {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  position: relative;
+}
+
+/* 每个茶壶/瓶子底部的真实木桌面接触投影 */
+.ing-card.pov-prop-item .pov-prop-thumb-wrap::before {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  left: 14%;
+  right: 14%;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(8, 4, 1, 0.78) 0%, rgba(8, 4, 1, 0) 75%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.ing-card.pov-prop-item .pov-prop-img {
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.78)) !important;
+}
+
+.ing-card.pov-prop-item:hover {
+  box-shadow: none !important;
+  transform: translateY(-6px) scale(1.06) !important;
+}
+
+.ing-card.pov-prop-item:hover .pov-prop-img {
+  filter: drop-shadow(0 14px 16px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 14px rgba(255, 200, 95, 0.75)) !important;
+}
+
+.ing-card.pov-prop-item.selected .pov-prop-img {
+  filter: drop-shadow(0 12px 14px rgba(0, 0, 0, 0.82)) drop-shadow(0 0 16px rgba(255, 210, 90, 0.95)) !important;
+}
+
+/* 壶底小木牌名称签 */
+.ing-card.pov-prop-item .ing-meta {
+  background: rgba(22, 12, 7, 0.82);
+  border: 1px solid rgba(212, 140, 70, 0.5);
+  border-radius: 999px;
+  padding: 2px 10px;
+  margin-top: -4px;
+  z-index: 2;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+}
+
+.ing-card.pov-prop-item.selected .ing-meta {
+  background: linear-gradient(135deg, #c87d32, #6e3b14);
+  border-color: #ffe082;
+}
+
+.ing-card.pov-prop-item .ing-tags {
+  display: none !important; /* 隐藏繁琐小字标签，保持桌面像真实做菜游戏一样清爽 */
+}
+
+/* 中央调制主杯与拉花钢杯：同样无边框立在吧台中央杯垫上 */
+.latte-pitcher-trigger-btn {
+  background: rgba(24, 13, 7, 0.65) !important;
+  backdrop-filter: blur(6px) !important;
+  border: 1.5px solid rgba(255, 209, 102, 0.55) !important;
+  border-radius: 16px !important;
+}
+
+.pov-slots-bar .chalk-slot-item {
+  background: rgba(20, 11, 7, 0.72) !important;
+  backdrop-filter: blur(6px) !important;
+  border: 1px solid rgba(212, 140, 70, 0.4) !important;
+}
+
+/* 顾客点单区：改为通透的暖木毛玻璃挂牌，不挡背景窗景与黑胶架 */
+.pov-customer-order-board {
+  background: rgba(24, 14, 9, 0.72) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1.5px solid rgba(255, 195, 110, 0.48) !important;
+}
+
+
+/* 精准对齐 49% 吧台木台远端边缘：女主立在吧台后缘，所有器具立在下半屏实木吧台台面上 */
+.pov-upper-customer-zone {
+  flex: 0 0 45% !important;
+  max-height: 46% !important;
+  padding-bottom: 0 !important;
+}
+
+.pov-customer-center-stage {
+  padding-bottom: 0 !important;
+}
