@@ -11,6 +11,9 @@
   const MAX_PLAY_CARDS = 5;
   const MAX_MODULES = 5;
   const MAX_HEARTS = 5;
+  const HEART_BONUS_GOLD = 1; // 过关时每颗剩余红心额外奖励的铜钱
+  const SHOP_REROLL_COST = 3;
+  const ALL_HANDS_BOOK_CHANCE = 0.3; // 「全牌秘传书」每次进货的出现概率
 
   // =========================================================================
   // 1. WebAudio 零依赖合成器音效引擎 (支持升调连锁 pitch *= 1.08)
@@ -219,7 +222,7 @@
       attackSprite: 'assets/alchemist/states/marin_attack.webp',
       hitSprite: 'assets/alchemist/states/marin_hit.webp',
       criticalSprite: 'assets/alchemist/states/marin_critical.webp',
-      passiveDesc: '打出同花 / 同花顺时，基础倍率 +4',
+      passiveDesc: '打出同花 / 同花顺时，基础倍率 +5',
       activeSkillName: '红心染色',
       activeSkillDesc: '将当前选中的所有手牌统一染为 ♥ 红心（选 5 张即可直接凑出同花）',
       attackQuote: '「闪耀全场吧！这可是我最拿手的一手牌！」',
@@ -234,7 +237,7 @@
       attackSprite: 'assets/alchemist/states/kaguya_attack.webp',
       hitSprite: 'assets/alchemist/states/kaguya_hit.webp',
       criticalSprite: 'assets/alchemist/states/kaguya_critical.webp',
-      passiveDesc: '每打出一张 J / Q / K / A 人头牌，额外 +15 伤害与 +1 倍率',
+      passiveDesc: '每张计分的 J / Q / K / A 人头牌，额外 +8 伤害与 +1 倍率',
       activeSkillName: '恢复与换牌',
       activeSkillDesc: '立即恢复 1 颗红心 ❤️，并获得 +2 次弃牌机会',
       attackQuote: '「真是可爱呢——这一手牌我已经算准了。」',
@@ -249,7 +252,7 @@
       attackSprite: 'assets/alchemist/states/kuroneko_attack.webp',
       hitSprite: 'assets/alchemist/states/kuroneko_hit.webp',
       criticalSprite: 'assets/alchemist/states/kuroneko_critical.webp',
-      passiveDesc: '打出四条 / 满堂红时，最终总倍率额外 ×1.35',
+      passiveDesc: '打出三条 / 四条 / 满堂红时，总倍率额外 ×1.5',
       activeSkillName: '复制手牌',
       activeSkillDesc: '将选中的第 1 张牌复制一张相同点数的牌加入手牌（方便凑三条/四条）',
       attackQuote: '「哼哼，听从号令吧，看我用这一手牌击败你！」',
@@ -264,7 +267,7 @@
       attackSprite: 'assets/alchemist/states/aili_attack.webp',
       hitSprite: 'assets/alchemist/states/aili_hit.webp',
       criticalSprite: 'assets/alchemist/states/aili_critical.webp',
-      passiveDesc: '打出顺子 / 两对时，额外获得 +35 伤害与 +3 倍率',
+      passiveDesc: '打出顺子 / 两对 / 同花顺时，额外获得 +25 伤害与 +2 倍率',
       activeSkillName: '王牌升阶',
       activeSkillDesc: '将当前选中的扑克牌全部升阶为 A (14点，+11伤)',
       attackQuote: '「别小看人！看我用这一击把你彻底轰飞！」',
@@ -279,7 +282,7 @@
       attackSprite: 'assets/alchemist/states/qianhe_attack.webp',
       hitSprite: 'assets/alchemist/states/qianhe_hit.webp',
       criticalSprite: 'assets/alchemist/states/qianhe_critical.webp',
-      passiveDesc: '每剩余 1 次弃牌机会，出牌时额外提供 +25 基础伤害',
+      passiveDesc: '每剩余 1 次弃牌机会，出牌时额外提供 +12 基础伤害',
       activeSkillName: '赏金补给',
       activeSkillDesc: '立即获得 +3 铜钱与 +2 次弃牌机会',
       attackQuote: '「全力以赴的演出，现在才刚刚进入高潮！」',
@@ -294,7 +297,7 @@
       attackSprite: 'assets/alchemist/states/mai_attack.webp',
       hitSprite: 'assets/alchemist/states/mai_hit.webp',
       criticalSprite: 'assets/alchemist/states/mai_critical.webp',
-      passiveDesc: '每打出一张 ♠ 黑桃或 ♣ 梅花牌，额外 +12 伤害与 +1 倍率',
+      passiveDesc: '每张计分的 ♠ 黑桃或 ♣ 梅花牌，额外 +6 伤害与 +1 倍率',
       activeSkillName: '黑桃染色',
       activeSkillDesc: '将当前选中的所有手牌统一染为 ♠ 黑桃',
       attackQuote: '「看好了，这可是只为你一人准备的一手好牌。」',
@@ -309,7 +312,7 @@
       attackSprite: 'assets/alchemist/states/yukino_attack.webp',
       hitSprite: 'assets/alchemist/states/yukino_hit.webp',
       criticalSprite: 'assets/alchemist/states/yukino_critical.webp',
-      passiveDesc: '打出三条 / 四条 / 同花顺时，基础伤害 +45、倍率 +3',
+      passiveDesc: '打出三条 / 四条 / 同花顺时，基础伤害 +30、倍率 +2',
       activeSkillName: '弱点破防',
       activeSkillDesc: '直接削减当前对手 20% 最大生命值',
       attackQuote: '「毫无破绽的一手牌——就此分出胜负吧。」',
@@ -479,7 +482,9 @@
       name: '同花顺',
       condDesc: '5 张同花色且点数连续的扑克牌',
       basePixels: 100,
-      baseMult: 8
+      baseMult: 8,
+      lvPixels: 40,
+      lvMult: 4
     },
     {
       id: 'four_bomb',
@@ -489,7 +494,9 @@
       name: '四条 (炸弹)',
       condDesc: '4 张相同点数的扑克牌（炸弹）',
       basePixels: 60,
-      baseMult: 7
+      baseMult: 7,
+      lvPixels: 30,
+      lvMult: 3
     },
     {
       id: 'full_house',
@@ -499,7 +506,9 @@
       name: '满堂红 (葫芦)',
       condDesc: '3 张同点数 + 2 张同点数（葫芦/三带二）',
       basePixels: 40,
-      baseMult: 4
+      baseMult: 4,
+      lvPixels: 25,
+      lvMult: 2
     },
     {
       id: 'flush_five',
@@ -509,7 +518,9 @@
       name: '同花',
       condDesc: '5 张相同花色的扑克牌（♠/♥/♣/♦）',
       basePixels: 35,
-      baseMult: 4
+      baseMult: 4,
+      lvPixels: 15,
+      lvMult: 2
     },
     {
       id: 'straight_five',
@@ -519,7 +530,9 @@
       name: '顺子',
       condDesc: '5 张点数连续的扑克牌（如 10-J-Q-K-A 或 A-2-3-4-5）',
       basePixels: 30,
-      baseMult: 4
+      baseMult: 4,
+      lvPixels: 30,
+      lvMult: 3
     },
     {
       id: 'three_kind',
@@ -529,7 +542,9 @@
       name: '三条',
       condDesc: '包含 3 张相同点数的扑克牌',
       basePixels: 30,
-      baseMult: 3
+      baseMult: 3,
+      lvPixels: 20,
+      lvMult: 2
     },
     {
       id: 'two_pair',
@@ -539,7 +554,9 @@
       name: '两对',
       condDesc: '包含 2 组不同点数的对子',
       basePixels: 20,
-      baseMult: 2
+      baseMult: 2,
+      lvPixels: 20,
+      lvMult: 1
     },
     {
       id: 'one_pair',
@@ -549,7 +566,9 @@
       name: '对子',
       condDesc: '包含 2 张相同点数的扑克牌',
       basePixels: 10,
-      baseMult: 2
+      baseMult: 2,
+      lvPixels: 15,
+      lvMult: 1
     },
     {
       id: 'high_card',
@@ -559,7 +578,9 @@
       name: '高牌',
       condDesc: '未凑成以上牌型的单牌或散牌',
       basePixels: 5,
-      baseMult: 1
+      baseMult: 1,
+      lvPixels: 10,
+      lvMult: 1
     }
   ];
 
@@ -653,19 +674,19 @@
   // 6. 12 件随身宝物道具库（白·普通 / 蓝·稀有 / 紫·史诗 / 红·传说 4 档品质，不同价格、权重与回收价）
   // =========================================================================
   const JOKER_MODULES_DB = [
-    // ---------- ⚪ 白色品质（普通 · 出现概率最高 45% · 售价 4 · 出售 +2） ----------
+    // ---------- ⚪ 白色品质（普通 · 出现概率最高 45% · 售价 5 · 出售 +2） ----------
     {
       id: 'mod_cfg_stabilizer',
       name: '星辰罗盘',
       rarity: 'white',
       rarityLabel: '普通',
       weight: 45,
-      icon: 'assets/alchemist/jokers/mod_cfg_stabilizer.webp?v=27',
-      cost: 4,
+      icon: 'assets/alchemist/jokers/mod_cfg_stabilizer.webp?v=32',
+      cost: 5,
       sellPrice: 2,
-      desc: '任何出牌无条件提供 +6 固定倍率',
+      desc: '任何出牌无条件提供 +3 固定倍率',
       effectType: 'flat_mult',
-      val: 6
+      val: 3
     },
     {
       id: 'mod_dpm_karras',
@@ -674,11 +695,11 @@
       rarityLabel: '普通',
       weight: 45,
       icon: 'assets/alchemist/jokers/mod_dpm_karras.webp?v=27',
-      cost: 4,
+      cost: 5,
       sellPrice: 2,
-      desc: '任何出牌无条件提供 +50 固定伤害',
+      desc: '任何出牌无条件提供 +30 固定伤害',
       effectType: 'flat_pixels',
-      val: 50
+      val: 30
     },
     {
       id: 'mod_vram_miner',
@@ -687,15 +708,15 @@
       rarityLabel: '普通',
       weight: 45,
       icon: 'assets/alchemist/jokers/mod_vram_miner.webp?v=27',
-      cost: 4,
+      cost: 5,
       sellPrice: 2,
-      desc: '每过一关额外获得 +5 铜钱，且出牌时总倍率 +3',
+      desc: '每过一关额外获得 +4 铜钱，且出牌时总倍率 +2',
       effectType: 'economy_mult',
-      val: 3,
-      bonusGold: 5
+      val: 2,
+      bonusGold: 4
     },
 
-    // ---------- 🔵 蓝色品质（稀有 · 出现概率 30% · 售价 6 · 出售 +3） ----------
+    // ---------- 🔵 蓝色品质（稀有 · 出现概率 30% · 售价 7 · 出售 +3） ----------
     {
       id: 'mod_anima_core',
       name: '黄玉戒指',
@@ -703,12 +724,12 @@
       rarityLabel: '稀有',
       weight: 30,
       icon: 'assets/alchemist/jokers/mod_anima_core.webp?v=27',
-      cost: 6,
+      cost: 7,
       sellPrice: 3,
-      desc: '每打出一张 ♦ 方片牌，额外 +4 倍率',
+      desc: '每张计分的 ♦ 方片牌，额外 +3 倍率',
       effectType: 'per_suit_mult',
       targetPokerSuit: 'diamond',
-      val: 4
+      val: 3
     },
     {
       id: 'mod_noobai_xl',
@@ -717,12 +738,12 @@
       rarityLabel: '稀有',
       weight: 30,
       icon: 'assets/alchemist/jokers/mod_noobai_xl.webp?v=27',
-      cost: 6,
+      cost: 7,
       sellPrice: 3,
-      desc: '每打出一张 ♥ 红心牌，额外 +30 伤害',
+      desc: '每张计分的 ♥ 红心牌，额外 +25 伤害',
       effectType: 'per_suit_pixels',
       targetPokerSuit: 'heart',
-      val: 30
+      val: 25
     },
     {
       id: 'mod_ray_tracing',
@@ -731,15 +752,15 @@
       rarityLabel: '稀有',
       weight: 30,
       icon: 'assets/alchemist/jokers/mod_ray_tracing.webp?v=27',
-      cost: 6,
+      cost: 7,
       sellPrice: 3,
-      desc: '每打出一张 ♠ 黑桃或 ♣ 梅花牌，+18 伤害与 +2 倍率',
+      desc: '每张计分的 ♠ 黑桃或 ♣ 梅花牌，+10 伤害与 +1 倍率',
       effectType: 'per_black_suit_hybrid',
-      valPixels: 18,
-      valMult: 2
+      valPixels: 10,
+      valMult: 1
     },
 
-    // ---------- 🟣 紫色品质（史诗 · 出现概率 18% · 售价 9 · 出售 +5） ----------
+    // ---------- 🟣 紫色品质（史诗 · 出现概率 18% · 售价 9 · 出售 +4） ----------
     {
       id: 'mod_adetailer',
       name: '黄金王冠',
@@ -748,11 +769,11 @@
       weight: 18,
       icon: 'assets/alchemist/jokers/mod_adetailer.webp?v=27',
       cost: 9,
-      sellPrice: 5,
-      desc: '每打出一张 J / Q / K / A 人头牌，+25 伤害与 +4 倍率',
+      sellPrice: 4,
+      desc: '每张计分的 J / Q / K / A 人头牌，+15 伤害与 +2 倍率',
       effectType: 'face_card_boost',
-      valPixels: 25,
-      valMult: 4
+      valPixels: 15,
+      valMult: 2
     },
     {
       id: 'mod_controlnet_pose',
@@ -762,11 +783,11 @@
       weight: 18,
       icon: 'assets/alchemist/jokers/mod_controlnet_pose.webp?v=27',
       cost: 9,
-      sellPrice: 5,
-      desc: '出牌基础伤害 +20，打出对子及以上牌型时总倍率 ×1.3',
+      sellPrice: 4,
+      desc: '出牌基础伤害 +20，打出对子及以上牌型时总倍率 ×1.25',
       effectType: 'starter_abacus_boost',
       valPixels: 20,
-      val: 1.3
+      val: 1.25
     },
     {
       id: 'mod_vram_cooler',
@@ -776,13 +797,13 @@
       weight: 18,
       icon: 'assets/alchemist/jokers/mod_vram_cooler.webp?v=27',
       cost: 9,
-      sellPrice: 5,
-      desc: '每剩余 1 次弃牌机会，出牌时总倍率 +4',
+      sellPrice: 4,
+      desc: '每剩余 1 次弃牌机会，出牌时总倍率 +3',
       effectType: 'reroll_scaling_mult',
-      val: 4
+      val: 3
     },
 
-    // ---------- 🔴 红色品质（传说 · 出现概率最低 7% · 售价 13 · 出售 +7） ----------
+    // ---------- 🔴 红色品质（传说 · 出现概率最低 7% · 售价 12 · 出售 +6） ----------
     {
       id: 'mod_hires_fix',
       name: '翡翠羽扇',
@@ -790,11 +811,11 @@
       rarityLabel: '传说',
       weight: 7,
       icon: 'assets/alchemist/jokers/mod_hires_fix.webp?v=27',
-      cost: 13,
-      sellPrice: 7,
-      desc: '打出顺子 / 同花 / 满堂红或 5 张牌时，总倍率 ×1.65',
+      cost: 12,
+      sellPrice: 6,
+      desc: '打出顺子 / 同花 / 满堂红或 5 张牌时，总倍率 ×1.5',
       effectType: 'five_cards_xmult',
-      val: 1.65
+      val: 1.5
     },
     {
       id: 'mod_lazypos_v2',
@@ -803,8 +824,8 @@
       rarityLabel: '传说',
       weight: 7,
       icon: 'assets/alchemist/jokers/mod_lazypos_v2.webp?v=27',
-      cost: 13,
-      sellPrice: 7,
+      cost: 12,
+      sellPrice: 6,
       desc: '每次出牌攻击时，总倍率无条件 ×1.5',
       effectType: 'global_xmult',
       val: 1.5
@@ -816,11 +837,11 @@
       rarityLabel: '传说',
       weight: 7,
       icon: 'assets/alchemist/jokers/mod_lora_stack.webp?v=27',
-      cost: 13,
-      sellPrice: 7,
-      desc: '打出对子 / 两对 / 三条 / 满堂红 / 四条时，总倍率 ×1.6',
+      cost: 12,
+      sellPrice: 6,
+      desc: '打出对子 / 两对 / 三条 / 满堂红 / 四条时，总倍率 ×1.5',
       effectType: 'multi_char_xmult',
-      val: 1.6
+      val: 1.5
     }
   ];
 
@@ -839,8 +860,8 @@
       bossHitSprite: 'assets/alchemist/monsters/boss_01_hit.webp',
       bossCriticalSprite: 'assets/alchemist/monsters/boss_01_critical.webp',
       ruleDesc: '💋 敌方技能【甜腻偷心】：若单次出牌只是「高牌散牌」，会被莉莉姆偷走 1 枚铜钱！凑出对子以上痛击她！',
-      targetScore: 300,
-      rewardGold: 7,
+      targetScore: 1000,
+      rewardGold: 4,
       bossRule: 'steal_coin_on_highcard'
     },
     {
@@ -854,8 +875,8 @@
       bossHitSprite: 'assets/alchemist/monsters/boss_02_hit.webp',
       bossCriticalSprite: 'assets/alchemist/monsters/boss_02_critical.webp',
       ruleDesc: '🍷 敌方技能【夜宴侍奉】：惧怕圣银寒光，所有【♠ 黑桃 / ♣ 梅花】扑克牌基础伤害额外 +10',
-      targetScore: 520,
-      rewardGold: 8,
+      targetScore: 2200,
+      rewardGold: 5,
       bossRule: 'light_bonus_pixels'
     },
     {
@@ -869,8 +890,8 @@
       bossHitSprite: 'assets/alchemist/monsters/boss_03_hit.webp',
       bossCriticalSprite: 'assets/alchemist/monsters/boss_03_critical.webp',
       ruleDesc: '⛓️ 魔将技能【嫉妒锁链】：封锁手牌上限，单次最多只能出 4 张牌！（4张连号即可触发顺子、4张同花即可触发同花）',
-      targetScore: 850,
-      rewardGold: 11,
+      targetScore: 3400,
+      rewardGold: 7,
       bossRule: 'max_4_cards'
     },
     {
@@ -884,8 +905,8 @@
       bossHitSprite: 'assets/alchemist/monsters/boss_04_hit.webp',
       bossCriticalSprite: 'assets/alchemist/monsters/boss_04_critical.webp',
       ruleDesc: '🦊 敌方技能【狐火倾城】：与人头牌共鸣，所有【J / Q / K / A】人头牌额外提供 +15 伤害！',
-      targetScore: 1250,
-      rewardGold: 9,
+      targetScore: 5600,
+      rewardGold: 5,
       bossRule: 'face_bonus_pixels'
     },
     {
@@ -898,9 +919,9 @@
       bossAttackSprite: 'assets/alchemist/monsters/boss_05_attack.webp',
       bossHitSprite: 'assets/alchemist/monsters/boss_05_hit.webp',
       bossCriticalSprite: 'assets/alchemist/monsters/boss_05_critical.webp',
-      ruleDesc: '✝️ 敌方技能【背德告解】：所有【♥ 红心 / ♦ 方片】扑克牌额外提供 +2 倍率',
-      targetScore: 1750,
-      rewardGold: 10,
+      ruleDesc: '✝️ 敌方技能【背德告解】：所有计分的【♥ 红心 / ♦ 方片】扑克牌额外提供 +1 倍率',
+      targetScore: 7400,
+      rewardGold: 6,
       bossRule: 'char_bonus_mult'
     },
     {
@@ -914,8 +935,8 @@
       bossHitSprite: 'assets/alchemist/monsters/boss_06_hit.webp',
       bossCriticalSprite: 'assets/alchemist/monsters/boss_06_critical.webp',
       ruleDesc: '⏱️ 魔将技能【催眠怀表】：精神暗示下，唯有打出【顺子 / 同花 / 满堂红 / 四条炸弹 / 同花顺】可破除催眠并额外 +4 倍率！',
-      targetScore: 2500,
-      rewardGold: 13,
+      targetScore: 7200,
+      rewardGold: 8,
       bossRule: 'triad_boost'
     },
     {
@@ -928,9 +949,11 @@
       bossAttackSprite: 'assets/alchemist/monsters/boss_07_attack.webp',
       bossHitSprite: 'assets/alchemist/monsters/boss_07_hit.webp',
       bossCriticalSprite: 'assets/alchemist/monsters/boss_07_critical.webp',
-      ruleDesc: '🩸 敌方技能【背德圣咏】：若单次出牌伤害低于 220，黑化圣女会吸收魔力回复 70 HP！打出高倍大招一举击穿她！',
-      targetScore: 3400,
-      rewardGold: 12,
+      ruleDesc: '🩸 敌方技能【背德圣咏】：若单次出牌伤害低于 1500，黑化圣女会吸收魔力回复 500 HP！打出高倍大招一举击穿她！',
+      regenThreshold: 1500,
+      regenHeal: 500,
+      targetScore: 7600,
+      rewardGold: 6,
       bossRule: 'boss_regen_low_hit'
     },
     {
@@ -944,8 +967,8 @@
       bossHitSprite: 'assets/alchemist/monsters/boss_08_hit.webp',
       bossCriticalSprite: 'assets/alchemist/monsters/boss_08_critical.webp',
       ruleDesc: '🐉 魔将技能【龙威激流】：战场魔力沸腾，所有扑克牌基础伤害 +15，尽情打出高倍连击！',
-      targetScore: 4600,
-      rewardGold: 14,
+      targetScore: 9600,
+      rewardGold: 7,
       bossRule: 'all_pixels_25'
     },
     {
@@ -959,8 +982,8 @@
       bossHitSprite: 'assets/alchemist/monsters/boss_09_hit.webp',
       bossCriticalSprite: 'assets/alchemist/monsters/boss_09_critical.webp',
       ruleDesc: '👑 魔王技能【掠夺契约项圈】：单牌散牌倍率被彻底压制！打出高牌时最终倍率固定为 1！唯有依靠主角被动天赋、圣遗物与高阶牌型斩断契约击败魔王！',
-      targetScore: 6200,
-      rewardGold: 20,
+      targetScore: 10000,
+      rewardGold: 10,
       bossRule: 'final_boss_audit'
     }
   ];
@@ -977,6 +1000,7 @@
           unlockedCgs: Array.isArray(parsed.unlockedCgs) ? parsed.unlockedCgs : ['cg_takagi_school'],
           bestHandScore: Number(parsed.bestHandScore) || 0,
           bestStageCleared: Number(parsed.bestStageCleared) || 0,
+          bestStageReached: Number(parsed.bestStageReached) || Math.min(99, (Number(parsed.bestStageCleared) || 0) + 1),
           totalRunsWon: Number(parsed.totalRunsWon) || 0,
           crtEnabled: parsed.crtEnabled !== false,
           soundEnabled: parsed.soundEnabled !== false,
@@ -988,6 +1012,7 @@
       unlockedCgs: ['cg_takagi_school'],
       bestHandScore: 0,
       bestStageCleared: 0,
+      bestStageReached: 1,
       totalRunsWon: 0,
       crtEnabled: true,
       soundEnabled: true,
@@ -1145,10 +1170,22 @@
       bossSprite: `assets/alchemist/monsters/boss_0${bossIdx}_anim.webp`,
       bossAttackSprite: `assets/alchemist/monsters/boss_0${bossIdx}_attack.webp`,
       ruleDesc: '🔥 深渊狂暴环境：魔王生命值飙升，利用顺势转、三才两合与四方已定极限突破！',
-      targetScore: Math.round(6000 * Math.pow(1.4, extra)),
+      targetScore: getEndlessTarget(extra),
       rewardGold: 15,
       bossRule: 'triad_boost'
     };
+  }
+
+  // 无尽深渊：以第 9 关魔王血量为基准，每一波 ×1.5 递增（百位取整）
+  function getEndlessTarget(wave) {
+    const base = BLIND_STAGES[BLIND_STAGES.length - 1].targetScore;
+    return Math.round((base * Math.pow(1.5, wave)) / 100) * 100;
+  }
+
+  // 第 7 关【背德圣咏】：单手伤害低于阈值时魔物回血（数值写在关卡配置中，说明文字同步引用）
+  function getRegenThreshold(kind) {
+    const cfg = getStageConfig();
+    return kind === 'heal' ? cfg.regenHeal || 0 : cfg.regenThreshold || 0;
   }
 
   function getMaxPlayableCards() {
@@ -1294,8 +1331,8 @@
 
     const level = state.synergyLevels[matched.id] || 1;
     const cfg = getStageConfig();
-    let bonusPixels = (level - 1) * 20;
-    let bonusMult = (level - 1) * 2;
+    let bonusPixels = (level - 1) * (matched.lvPixels || 0);
+    let bonusMult = (level - 1) * (matched.lvMult || 0);
 
     if (
       cfg.bossRule === 'triad_boost' &&
@@ -1320,6 +1357,46 @@
     };
   }
 
+  // 计分牌判定（参考 Balatro）：只有真正组成牌型的牌才计入点数与宝物/主角的逐张加成
+  //   - 高牌：仅最大的 1 张；对子/三条/四条：仅同点数的那几张；两对：两组对子共 4 张
+  //   - 顺子/同花/满堂红/同花顺：打出的全部牌
+  function getScoringCards(selectedCards, syn) {
+    if (!selectedCards || selectedCards.length === 0 || !syn) return [];
+    if (['straight_flush', 'flush_five', 'straight_five', 'full_house'].includes(syn.id)) {
+      return selectedCards.slice();
+    }
+    const wilds = selectedCards.filter((c) => c.isWild);
+    const groups = {};
+    selectedCards.forEach((c) => {
+      if (c.isWild) return;
+      const r = c.rank || 10;
+      (groups[r] = groups[r] || []).push(c);
+    });
+    // 按「数量多 → 点数大」排序
+    const ordered = Object.keys(groups)
+      .map(Number)
+      .sort((a, b) => groups[b].length - groups[a].length || b - a);
+    let picked = [];
+    if (syn.id === 'high_card') {
+      picked = ordered.length > 0 ? [groups[ordered.sort((a, b) => b - a)[0]][0]] : [];
+    } else if (syn.id === 'two_pair') {
+      const pairRanks = ordered.filter((r) => groups[r].length >= 2).slice(0, 2);
+      pairRanks.forEach((r) => {
+        picked = picked.concat(groups[r]);
+      });
+      if (pairRanks.length < 2 && ordered.length > pairRanks.length) {
+        // 百搭牌补出的第二对：再取一组最大的单张
+        const extra = ordered.find((r) => !pairRanks.includes(r));
+        if (extra !== undefined) picked = picked.concat(groups[extra]);
+      }
+    } else if (ordered.length > 0) {
+      // one_pair / three_kind / four_bomb：取数量最多（同数量取点数最大）的那组
+      picked = groups[ordered[0]].slice();
+    }
+    const scoringSet = new Set(picked.concat(wilds));
+    return selectedCards.filter((c) => scoringSet.has(c));
+  }
+
   // 计算单张扑克牌在当前场地的实际伤害贡献
   function computeCardContribution(card) {
     const cfg = getStageConfig();
@@ -1339,7 +1416,7 @@
       pix += 15;
     }
     if (cfg.bossRule === 'char_bonus_mult' && (card.pokerSuit === 'heart' || card.pokerSuit === 'diamond')) {
-      mult += 2;
+      mult += 1;
     }
 
     return { pixels: pix, mult, xMult, wasPurified: false };
@@ -1352,7 +1429,7 @@
   function computeHandScore(selectedCards) {
     const syn = evaluatePromptSynergy(selectedCards);
     if (!syn) {
-      return { pixels: 0, mult: 0, total: 0, synergy: null, steps: [] };
+      return { pixels: 0, mult: 0, total: 0, synergy: null, scoringCards: [], steps: [] };
     }
 
     const steps = [];
@@ -1360,8 +1437,9 @@
     let mult = syn.computedMult;
     const pushStep = (step) => steps.push({ ...step, pixels, mult });
 
-    // 1. 逐张扑克牌点数结算
-    selectedCards.forEach((card) => {
+    // 1. 逐张扑克牌点数结算（仅计分牌：组成牌型的牌，其余陪打的散牌不计点数）
+    const scoringCards = getScoringCards(selectedCards, syn);
+    scoringCards.forEach((card) => {
       const c = computeCardContribution(card);
       pixels += c.pixels;
       mult += c.mult;
@@ -1373,7 +1451,7 @@
 
     const pokerSuitCounts = { spade: 0, heart: 0, club: 0, diamond: 0 };
     let faceCount = 0;
-    selectedCards.forEach((c) => {
+    scoringCards.forEach((c) => {
       if (c.pokerSuit) pokerSuitCounts[c.pokerSuit] = (pokerSuitCounts[c.pokerSuit] || 0) + 1;
       if (c.isFace) faceCount += 1;
     });
@@ -1397,31 +1475,31 @@
       mult += 2;
       heroText = '+2 倍率';
     } else if (hero.key === 'marin' && ['flush_five', 'straight_flush'].includes(syn.id)) {
-      mult += 4;
-      heroText = '+4 倍率';
+      mult += 5;
+      heroText = '+5 倍率';
     } else if (hero.key === 'kaguya' && faceCount > 0) {
-      pixels += faceCount * 15;
+      pixels += faceCount * 8;
       mult += faceCount * 1;
-      heroText = `+${faceCount * 15}伤 +${faceCount}倍`;
-    } else if (hero.key === 'kuroneko' && ['four_bomb', 'full_house'].includes(syn.id)) {
-      mult = round1(mult * 1.35);
-      heroText = '×1.35 倍率!';
+      heroText = `+${faceCount * 8}伤 +${faceCount}倍`;
+    } else if (hero.key === 'kuroneko' && ['three_kind', 'four_bomb', 'full_house'].includes(syn.id)) {
+      mult = round1(mult * 1.5);
+      heroText = '×1.5 倍率!';
       heroIsX = true;
     } else if (hero.key === 'aili' && ['straight_five', 'straight_flush', 'two_pair'].includes(syn.id)) {
-      pixels += 35;
-      mult += 3;
-      heroText = '+35伤 +3倍';
+      pixels += 25;
+      mult += 2;
+      heroText = '+25伤 +2倍';
     } else if (hero.key === 'qianhe' && state.rerollsLeft > 0) {
-      pixels += state.rerollsLeft * 25;
-      heroText = `+${state.rerollsLeft * 25} 伤害`;
+      pixels += state.rerollsLeft * 12;
+      heroText = `+${state.rerollsLeft * 12} 伤害`;
     } else if (hero.key === 'mai' && blackCnt > 0) {
-      pixels += blackCnt * 12;
+      pixels += blackCnt * 6;
       mult += blackCnt * 1;
-      heroText = `+${blackCnt * 12}伤 +${blackCnt}倍`;
+      heroText = `+${blackCnt * 6}伤 +${blackCnt}倍`;
     } else if (hero.key === 'yukino' && ['three_kind', 'four_bomb', 'straight_flush'].includes(syn.id)) {
-      pixels += 45;
-      mult += 3;
-      heroText = '+45伤 +3倍';
+      pixels += 30;
+      mult += 2;
+      heroText = '+30伤 +2倍';
     }
     if (heroText) {
       pushStep({ kind: 'hero', text: `🌟 ${hero.shortName}天赋 ${heroText}`, isX: heroIsX });
@@ -1514,6 +1592,7 @@
       mult: round1(mult),
       total,
       synergy: syn,
+      scoringCards,
       steps
     };
   }
@@ -1529,7 +1608,7 @@
   }
 
   function suggestBestHand() {
-    if (state.isAnimating) return;
+    if (state.isAnimating || state.runOver) return;
     const pool = getHintableCards();
     if (pool.length === 0) {
       sfx.playGlitchBuzz();
@@ -2036,10 +2115,10 @@
     sortHandByRankDesc();
     renderHandCards();
 
-    dom.btnPlayHand.disabled = state.isAnimating || selected.length === 0 || state.rendersLeft <= 0;
-    dom.btnDiscard.disabled = state.isAnimating || selected.length === 0 || state.rerollsLeft <= 0;
+    dom.btnPlayHand.disabled = state.isAnimating || state.runOver || selected.length === 0 || state.rendersLeft <= 0;
+    dom.btnDiscard.disabled = state.isAnimating || state.runOver || selected.length === 0 || state.rerollsLeft <= 0;
     if (dom.btnSuggestBest) {
-      dom.btnSuggestBest.disabled = state.isAnimating || getHintableCards().length === 0;
+      dom.btnSuggestBest.disabled = state.isAnimating || state.runOver || getHintableCards().length === 0;
     }
   }
 
@@ -2120,8 +2199,17 @@
     if (!dom.holoHandRow) return;
     dom.holoHandRow.innerHTML = '';
 
+    // 选中但不参与计分的陪打牌（如高牌/对子之外的散牌）以半透明显示，提示玩家只有计分牌才加伤害
+    const selectedNow = getSelectedCardsInOrder();
+    let scoringIds = null;
+    if (!state.isAnimating && selectedNow.length > 0 && !selectedNow.some((c) => c.isFaceDown)) {
+      const synNow = evaluatePromptSynergy(selectedNow);
+      scoringIds = new Set(getScoringCards(selectedNow, synNow).map((c) => c.instanceId));
+    }
+
     state.hand.forEach((card) => {
       const isSelected = state.selectedInstanceIds.has(card.instanceId);
+      const isNonScoring = isSelected && scoringIds && !scoringIds.has(card.instanceId);
       const contrib = computeCardContribution(card);
       const isFaceDown = !!card.isFaceDown;
 
@@ -2131,7 +2219,8 @@
         card.colorClass || 'suit-spade',
         card.isFace ? 'is-face-card' : '',
         isFaceDown ? 'is-facedown' : '',
-        isSelected ? 'selected' : ''
+        isSelected ? 'selected' : '',
+        isNonScoring ? 'non-scoring' : ''
       ]
         .filter(Boolean)
         .join(' ');
@@ -2296,7 +2385,7 @@
 
   async function playSelectedHand() {
     const selected = getSelectedCardsInOrder();
-    if (state.isAnimating || selected.length === 0 || state.rendersLeft <= 0) return;
+    if (state.isAnimating || state.runOver || selected.length === 0 || state.rendersLeft <= 0) return;
 
     state.isAnimating = true;
     // 出牌瞬间，被盖住的盲牌翻转回正面揭晓真实点数！
@@ -2416,6 +2505,7 @@
     const handTotal = score.total;
     dom.previewTotalNumber.textContent = handTotal.toLocaleString();
     state.currentScore += handTotal;
+    state.runTotalDamage = (state.runTotalDamage || 0) + handTotal;
     state.runBestHand = Math.max(state.runBestHand, handTotal);
     if (handTotal > archive.bestHandScore) {
       archive.bestHandScore = handTotal;
@@ -2426,9 +2516,14 @@
     if (stageCfg.bossRule === 'steal_coin_on_highcard' && syn.id === 'high_card' && state.credits > 0) {
       state.credits = Math.max(0, state.credits - 1);
       spawnFloatingPopup('💋 莉莉姆偷走 1 铜钱!', 'type-mult', dom.bossCombatantBox);
-    } else if (stageCfg.bossRule === 'boss_regen_low_hit' && handTotal < 220 && state.currentScore < state.targetScore) {
-      state.currentScore = Math.max(0, state.currentScore - 70);
-      spawnFloatingPopup('🩸 背德圣咏 +70 HP!', 'type-mult', dom.bossCombatantBox);
+    } else if (
+      stageCfg.bossRule === 'boss_regen_low_hit' &&
+      handTotal < getRegenThreshold() &&
+      state.currentScore < state.targetScore
+    ) {
+      const heal = getRegenThreshold('heal');
+      state.currentScore = Math.max(0, state.currentScore - heal);
+      spawnFloatingPopup(`🩸 背德圣咏 +${heal} HP!`, 'type-mult', dom.bossCombatantBox);
     }
 
     // 若本击首次将 BOSS 打入濒死爆衣破防线 (HP <= 45%)，触发【BOSS 战损爆衣破防插屏】并切换为爆衣立绘！
@@ -2607,7 +2702,7 @@
 
   function discardSelectedCards() {
     const selected = getSelectedCardsInOrder();
-    if (state.isAnimating || selected.length === 0 || state.rerollsLeft <= 0) return;
+    if (state.isAnimating || state.runOver || selected.length === 0 || state.rerollsLeft <= 0) return;
 
     state.rerollsLeft -= 1;
     sfx.playClick(false);
@@ -2633,7 +2728,7 @@
 
   function handleStageClear() {
     const cfg = getStageConfig();
-    const unusedRendersBonus = state.rendersLeft * 2;
+    const unusedRendersBonus = state.rendersLeft * HEART_BONUS_GOLD;
     const minerBonus = state.modules.reduce((acc, m) => acc + (m.bonusGold || 0), 0);
     const totalEarned = cfg.rewardGold + unusedRendersBonus + minerBonus;
 
@@ -2652,6 +2747,8 @@
   }
 
   function handleRunFailed() {
+    state.runOver = true;
+    state.selectedInstanceIds.clear();
     sfx.playGlitchBuzz();
     openRunEndModal(false);
   }
@@ -2692,21 +2789,46 @@
     const availableMods = JOKER_MODULES_DB.filter((m) => !ownedIds.has(m.id));
     state.shopModules = pickWeightedModules(availableMods, 3).map((m) => ({ ...m, sold: false }));
 
-    const randomSynergy = PROMPT_SYNERGIES[Math.floor(Math.random() * 6)];
-    state.shopUpgrades = [
-      {
-        id: 'upg_synergy_lv',
-        name: `${randomSynergy.shortTitle}秘籍`,
-        rarity: 'blue',
-        rarityLabel: '稀有',
-        icon: 'assets/alchemist/jokers/mod_hires_fix.webp?v=27',
-        desc: `【${randomSynergy.name}】升 1 级（伤害 +20，倍率 +2）`,
-        cost: 4,
+    // 单牌型秘籍：从 9 种牌型中随机抽 2 种不同牌型上架（每种牌型的升级幅度见牌型表）
+    const bookSynergies = shuffleArray(PROMPT_SYNERGIES).slice(0, 2);
+    const makeBook = (syn, idx) => ({
+      id: `upg_synergy_lv_${idx}`,
+      name: `${syn.shortTitle}秘籍`,
+      rarity: 'blue',
+      rarityLabel: '稀有',
+      icon: 'assets/alchemist/jokers/item_hand_scroll.webp?v=32',
+      desc: `【${syn.name}】升 1 级（伤害 +${syn.lvPixels}，倍率 +${syn.lvMult}）`,
+      cost: 4,
+      sold: false,
+      action: () => {
+        state.synergyLevels[syn.id] = (state.synergyLevels[syn.id] || 1) + 1;
+      }
+    });
+    state.shopUpgrades = [makeBook(bookSynergies[0], 0)];
+    // 「全牌秘传书」改为稀有进货：仅 ALL_HANDS_BOOK_CHANCE 概率出现（否则换成第二本单牌型秘籍），
+    // 且本局每购买一次，之后的售价 +6，避免每店必买、无脑叠级
+    if (Math.random() < ALL_HANDS_BOOK_CHANCE) {
+      const allCost = 15 + 6 * (state.allHandsBooksBought || 0);
+      state.shopUpgrades.push({
+        id: 'upg_all_hands_lv',
+        name: '全牌秘传书',
+        rarity: 'red',
+        rarityLabel: '传说',
+        icon: 'assets/alchemist/jokers/item_master_book.webp?v=32',
+        desc: '所有 9 种扑克牌型等级全部 +1（稀有进货，每购买一次后续售价 +6）',
+        cost: allCost,
         sold: false,
         action: () => {
-          state.synergyLevels[randomSynergy.id] = (state.synergyLevels[randomSynergy.id] || 1) + 1;
+          state.allHandsBooksBought = (state.allHandsBooksBought || 0) + 1;
+          PROMPT_SYNERGIES.forEach((s) => {
+            state.synergyLevels[s.id] = (state.synergyLevels[s.id] || 1) + 1;
+          });
         }
-      },
+      });
+    } else {
+      state.shopUpgrades.push(makeBook(bookSynergies[1], 1));
+    }
+    state.shopUpgrades.push(
       {
         id: 'upg_weight_boost',
         name: '锻造圣锤',
@@ -2722,23 +2844,8 @@
             c.weight = Math.round(((c.weight || 1.0) + 0.5) * 10) / 10;
           });
         }
-      },
-      {
-        id: 'upg_all_hands_lv',
-        name: '全牌秘传书',
-        rarity: 'red',
-        rarityLabel: '传说',
-        icon: 'assets/alchemist/jokers/mod_cfg_stabilizer.webp?v=27',
-        desc: '所有 9 种扑克牌型等级全部 +1',
-        cost: 10,
-        sold: false,
-        action: () => {
-          PROMPT_SYNERGIES.forEach((s) => {
-            state.synergyLevels[s.id] = (state.synergyLevels[s.id] || 1) + 1;
-          });
-        }
       }
-    ];
+    );
   }
 
   function openCheckpointShop(cfg, totalEarned, unusedRendersBonus, minerBonus) {
@@ -2909,8 +3016,13 @@
   // =========================================================================
   function startBlindStage(stageIndex) {
     state.stageIndex = stageIndex;
+    state.runOver = false;
     const cfg = getStageConfig();
     sfx.playBgm(cfg.isBoss ? 'boss' : 'table');
+    if (stageIndex > (archive.bestStageReached || 0)) {
+      archive.bestStageReached = stageIndex;
+      saveArchive();
+    }
 
     state.currentScore = 0;
     state.targetScore = cfg.targetScore;
@@ -3081,26 +3193,75 @@
       state.handPlayCounts[s.id] = 0;
     });
 
+    // 彻底重置本局：商店货架、秘传书涨价计数、累计伤害、动画锁等都回到初始状态
+    state.shopModules = [];
+    state.shopUpgrades = [];
+    state.allHandsBooksBought = 0;
+    state.runTotalDamage = 0;
+    state.runOver = false;
+    state.isAnimating = false;
+    state.endlessWave = 0;
+
     dom.shopModal.classList.add('hidden');
     dom.runEndModal.classList.add('hidden');
     startBlindStage(1);
   }
 
+  function getStageLabel(stageIndex) {
+    return stageIndex <= BLIND_STAGES.length
+      ? `第 ${stageIndex} / ${BLIND_STAGES.length} 关`
+      : `无尽深渊 Wave ${stageIndex - BLIND_STAGES.length}`;
+  }
+
   function openRunEndModal(victory) {
-    dom.runEndTag.textContent = victory ? 'ALL BOSSES DEFEATED · 传奇讨伐者' : 'PARTY WIPED · 讨伐受挫';
+    const cfg = getStageConfig();
+    const isEndless = state.stageIndex > BLIND_STAGES.length;
+    const stageDamage = Math.min(state.currentScore, state.targetScore);
+    const hpPct = state.targetScore > 0 ? Math.round((stageDamage / state.targetScore) * 100) : 0;
+    // 失败后本局即结束：锁住出牌/弃牌，只能通过「重新开始」开新局
+    state.runOver = !victory;
+
+    dom.runEndModal.classList.toggle('is-defeat', !victory);
+    dom.runEndTag.textContent = victory
+      ? 'ALL BOSSES DEFEATED · 传奇讨伐者'
+      : isEndless
+        ? 'ENDLESS OVER · 无尽深渊终结'
+        : 'PARTY WIPED · 讨伐失败';
     dom.runEndTitle.textContent = victory
       ? '🏆 恭喜通关！9 大次元魔物与终焉魔王全部击破！'
-      : `💥 讨伐受挫：止步于第 ${state.stageIndex} 关 (${getStageConfig().title})`;
+      : `💀 讨伐失败：止步于${getStageLabel(state.stageIndex)}`;
     dom.runEndDesc.textContent = victory
       ? '你凭借精妙的顺子、同花、葫芦与四条炸弹击溃了终焉次元魔王！所有战利品 CG 已永久收录！'
-      : '未能在 5 颗红心耗尽前清空魔物生命值。试试多利用「💡 提示」或弃掉散牌去凑对子、三条、顺子、同花与葫芦！';
+      : `5 颗红心已全部耗尽，未能击败「${cfg.title}」（造成 ${stageDamage.toLocaleString()} / ${state.targetScore.toLocaleString()} 伤害，${hpPct}%）。本局的铜钱、宝物与牌型等级将全部清空，点击「重新开始」从第 1 关再战！`;
 
     dom.btnEndlessMode.style.display = victory ? 'inline-flex' : 'none';
+    const restartLabel = dom.runEndModal.querySelector('#btnRestartFromModal span');
+    if (restartLabel) restartLabel.textContent = victory ? '🔄 重新讨伐' : '🔄 重新开始';
 
+    const stageBox = victory
+      ? ''
+      : `
+      <div class="run-stat-box stat-wide">
+        <span>止步关卡</span>
+        <strong>${getStageLabel(state.stageIndex)}</strong>
+      </div>
+      <div class="run-stat-box">
+        <span>本关造成伤害</span>
+        <strong>${stageDamage.toLocaleString()} / ${state.targetScore.toLocaleString()}</strong>
+      </div>`;
     dom.runStatsGrid.innerHTML = `
+      ${stageBox}
+      <div class="run-stat-box">
+        <span>本局累计伤害</span>
+        <strong>${(state.runTotalDamage || 0).toLocaleString()}</strong>
+      </div>
       <div class="run-stat-box">
         <span>本局最高单手伤害</span>
         <strong>${state.runBestHand.toLocaleString()}</strong>
+      </div>
+      <div class="run-stat-box">
+        <span>历史最远到达</span>
+        <strong>${getStageLabel(Math.max(1, archive.bestStageReached || 1))}</strong>
       </div>
       <div class="run-stat-box">
         <span>历史最高单手纪录</span>
@@ -3124,8 +3285,8 @@
       dom.rulesSynergyTbody.innerHTML = '';
       PROMPT_SYNERGIES.forEach((syn) => {
         const lv = state.synergyLevels[syn.id] || 1;
-        const dmg = syn.basePixels + (lv - 1) * 20;
-        const mult = syn.baseMult + (lv - 1) * 2;
+        const dmg = syn.basePixels + (lv - 1) * (syn.lvPixels || 0);
+        const mult = syn.baseMult + (lv - 1) * (syn.lvMult || 0);
         const count = state.handPlayCounts[syn.id] || 0;
 
         const tr = document.createElement('tr');
@@ -3368,11 +3529,11 @@
     const btnRerollShop = document.getElementById('btnRerollShop');
     if (btnRerollShop) {
       btnRerollShop.addEventListener('click', () => {
-        if (state.credits < 3) {
+        if (state.credits < SHOP_REROLL_COST) {
           sfx.playGlitchBuzz();
           return;
         }
-        state.credits -= 3;
+        state.credits -= SHOP_REROLL_COST;
         sfx.playClick(true);
         generateShopInventory();
         renderShopModalContents();

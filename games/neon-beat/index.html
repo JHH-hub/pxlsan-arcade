@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>次元节拍：糖果风暴 (Pxlsan Neon Beat) · 高饱和糖果波普音游街机</title>
   <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
-  <link rel="stylesheet" href="src/arcade/neon-beat.css?v=20261121" />
+  <link rel="stylesheet" href="src/arcade/neon-beat.css?v=20261121d" />
 </head>
 <body class="c1-pop-theme">
   <!-- 动态波普网点与斜切漫画速度线背景层 -->
@@ -40,6 +40,9 @@
 
       <button type="button" class="pop-action-btn" id="btnToggleAutoPlay" title="开启/关闭 AI 自动打歌演示">
         🤖 AUTO: OFF
+      </button>
+      <button type="button" class="pop-action-btn" id="btnToggleNoFail" aria-pressed="false" title="不死模式：体力归零也不会失败（适合练习 / 休闲），但成绩不计入高分榜">
+        🛡️ 不死模式: OFF
       </button>
       <button type="button" class="pop-action-btn" id="btnTriggerCutInTest" title="立即预览看板娘全屏斜切漫画 SKILL CUT-IN">
         ⚡ 看板娘 CUT-IN
@@ -294,6 +297,7 @@
                 <span class="result-clear-tag" id="resultClearTag">STAGE CLEAR!!</span>
                 <h2 id="resultSongTitle">《放学后的捉弄节拍》</h2>
                 <p id="resultModeAndDiff">横版双轨跑酷 · HARD ★★★★ · 搭档：高木同学</p>
+                <p class="result-progress-line" id="resultProgressLine" hidden></p>
               </div>
 
               <div class="result-big-metrics">
@@ -426,6 +430,7 @@
         <div class="rule-block">
           <h4>⚡ 看板娘 SKILL CUT-IN 与 FEVER 狂热</h4>
           <ul>
+            <li><strong>体力 (HP)</strong>：MISS 或撞上齿轮会扣血，命中回血；体力归零即 <strong>STAGE FAILED</strong>。开启顶部 <strong>🛡️ 不死模式</strong> 可保证打完全曲（不计入高分榜）。</li>
             <li>每达成 <strong>25 / 50 / 100 连击</strong> 或 <strong>FEVER 能量满 100%</strong> 时，全屏斜切进入巨幅漫画分镜！</li>
             <li><strong>FEVER 状态</strong>下全屏波普速度线狂飙，所有音符得分额外 <strong>×1.5 倍</strong>！</li>
             <li>5 位搭档看板娘各具独特被动技能，可在左侧随时切换搭档出战。</li>
@@ -438,6 +443,6 @@
     </div>
   </div>
 
-  <script src="src/arcade/neon-beat.js?v=20261121"></script>
+  <script src="src/arcade/neon-beat.js?v=20261121d"></script>
 </body>
 </html>

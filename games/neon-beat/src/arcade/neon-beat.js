@@ -14,10 +14,26 @@
 
 const STORAGE_KEY = 'pxlsan-game:arcade:neonbeat';
 const CALIBRATION_STORAGE_KEY = 'pxlsan-game:arcade:neonbeat:calibMs';
+const NOFAIL_STORAGE_KEY = 'pxlsan-game:arcade:neonbeat:noFail';
+// 失败局的最佳进度（不计入高分榜，仅在选曲卡上提示）
+const PROGRESS_STORAGE_KEY = 'pxlsan-game:arcade:neonbeat:bestProgress';
+// 体力规则（下标 0 = 左侧难度 / 1 = 右侧难度）：MISS 扣血、撞齿轮扣血、命中回血
+//   EASY：命中率 ≈ 77% 以上即可持平，连续漏掉约 20 个音符才会归零
+//   HARD：命中率 ≈ 84% 以上才持平，连续漏掉约 17 个音符即失败
+const HP_RULES = [
+  { miss: 5, hazard: 7, heal: 1.5, healGood: 0.75 },
+  { miss: 6, hazard: 8.5, heal: 1.15, healGood: 0.5 }
+];
 // 4K 下落轨道几何（Canvas 坐标系，绘制与触控命中共用）
 const MANIA_HIGHWAY = { left: 450, laneWidth: 132, lanes: 4 };
 // 双押重拍：两键必须在该时间窗内先后按下
 const DOUBLE_PRESS_WINDOW_SEC = 0.08;
+
+// 秒数 → 「m:ss」曲长显示
+function formatSongLength(sec) {
+  const total = Math.max(0, Math.round(Number(sec) || 0));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+}
 
 function escapeHtml(value) {
   return String(value == null ? '' : value)
@@ -211,7 +227,7 @@ const BUILTIN_TRACKS = [
     enTitle: 'After-School Tease Beat',
     bpm: 124,
     beatOffsetSec: 0.015, // 离线 onset 分析：124 BPM，首拍相位 ≈ 15ms
-    durationSec: 54,
+    durationSec: 170.3, // 离线 RMS 分析：音乐真实结束时间（见 BUILTIN_CHART_MAPS）
     defaultPartner: 'takagi',
     sceneBg: 'assets/neonbeat/covers/track_01.webp',
     coverImg: 'assets/neonbeat/covers/track_01.webp',
@@ -239,7 +255,7 @@ const BUILTIN_TRACKS = [
     enTitle: 'Lemon Soda Blitz',
     bpm: 132, // 原标注 136；离线 onset/自相关分析实测 132.0 BPM（全曲相位稳定）
     beatOffsetSec: 0.0,
-    durationSec: 58,
+    durationSec: 162.4, // 离线 RMS 分析：音乐真实结束时间（见 BUILTIN_CHART_MAPS）
     defaultPartner: 'nagatoro',
     sceneBg: 'assets/neonbeat/covers/track_02.webp',
     coverImg: 'assets/neonbeat/covers/track_02.webp',
@@ -267,7 +283,7 @@ const BUILTIN_TRACKS = [
     enTitle: 'Starlight Dress-Up',
     bpm: 148,
     beatOffsetSec: 0.0,
-    durationSec: 60,
+    durationSec: 176.2, // 离线 RMS 分析：音乐真实结束时间（见 BUILTIN_CHART_MAPS）
     defaultPartner: 'marin',
     sceneBg: 'assets/neonbeat/covers/track_03.webp',
     coverImg: 'assets/neonbeat/covers/track_03.webp',
@@ -295,7 +311,7 @@ const BUILTIN_TRACKS = [
     enTitle: 'Love is War Step',
     bpm: 150, // 原标注 158；离线分析实测 150 BPM（自相关峰 75/150，取 150）
     beatOffsetSec: 0.0,
-    durationSec: 62,
+    durationSec: 169.2, // 离线 RMS 分析：音乐真实结束时间（见 BUILTIN_CHART_MAPS）
     defaultPartner: 'kaguya',
     sceneBg: 'assets/neonbeat/covers/track_04.webp',
     coverImg: 'assets/neonbeat/covers/track_04.webp',
@@ -323,7 +339,7 @@ const BUILTIN_TRACKS = [
     enTitle: 'Crimson Fallen Angel',
     bpm: 172,
     beatOffsetSec: 0.0,
-    durationSec: 64,
+    durationSec: 177.0, // 离线 RMS 分析：音乐真实结束时间（见 BUILTIN_CHART_MAPS）
     defaultPartner: 'kuroneko',
     sceneBg: 'assets/neonbeat/covers/track_05.webp',
     coverImg: 'assets/neonbeat/covers/track_05.webp',
@@ -428,6 +444,21 @@ class NeonSynthEngine {
       g.cancelScheduledValues(now);
       g.setValueAtTime(g.value, now);
       g.linearRampToValueAtTime(0.0001, now + durationSec);
+    }
+  }
+
+  // 失败演出：唱片「掉电」式减速 + 快速渐弱（之后由 stopSong 彻底停止）
+  slowDownAndStop(durationSec = 1.4) {
+    if (!this.ctx) return;
+    this.fadeOutMusic(durationSec);
+    const src = this.customBufferSource;
+    if (src && src.playbackRate) {
+      const now = this.ctx.currentTime;
+      try {
+        src.playbackRate.cancelScheduledValues(now);
+        src.playbackRate.setValueAtTime(src.playbackRate.value || 1, now);
+        src.playbackRate.exponentialRampToValueAtTime(0.25, now + durationSec);
+      } catch (_) {}
     }
   }
 
@@ -852,11 +883,440 @@ function createSeededRng(seedStr) {
   };
 }
 
+/* 离线音频分析生成（ffmpeg + numpy：RMS 能量 / 频谱通量 onset，按实测 BPM 与首拍相位对齐）
+ * endSec：音乐真实结束（平滑 RMS 跌破峰值 -35dB）；fadeSec：尾奏开始衰减（跌破 -8dB）
+ * blocks：每行 = 4 小节（64 个 16 分音符格），前缀为段落标签
+ *   I 前奏 / V 主歌(平稳) / B 铺垫(渐强) / C 副歌(高能) / K 间奏(Break) / O 尾奏
+ *   后接每个 16 分格的 onset 强度 0–9（已吸附到 1/4 拍网格） */
+const BUILTIN_CHART_MAPS = {
+  'track-01-tease': {
+    endSec: 170.3, fadeSec: 169.6, fileSec: 172.9,
+    sections: 'ICCCKKVVKBCCCCKVVBCCCC',
+    blocks: [
+      'I:2150508526534061508182381181475050706094143240607232423050451551',
+      'C:9100912234238161807192271070663040409062313290709027016000005443',
+      'C:9030804433237040504191280060923090609064332390708041812561625350',
+      'C:5040826534249160706051361060734050507054242280608108017112014243',
+      'K:7010504312406020801340341280841080107053135071207018405310805410',
+      'K:8010715413607220310340331180851030207044135070108013505310705010',
+      'V:8020506312607050903250631290843080408074226070507027416310908520',
+      'V:9030818312606050402240531080633090428073227080609032506210706230',
+      'K:3020211021204020301220311111301100302110202140202111201131122111',
+      'B:6141233120915030504230531040603030405140504050315109006100013000',
+      'C:9030805434239050806191270192734060419053042293202211703050635440',
+      'C:5060903223237040705191361090734070509063452370606027024102105442',
+      'C:9130904424238060605091181080823020105032221510507030702540516340',
+      'C:5060906425249050707091371190734060609064342470405109017023114000',
+      'K:3100201110103110200040210010301050004006016141115002325000503330',
+      'V:6020303410614040803130801061315060413145106130405035216100123111',
+      'V:6030506322506060603150631062335060405064124162231030403160305240',
+      'B:6020604222407040704350703060705050306042214132332002022000005000',
+      'C:9050805323238060805191280281543130409052242420405122613250535440',
+      'C:5060903213138040706191361070743060409064352360607026125103216432',
+      'C:8130805423328051704171271060813030105032112290405030813350417340',
+      'C:606090642533905070619138108064305040705324136040710712610000500',
+    ]
+  },
+  'track-02-lemon': {
+    endSec: 162.4, fadeSec: 162.0, fileSec: 164.9,
+    sections: 'ICVBCCBCCCCVVVVVBCCCCOO',
+    blocks: [
+      'I:2144308183719065605422724553937370624071477391919090727549215511',
+      'C:6026326154339061903731425644744291252030141031405409184011009000',
+      'V:7001911273307130802073129040915090319231933097609024812180307240',
+      'B:7010923394507150904194119050924060219050923094009090744601206310',
+      'C:6110713292618141905072116061905060319151913174519042713260505130',
+      'C:5120714192607161906092439070807060408260606053217061835610705240',
+      'B:6011001111102021101121211221313220302131133150514050517457216310',
+      'C:4004312113625140602711211563735041307150827140005004503260706317',
+      'C:1030614161516141805081315350414120707052924161335050914160505152',
+      'C:1050513162415140506071417150514240608142725264541050814340505121',
+      'C:0330913141416041704081316240504130509241619425161041905161407352',
+      'V:1140523143415132114060404150503312143421011053316100811373115120',
+      'V:7020621180205130802082227321633171217212713042407010923294317250',
+      'V:9120722181326130602291509120830150806325011161305010713181507131',
+      'V:9040711170507150703182516241634180316121605041305020925183416161',
+      'V:9060612280707161603092507170421040426246105052405102102110204031',
+      'B:1020303111303132103030311131514110304121641261113036104121326261',
+      'C:5044122111525131303152618171633020045131624493461050524061415131',
+      'C:6050513251404131315082425351613230607231515051511040613191415150',
+      'C:6060613151504132307091434282337310506133205043210363912151415131',
+      'C:4050714171305141404091416143141511509153614062222030513142515132',
+      'O:2040514030306234133438210668453310001001101111111010011101110100',
+      'O:100111101435340240000',
+    ]
+  },
+  'track-03-starlight': {
+    endSec: 176.2, fadeSec: 175.2, fileSec: 178.8,
+    sections: 'IIIIKBCCKBCCCCCCVVVBCCCCCCO',
+    blocks: [
+      'I:0091122111311210411322241231612071103471026108107115410810418222',
+      'I:5021736120604530813283452250812061123106111021071040541001101121',
+      'I:2050231320704520609334339091703080904525409044207073362060717120',
+      'I:7051252440805430809334349091602081317223104062207170807402524210',
+      'K:5110404021607040603072705090404060606070426070508050932060604040',
+      'B:6070807041707060607092805090609080907080439070737190705120708020',
+      'C:5050505032508040708161706091603080705070327070508080612080918040',
+      'C:9060508141608050705161705081504072409161024091318071807000215021',
+      'K:8012012021010030300200502002003061021020400210323010302121021010',
+      'B:4101203040012020610110402102112061203140512061107061806303117000',
+      'C:9142514242406341606083262160903160928091436092706071912460506121',
+      'C:5052717133508231705360808150912150808116706170820622713411009001',
+      'C:9163816134308332817083362270903160937072345062618081912580608121',
+      'C:6162814143307021603540708170901140918034607091710643805500009101',
+      'C:5000412020413120501150404050403060118030508160306002504060616040',
+      'C:3110503030504020602081203050403040306021305051407261909200727240',
+      'V:9115015020313041113260811141721072152160526160611221806221506110',
+      'V:6202603030505160208091512080810061015010711061105109109101011000',
+      'V:7031214051005001402050040240700040313250820080026060600550206001',
+      'B:4052317024306031603230504030601020625103406060711712613311113100',
+      'C:9163523133405132608162453260902170938151246042619081912570616131',
+      'C:5093526033405122604431809160912130735125705070911472617510116000',
+      'C:9051314121306121506092461260802160927080315053517071913460619111',
+      'C:5164716154405121603340615041701130917005607090801924913310117000',
+      'C:6111622211214111502081322330803140307452525043315141712441427110',
+      'C:4111538310206140511250610320812061155371614080800530605410009000',
+      'O:5020020201200300211121230320400061101312221013108060605320646413',
+    ]
+  },
+  'track-04-lovewar': {
+    endSec: 169.2, fadeSec: 168.6, fileSec: 171.8,
+    sections: 'IICCCCVVVVVBCCCVBCCKBCCCCOO',
+    blocks: [
+      'I:1092005070703040810120031031223040721040506110406103412010422120',
+      'I:9062012230203070705100116020321061011110311141114110110120009200',
+      'C:7040715070708431805082507140616071307152806085305041707060307120',
+      'C:9150916070709330805090409130616090204152806075207284242092304260',
+      'C:7050716070607340305081604050415060506131514051304040505080505130',
+      'C:3130515041305130404061304060514040405040521240804122244490309030',
+      'V:9010901090108030901081309010611090209020904090902021904051308110',
+      'V:9110911091209020901090309110711190309030904090920021202320909210',
+      'V:6111105051201100812610708220114290202090723000109015006092211050',
+      'V:9111105081201010601310406230213060311060631072014010034030200351',
+      'V:6230414151106100902102207021023080308060802091109111011082210120',
+      'B:8102601262009200702020202081062051124082111091009130413160606321',
+      'C:6030905060506130705080406060733080409140703052608030514060306310',
+      'C:7262315132204141704060505060653050508040304061507050522141315140',
+      'C:5060614170405040513050506150525040405220404040507040506073126162',
+      'V:5200700001107010501030406120404090306040403090408030604041406020',
+      'B:6020604070206034502080305030902060209030604090307120904060307020',
+      'C:5220811051247130302060504130806150519040405091506130916041507150',
+      'C:7041814160405241411010506204105041212041522230424120103051221070',
+      'K:2120214040503040400230121020202040612220707120209102302120202020',
+      'B:6111222230203090621231225020400051002010211140203100000120008100',
+      'C:4240415060608340505180406230434051327142606064406040716071306320',
+      'C:8140715080607330805071507130524061313151604164308065142072203141',
+      'C:7150615140605230306071505130414080404231515262213050504050505030',
+      'C:4130705030505140405082414060515070415150631141624010012010200230',
+      'O:4120302130104010712102305111023060308030702091108112011091120110',
+      'O:8001710162007210610111000000',
+    ]
+  },
+  'track-05-crimson': {
+    endSec: 177.0, fadeSec: 169.5, fileSec: 177.0,
+    sections: 'IIIICCCCKBCCCCKBCCCCKKKBCCCCKOOO',
+    blocks: [
+      'I:2130102020101020201030202010103020201020101010203010202030101020',
+      'I:4120203020202020302050203021203040203010102010103100000000000100',
+      'I:9000211020201010202020203010202040101010102010102031301030102021',
+      'I:8011201020101021201030103010202040103011203010111000110110000000',
+      'C:9011506000409050803090602050906080107050116090409030916010907061',
+      'C:8010515010408140602090603150908060307070206091508061309070108060',
+      'C:8010506001408130802061501030616050105060104080506020805010609060',
+      'C:7010715020409150802090402040706070105050113071505000506020406062',
+      'K:6110101020201010102040304010305030202010202010102030203030102020',
+      'B:9101101010101111102030103011111030102010111011102210011232323210',
+      'C:9010614060308120611080404040910060306030406091019020905050509010',
+      'C:8120715040609110901090405060902070207030404080209000714060308101',
+      'C:7010813060309030711090604050910090205040415091109010806040507110',
+      'C:7011513040509110701091304050912070207120802071109010613071403120',
+      'K:6000000100000100110000000000000040102020301020103020102020101010',
+      'B:9010504070124040503060503030502070113130511030125100211123122100',
+      'C:9010706030508050903091604040906090209080305091609020906020809061',
+      'C:6040605022307130903080604140808070406080215080508161409061507151',
+      'C:9020506040409040904090504040806061205090403070506040807050609060',
+      'C:5040808041409050813161215121605040106050303080404110513061214450',
+      'K:6100000010001010200010101010101020001020101020203010201020202010',
+      'K:2010103020203010301020202021103030102020102020103000112111112110',
+      'K:6001101110111010101010101010202010001020101020102010101010201010',
+      'B:1010202010101010201010101011001020101020102020102010102011202100',
+      'C:4000211240003120210000547160900090106040405091108010905030509101',
+      'C:7200503030407110701091303040913060207040403090118010905070409101',
+      'C:9010614040308110501090503030802070205040404081106010814050407110',
+      'C:8010414030509110803080406050702060007110702061107010401050305111',
+      'K:8000000000000000120000000000000040102010201010103020102010102111',
+      'O:8010202040101010402020305130102090002040602131106001101012102310',
+      'O:3101101000012000710000000000000000000000000000000000000000000000',
+      'O:0000000000000000000000000000000000000000000000',
+    ]
+  },
+};
+
 /**
  * 为内置电音曲目生成兼具音乐感与打击爽感的谱面
- * 每个音符结构：{ id, time, type: 'TAP'|'DOUBLE'|'HOLD'|'HAZARD', lane2: 0|1, lane4: 0|1|2|3, endTime, hit, holding, holdTicks, missed }
+ * 每个音符结构：{ id, time, type: 'TAP'|'DOUBLE'|'HOLD'|'HAZARD'|'MASH', lane2: 0|1, lane4: 0|1|2|3, endTime, hit, holding, missed }
+ * 有离线段落图（BUILTIN_CHART_MAPS）的曲目：全曲长度 + 按段落变化密度/题型 + 音符吸附真实 onset；
+ * 否则回退到旧的固定网格生成器。
  */
 function generateBuiltinChart(track, diffIdx = 0) {
+  const map = BUILTIN_CHART_MAPS[track.id];
+  if (!map) return generateLegacyChart(track, diffIdx);
+  return generateSectionChart(track, map, diffIdx);
+}
+
+const SECTION_LABELS = { I: '前奏', V: '主歌', B: '铺垫', C: '副歌', K: '间奏', O: '尾奏' };
+
+// 段落谱面风格（数组下标 0 = 左侧难度 / 1 = 右侧难度）
+//   nps：每秒目标音符数；grid：可落点网格（16 分格数）；gap：最小间隔（16 分格）
+//   hold / dbl / hazard：长按 / 双押 / 齿轮 的转换概率；patterns：轮换使用的配键型
+const SECTION_STYLES = {
+  I: { nps: [0.8, 1.45], grid: [4, 2], gap: [4, 2], hold: [0.4, 0.32], dbl: [0, 0.03], hazard: [0, 0.04], patterns: ['sway', 'pairs'] },
+  V: { nps: [1.3, 2.45], grid: [2, 2], gap: [2, 2], hold: [0.26, 0.2], dbl: [0.03, 0.07], hazard: [0.08, 0.12], patterns: ['pairs', 'sway', 'stairs'] },
+  B: { nps: [1.6, 3.0], grid: [2, 1], gap: [2, 1], hold: [0.05, 0.04], dbl: [0.08, 0.14], hazard: [0.05, 0.08], patterns: ['stairs', 'trill'], ramp: true },
+  C: { nps: [2.05, 3.85], grid: [2, 1], gap: [2, 1], hold: [0.05, 0.05], dbl: [0.16, 0.24], hazard: [0.1, 0.15], patterns: ['jumps', 'trill', 'stairs', 'jumps'] },
+  K: { nps: [0.55, 0.95], grid: [4, 2], gap: [4, 2], hold: [0.55, 0.45], dbl: [0, 0], hazard: [0, 0.04], patterns: ['sway'] },
+  O: { nps: [0.7, 1.15], grid: [4, 2], gap: [4, 2], hold: [0.45, 0.35], dbl: [0, 0.03], hazard: [0, 0], patterns: ['sway', 'pairs'] }
+};
+
+function makeChartNote(id, time, type, lane4, extra = {}) {
+  const lane2 = lane4 < 2 ? 0 : 1;
+  const base = { id, time, type, lane2, lane4, endTime: time, hit: false, missed: false };
+  if (type === 'HOLD' || type === 'MASH') {
+    Object.assign(base, { holding: false, holdCompleted: false, lastTickTime: time });
+  }
+  if (type === 'HAZARD') base.dodged = false;
+  return Object.assign(base, extra);
+}
+
+function generateSectionChart(track, map, diffIdx) {
+  const slot = diffIdx >= 1 ? 1 : 0;
+  const diff = track.diffs[diffIdx] || track.diffs[0];
+  const rng = createSeededRng(`${track.id}-sections-diff-${diffIdx}`);
+  const beatSec = 60 / track.bpm;
+  const q = beatSec / 4; // 1/4 拍（16 分音符）网格
+  const off = track.beatOffsetSec || 0;
+  const densScale = Math.max(0.8, Math.min(1.35, diff.density / (slot === 0 ? 0.62 : 1.0)));
+
+  // 解析段落图：每 block = 4 小节 = 64 个 16 分格
+  const blocks = map.blocks.map((row) => ({ label: row[0], s: row.slice(2) }));
+  const strengthAt = (i) => {
+    const b = blocks[Math.floor(i / 64)];
+    if (!b) return 0;
+    const ch = b.s.charCodeAt(i % 64) - 48;
+    return ch >= 0 && ch <= 9 ? ch : 0;
+  };
+  const labelAt = (i) => (blocks[Math.floor(i / 64)] || { label: 'O' }).label;
+  const timeOf = (i) => off + i * q;
+
+  const startStep = Math.ceil((1.8 - off) / beatSec) * 4;
+  // 谱面在尾奏衰减前收尾（突然结束的曲目留 0.8s 余韵）
+  const chartEndSec = Math.min(map.fadeSec, map.endSec - 0.8);
+  const lastStep = Math.floor((chartEndSec - off) / q);
+
+  // 1. 逐 block 选取落点：得分 = onset 强度 + 节拍位置加成，按密度目标取前 K 个（满足最小间隔）
+  const picks = [];
+  const taken = new Uint8Array(lastStep + 8);
+  // 越往后的副歌越密集（第 1 / 2 / 3+ 段副歌 ×1.0 / ×1.08 / ×1.15），铺垫同步加码
+  let chorusRun = 0;
+  blocks.forEach((blk, k) => {
+    const style = SECTION_STYLES[blk.label] || SECTION_STYLES.V;
+    if (blk.label === 'C' && (k === 0 || blocks[k - 1].label !== 'C')) chorusRun += 1;
+    const i0 = Math.max(startStep, k * 64);
+    const i1 = Math.min(lastStep, k * 64 + 63);
+    if (i1 < i0) return;
+    const span = (i1 - i0 + 1) * q;
+    const runMul = blk.label === 'C' || blk.label === 'B' ? [1.0, 1.0, 1.08, 1.15][Math.min(3, chorusRun + (blk.label === 'B' ? 1 : 0))] : 1.0;
+    const target = Math.round(style.nps[slot] * span * densScale * runMul);
+    const grid = style.grid[slot];
+    const gap = style.gap[slot];
+    const cands = [];
+    for (let i = i0; i <= i1; i++) {
+      if (i % grid !== 0) continue;
+      const p = i % 64;
+      const s = strengthAt(i);
+      // 16 分反拍只在 onset 很强时才落键（真实的鼓点/切分），否则保持 8 分网格
+      if (i % 2 === 1 && s < 6) continue;
+      const pos = p % 16 === 0 ? 4 : p % 8 === 0 ? 3 : p % 4 === 0 ? 2 : p % 2 === 0 ? 0.5 : 0;
+      const ramp = style.ramp ? Math.floor(p / 16) * 1.1 : 0;
+      cands.push({ i, s, score: s + pos + ramp + rng() * 0.6 });
+    }
+    cands.sort((a, b) => b.score - a.score);
+    const chosen = [];
+    for (const c of cands) {
+      if (chosen.length >= target) break;
+      let ok = true;
+      for (let d = 1; d < Math.max(2, gap + 1); d++) {
+        const nb = [c.i - d, c.i + d];
+        for (const j of nb) {
+          if (j < 0 || j >= taken.length || !taken[j]) continue;
+          // 16 分相邻仅允许双方都是强 onset（真实连打）
+          if (d === 1 && gap === 1 && c.s >= 6 && strengthAt(j) >= 6) continue;
+          if (d < gap || d === 1) ok = false;
+        }
+      }
+      if (!ok) continue;
+      // 防止 16 分连打超过 4 连
+      if (gap === 1) {
+        let run = 1;
+        for (let j = c.i - 1; j >= 0 && taken[j]; j--) run++;
+        for (let j = c.i + 1; j < taken.length && taken[j]; j++) run++;
+        if (run > 4) continue;
+      }
+      taken[c.i] = 1;
+      chosen.push(c);
+    }
+    chosen.forEach((c) => picks.push({ i: c.i, s: c.s, label: blk.label, block: k }));
+  });
+  picks.sort((a, b) => a.i - b.i);
+
+  // 2. Boss 冲锋连打（MASH）：放在「进入副歌」的第一拍，间隔 ≥ 24 秒
+  const mashSteps = [];
+  const mashLen = 14; // 3.5 拍
+  let lastMashSec = -999;
+  blocks.forEach((blk, k) => {
+    const prev = k > 0 ? blocks[k - 1].label : 'I';
+    const runStart = blk.label === 'C' && prev !== 'C';
+    const longRun = blk.label === 'C' && k >= 2 && blocks[k - 1].label === 'C' && blocks[k - 2].label === 'C' && (blocks[k + 1] || {}).label === 'C';
+    if (!runStart && !longRun) return;
+    const i = k * 64;
+    const t = timeOf(i);
+    if (t < 10 || t - lastMashSec < 24 || timeOf(i + mashLen + 12) > chartEndSec) return;
+    mashSteps.push(i);
+    lastMashSec = t;
+  });
+  const inMash = (i) => mashSteps.some((m) => i >= m - 2 && i < m + mashLen + 4);
+  const filtered = picks.filter((p) => !inMash(p.i));
+
+  // 3. 题型 + 配键：按段落轮换配键型（同一副歌段内每 4 小节换一种），保证不是单调循环
+  const notes = [];
+  let noteId = 1;
+  let laneSeq = 0;
+  let prevLane4 = 1;
+  let curBlock = -1;
+  let pattern = 'sway';
+  let trillPair = [1, 2];
+  const TRILL_PAIRS = [[1, 2], [0, 3], [0, 2], [1, 3]];
+  const STAIRS = [0, 1, 2, 3, 2, 1];
+  const SWAY = [1, 1, 2, 2];
+  const PAIRS = [0, 1, 3, 2];
+  const pickLane = (pk) => {
+    if (pk.block !== curBlock) {
+      curBlock = pk.block;
+      const style = SECTION_STYLES[pk.label] || SECTION_STYLES.V;
+      pattern = style.patterns[(pk.block + diffIdx) % style.patterns.length];
+      trillPair = TRILL_PAIRS[Math.floor(rng() * TRILL_PAIRS.length)];
+      laneSeq = 0;
+    }
+    let lane;
+    if (pattern === 'sway') lane = SWAY[laneSeq % 4] + (pk.block % 2 === 1 && laneSeq % 8 >= 4 ? (laneSeq % 2 ? 1 : -1) : 0);
+    else if (pattern === 'pairs') lane = PAIRS[Math.floor(laneSeq / 2) % 4];
+    else if (pattern === 'stairs') lane = STAIRS[laneSeq % STAIRS.length];
+    else if (pattern === 'trill') lane = trillPair[laneSeq % 2];
+    else {
+      // jumps：强 onset 甩到外侧轨（2 轨模式 = 空中/地面大幅换轨）
+      lane = pk.s >= 8 ? (rng() < 0.5 ? 0 : 3) : Math.floor(rng() * 4);
+    }
+    laneSeq += 1;
+    lane = Math.max(0, Math.min(3, lane));
+    return lane;
+  };
+
+  const entryStyleFor = (lane2) => {
+    const r = rng();
+    if (r < 0.16) return 'GHOST';
+    return lane2 === 0 ? (r < 0.62 ? 'SWOOP' : 'WAVE') : r < 0.72 ? 'BOUNCE' : 'SNIPER';
+  };
+
+  let mi = 0;
+  const pushMashUpTo = (i) => {
+    while (mi < mashSteps.length && mashSteps[mi] <= i) {
+      const m = mashSteps[mi++];
+      const t = timeOf(m);
+      notes.push(
+        makeChartNote(noteId++, t, 'MASH', 1, {
+          lane2: 1,
+          endTime: t + mashLen * q,
+          mashHits: 0,
+          targetHits: slot === 0 ? 10 : 14,
+          entryStyle: 'BOSS_CHARGE'
+        })
+      );
+    }
+  };
+
+  for (let n = 0; n < filtered.length; n++) {
+    const pk = filtered[n];
+    pushMashUpTo(pk.i);
+    const style = SECTION_STYLES[pk.label] || SECTION_STYLES.V;
+    const prevGap = n > 0 ? pk.i - filtered[n - 1].i : 99;
+    const nextMash = mashSteps.find((m) => m > pk.i);
+    const nextGap = Math.min(n + 1 < filtered.length ? filtered[n + 1].i - pk.i : 99, nextMash != null ? nextMash - pk.i : 99);
+    const nextLabel = n + 1 < filtered.length ? filtered[n + 1].label : 'O';
+    const p = pk.i % 64;
+    const t = timeOf(pk.i);
+    let lane4 = pickLane(pk);
+    // 4K：16 分相邻不出同轨「纵连」
+    if (prevGap === 1 && lane4 === prevLane4) lane4 = (lane4 + 1) % 4;
+
+    const isLast = n === filtered.length - 1;
+    const buildClimax = pk.label === 'B' && nextLabel === 'C' && nextGap >= 2 && filtered[n + 1] && filtered[n + 1].block !== pk.block;
+    const r = rng();
+
+    // 长按：平稳段落、拍点上、后面留有空档
+    if (!isLast && pk.i % 4 === 0 && nextGap >= 6 && r < style.hold[slot]) {
+      const maxLen = 'KIO'.includes(pk.label) ? 8 : 6;
+      const len = Math.max(4, Math.min(maxLen, nextGap - 2) & ~1);
+      notes.push(makeChartNote(noteId++, t, 'HOLD', lane4, { endTime: t + len * q, entryStyle: 'WAVE' }));
+      prevLane4 = lane4;
+      continue;
+    }
+
+    // 双押：副歌/铺垫的强拍 + 铺垫段落最后一下 + 全曲最后一下
+    const dblOk = prevGap >= 2 && nextGap >= 2;
+    const strongDown = p % 8 === 0 && pk.s >= 5 && rng() < style.dbl[slot] * 2.2;
+    if (dblOk && (isLast || buildClimax || strongDown)) {
+      const pair = slot === 1 && rng() < 0.5 ? [0, 3] : rng() < 0.5 ? [1, 2] : [0, 2 + Math.floor(rng() * 2)];
+      notes.push(makeChartNote(noteId++, t, 'DOUBLE', pair[0], { lane2: 0, lane4Pair: pair[1], entryStyle: 'SWOOP' }));
+      prevLane4 = pair[0];
+      continue;
+    }
+
+    // 尖刺齿轮：弱拍/反拍上的闪避题
+    if ((pk.i % 4 !== 0 || p % 8 === 4) && dblOk && r > 1 - style.hazard[slot]) {
+      const hazardLane2 = rng() < 0.55 ? 1 : 0;
+      notes.push(makeChartNote(noteId++, t, 'HAZARD', hazardLane2 === 0 ? 0 : 3, { lane2: hazardLane2, entryStyle: 'SNIPER' }));
+      continue;
+    }
+
+    const tap = makeChartNote(noteId++, t, 'TAP', lane4);
+    tap.entryStyle = entryStyleFor(tap.lane2);
+    notes.push(tap);
+    prevLane4 = lane4;
+  }
+  pushMashUpTo(Infinity);
+
+  return notes.sort((a, b) => a.time - b.time);
+}
+
+// 统计谱面各段落音符数（调试 / 验证用：window.neonBeatArcade.describeChart()）
+function summarizeChartSections(track, notes) {
+  const map = BUILTIN_CHART_MAPS[track.id];
+  if (!map) return null;
+  const blockSec = (60 / track.bpm) * 16;
+  const off = track.beatOffsetSec || 0;
+  return map.blocks.map((row, k) => {
+    const t0 = off + k * blockSec;
+    const t1 = t0 + blockSec;
+    const inBlk = notes.filter((n) => n.time >= t0 - 1e-6 && n.time < t1 - 1e-6);
+    const types = {};
+    inBlk.forEach((n) => {
+      types[n.type] = (types[n.type] || 0) + 1;
+    });
+    return { block: k, label: row[0], section: SECTION_LABELS[row[0]], t0: Number(t0.toFixed(1)), count: inBlk.length, nps: Number((inBlk.length / blockSec).toFixed(2)), types };
+  });
+}
+
+function generateLegacyChart(track, diffIdx = 0) {
   const diff = track.diffs[diffIdx] || track.diffs[0];
   const rng = createSeededRng(`${track.id}-diff-${diffIdx}`);
   const beatSec = 60 / track.bpm;
@@ -1227,6 +1687,10 @@ class NeonBeatArcade {
     this.resumeCountdownTimer = null;
     this.canvasPointerLanes = new Map();
     this.calibrationMs = this.loadCalibrationMs();
+    this.noFail = this.loadNoFail();
+    this.failTimer = null;
+    // 本局谱面统计（Boss 血量 / FEVER 充能按总音符数缩放）
+    this.chartStats = { hitNotes: 1, bossUnit: 1, feverPerHit: 4.5 };
 
     // 预加载角色与舞台贴图缓存
     this.imageCache = new Map();
@@ -1344,6 +1808,7 @@ class NeonBeatArcade {
   renderTrackList() {
     const container = document.getElementById('trackListContainer');
     const records = this.loadRecords();
+    const progress = this.loadBestProgress();
     container.innerHTML = '';
 
     this.tracks.forEach((track) => {
@@ -1351,6 +1816,12 @@ class NeonBeatArcade {
       const partner = PARTNERS[track.defaultPartner] || PARTNERS.takagi;
       const recKey = this.getRecordKey(track.id, this.selectedDiffIdx, this.gameMode);
       const best = records[recKey];
+      const bestPct = progress[recKey];
+      const rankText = best
+        ? `👑 ${escapeHtml(best.rank)} · ${escapeHtml(best.score)}`
+        : bestPct
+        ? `💔 最佳进度 ${escapeHtml(bestPct)}%`
+        : 'NEW';
 
       const card = document.createElement('div');
       card.className = `track-card${isSelected ? ' active' : ''}`;
@@ -1368,8 +1839,8 @@ class NeonBeatArcade {
           </div>
         </div>
         <div class="track-card-right">
-          <span class="bpm-pill">BPM ${escapeHtml(track.bpm)}</span>
-          <span class="rank-mini-badge">${best ? `👑 ${escapeHtml(best.rank)} · ${escapeHtml(best.score)}` : 'NEW'}</span>
+          <span class="bpm-pill">BPM ${escapeHtml(track.bpm)} · ⏱ ${escapeHtml(formatSongLength(track.durationSec))}</span>
+          <span class="rank-mini-badge">${rankText}</span>
         </div>
       `;
       card.addEventListener('click', () => {
@@ -1453,7 +1924,7 @@ class NeonBeatArcade {
     const best = records[this.getRecordKey(track.id, this.selectedDiffIdx, this.gameMode)];
 
     document.getElementById('startCardTrackBadge').textContent =
-      `${track.indexLabel} · BPM ${track.bpm} · ${diff.name}`;
+      `${track.indexLabel} · BPM ${track.bpm} · ⏱ ${formatSongLength(track.durationSec)} · ${diff.name}`;
     document.getElementById('startCardTitle').textContent = `${track.icon} 《${track.title}》`;
     document.getElementById('startCardSub').textContent =
       `${track.enTitle} · 出战搭档：${partner.name}（${partner.badge}）`;
@@ -1464,7 +1935,10 @@ class NeonBeatArcade {
     if (best) {
       bestTextEl.textContent = `评级 ${best.rank} · ${best.score.toLocaleString()} 分 · MAX COMBO ${best.maxCombo} (${best.acc}%)`;
     } else {
-      bestTextEl.textContent = '尚无纪录 · 等你首通摘取 S+ 桂冠！';
+      const bestPct = this.loadBestProgress()[this.getRecordKey(track.id, this.selectedDiffIdx, this.gameMode)];
+      bestTextEl.textContent = bestPct
+        ? `尚未通关 · 最佳进度 ${bestPct}%，再冲一次！`
+        : '尚无纪录 · 等你首通摘取 S+ 桂冠！';
     }
   }
 
@@ -1500,6 +1974,48 @@ class NeonBeatArcade {
     if (text) text.textContent = `${this.calibrationMs > 0 ? '+' : ''}${this.calibrationMs} ms`;
   }
 
+  loadNoFail() {
+    try {
+      return localStorage.getItem(NOFAIL_STORAGE_KEY) === '1';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  setNoFail(on) {
+    this.noFail = !!on;
+    try {
+      if (this.noFail) localStorage.setItem(NOFAIL_STORAGE_KEY, '1');
+      else localStorage.removeItem(NOFAIL_STORAGE_KEY);
+    } catch (_) {}
+    const btn = document.getElementById('btnToggleNoFail');
+    if (btn) {
+      btn.classList.toggle('active', this.noFail);
+      btn.textContent = this.noFail ? '🛡️ 不死模式: ON' : '🛡️ 不死模式: OFF';
+      btn.setAttribute('aria-pressed', String(this.noFail));
+    }
+    document.body.classList.toggle('nofail-on', this.noFail);
+  }
+
+  loadBestProgress() {
+    try {
+      const raw = localStorage.getItem(PROGRESS_STORAGE_KEY);
+      return raw ? JSON.parse(raw) || {} : {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  saveBestProgress(key, pct) {
+    const all = this.loadBestProgress();
+    if ((all[key] || 0) >= pct) return false;
+    all[key] = Number(pct.toFixed(1));
+    try {
+      localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(all));
+    } catch (_) {}
+    return true;
+  }
+
   setAutoPlay(on) {
     this.autoPlay = !!on;
     const btnAuto = document.getElementById('btnToggleAutoPlay');
@@ -1515,14 +2031,14 @@ class NeonBeatArcade {
   // 打歌中（含暂停/加载）锁定难度、模式与搭档，避免中途篡改导致存档串档
   setLiveControlsLocked(locked) {
     document
-      .querySelectorAll('.mode-btn, .diff-pill, .partner-tab-btn')
+      .querySelectorAll('.mode-btn, .diff-pill, .partner-tab-btn, #btnToggleNoFail')
       .forEach((btn) => {
         btn.disabled = locked;
       });
   }
 
   areLiveControlsLocked() {
-    return this.state === 'PLAYING' || this.state === 'PAUSED' || this.state === 'LOADING';
+    return this.state === 'PLAYING' || this.state === 'PAUSED' || this.state === 'LOADING' || this.state === 'FAILING';
   }
 
   releaseAllLanes() {
@@ -1667,6 +2183,7 @@ class NeonBeatArcade {
     const audioMode = document.getElementById('audioSourceMode').value;
 
     // 退出暂停 / 上一局
+    this.clearFailTimer();
     this.cancelResumeCountdown();
     const pauseOverlay = document.getElementById('stagePauseOverlay');
     if (pauseOverlay) pauseOverlay.hidden = true;
@@ -1703,12 +2220,15 @@ class NeonBeatArcade {
       mode: this.gameMode,
       partnerId: partner.id,
       isPreview: !!preview,
-      autoUsed: this.autoPlay
+      autoUsed: this.autoPlay,
+      noFail: this.noFail,
+      hpDepleted: false
     };
     this.resetPerSongState();
     this.notes = track.isCustom
       ? analyzeAudioBufferToChart(track.audioBuffer, this.selectedDiffIdx).notes
       : generateBuiltinChart(track, this.selectedDiffIdx);
+    this.computeChartStats();
 
     this.particles = [];
     this.popups = [];
@@ -1752,7 +2272,74 @@ class NeonBeatArcade {
     this.ensurePlayfieldVisible();
   }
 
+  // 按全曲音符总量缩放 Boss 伤害与 FEVER 充能，保证 3 分钟长谱面的节奏感：
+  //   Boss 血条贯穿全曲（全部命中时恰好在曲末被击破）；FEVER 约每 1/5.5 的音符量充满一次
+  computeChartStats() {
+    let weight = 0;
+    let hitNotes = 0;
+    for (const n of this.notes) {
+      if (n.type === 'TAP' || n.type === 'HOLD') {
+        weight += 1;
+        hitNotes += 1;
+      } else if (n.type === 'DOUBLE') {
+        weight += 2;
+        hitNotes += 1;
+      } else if (n.type === 'MASH') {
+        weight += n.targetHits || 10; // 连打：前 2×targetHits 下每下 0.5 份伤害
+      }
+    }
+    const fillHits = Math.max(22, Math.min(120, Math.round(hitNotes / 5.5)));
+    this.chartStats = {
+      hitNotes,
+      bossUnit: 100 / Math.max(1, weight),
+      feverPerHit: 100 / fillHits,
+      hpRule: HP_RULES[this.selectedDiffIdx >= 1 ? 1 : 0]
+    };
+  }
+
+  // 调试 / 验证：输出所选曲目谱面各段落（4 小节一块）的音符数与题型
+  describeChart(trackId = this.selectedTrackId, diffIdx = this.selectedDiffIdx) {
+    const track = this.tracks.find((t) => t.id === trackId);
+    if (!track || track.isCustom) return null;
+    const notes = generateBuiltinChart(track, diffIdx);
+    return { total: notes.length, lastNoteSec: notes.length ? notes[notes.length - 1].time : 0, durationSec: track.durationSec, blocks: summarizeChartSections(track, notes) };
+  }
+
+  damageBoss(units) {
+    this.bossHp = Math.max(0, this.bossHp - units * this.chartStats.bossUnit);
+  }
+
+  clearFailTimer() {
+    if (this.failTimer) {
+      clearTimeout(this.failTimer);
+      this.failTimer = null;
+    }
+  }
+
+  // 体力归零：音乐减速 + 渐弱 → FAILED 结算
+  failSong() {
+    if (this.state !== 'PLAYING') return;
+    const track = this.liveSession ? this.liveSession.track : this.getActiveTrack();
+    const songTime = this.synth.getElapsedSec();
+    this.failProgressPct = Math.max(0, Math.min(99.9, (songTime / track.durationSec) * 100));
+    this.state = 'FAILING';
+    this.releaseAllLanes();
+    this.isFever = false;
+    document.body.classList.remove('fever-mode-active');
+    this.synth.slowDownAndStop(1.4);
+    this.runnerAnimState = 'HURT';
+    this.triggerScreenShake(true);
+    this.updateBottomJudge('STAGE FAILED...', 0, true);
+    this.spawnPopup('STAGE FAILED...', '#FF2E4C', '体力耗尽！', 540, 200);
+    this.clearFailTimer();
+    this.failTimer = setTimeout(() => {
+      this.failTimer = null;
+      if (this.state === 'FAILING') this.finishSongToResult({ failed: true });
+    }, 1700);
+  }
+
   stopLiveToIdle() {
+    this.clearFailTimer();
     this.loadToken += 1; // 取消进行中的加载
     this.setLoadingBadge(false);
     this.cancelResumeCountdown();
@@ -1833,7 +2420,7 @@ class NeonBeatArcade {
 
     if (!isKeyDown) return;
     // 暂停/加载中只记录按键状态，不触发判定与动作
-    if (this.state === 'PAUSED' || this.state === 'LOADING') return;
+    if (this.state === 'PAUSED' || this.state === 'LOADING' || this.state === 'FAILING') return;
 
     const nowTime = this.state === 'PLAYING' ? this.getJudgeTime() : performance.now() / 1000;
     this.lastLanePressTime[laneIdx] = nowTime;
@@ -1969,7 +2556,7 @@ class NeonBeatArcade {
   registerBossMashStrike(mashNote) {
     mashNote.mashHits = (mashNote.mashHits || 0) + 1;
     this.bossHurtTimer = 0.18;
-    this.bossHp = Math.max(5, this.bossHp - 4.5);
+    if (mashNote.mashHits <= (mashNote.targetHits || 10) * 2) this.damageBoss(0.5);
     this.hitstopTimer = 0.016;
     this.cameraZoom = 1.042;
     this.cameraPunchX = (Math.random() - 0.3) * 14;
@@ -2095,11 +2682,23 @@ class NeonBeatArcade {
       }
       this.counts.MISS += 1;
       this.combo = 0;
-      this.hp = Math.max(5, this.hp - 8);
+      const rule = this.chartStats.hpRule || HP_RULES[0];
+      const dmg = note && note.type === 'HAZARD' ? rule.hazard : rule.miss;
+      this.hp = Math.max(0, this.hp - dmg);
       this.synth.playHitSfx('MISS');
       this.spawnPopup('MISS...', '#FF2E4C', '');
       this.updateBottomJudge('MISS...', 0, true);
       this.updateHud();
+      if (this.hp <= 0 && !this.autoPlay) {
+        if (this.liveSession && this.liveSession.noFail) {
+          if (!this.liveSession.hpDepleted) {
+            this.liveSession.hpDepleted = true;
+            this.spawnPopup('🛡️ NO FAIL!!', '#00F5D4', '不死模式：体力归零但继续演奏（不计排名）', 540, 200);
+          }
+        } else {
+          this.failSong();
+        }
+      }
       return;
     }
 
@@ -2134,6 +2733,10 @@ class NeonBeatArcade {
     const gained = Math.round(baseScore * comboMult * feverMult);
     this.score += gained;
 
+    // 命中回血（GOOD 回得少）
+    const hpRule = this.chartStats.hpRule || HP_RULES[0];
+    this.hp = Math.min(100, this.hp + (judge === 'GOOD' ? hpRule.healGood : hpRule.heal));
+
     // 长瀞同学技能：每 30 连击恢复生命并补充护盾
     if (partner.id === 'nagatoro' && this.combo > 0 && this.combo % 30 === 0) {
       this.hp = Math.min(100, this.hp + 18);
@@ -2143,7 +2746,8 @@ class NeonBeatArcade {
 
     // FEVER 能量积累（喜多川海梦充能加速 +25%，持续时间 +50%）
     if (!this.isFever) {
-      const feverGain = (judge === 'PERFECT' ? 4.5 : 2.8) * (partner.id === 'marin' ? 1.25 : 1.0);
+      const feverGain =
+        this.chartStats.feverPerHit * (judge === 'PERFECT' ? 1.0 : 0.62) * (partner.id === 'marin' ? 1.25 : 1.0);
       this.feverGauge = Math.min(100, this.feverGauge + feverGain);
       if (this.feverGauge >= 100) {
         this.activateFever();
@@ -2151,7 +2755,7 @@ class NeonBeatArcade {
     }
 
     // 达成 25 / 50 / 100 / 150 连击触发全屏斜切漫画 SKILL CUT-IN
-    if (this.combo === 25 || this.combo === 50 || this.combo === 100 || this.combo === 150) {
+    if (this.combo === 25 || this.combo === 50 || this.combo === 150 || (this.combo > 0 && this.combo % 100 === 0)) {
       this.triggerMangaCutIn(`${this.combo} COMBO BURST!!`);
     }
 
@@ -2162,7 +2766,7 @@ class NeonBeatArcade {
     this.spawnParticles(hitPos.x, hitPos.y, color, note?.type === 'DOUBLE' ? 28 : 18);
 
     // 击中音符时：把 Q 版节拍怪旋转击飞出去 + 24ms 打击微顿帧 (Hitstop) + 镜头前冲缩放
-    this.bossHp = Math.max(5, this.bossHp - (note?.type === 'DOUBLE' ? 2.5 : 1.0));
+    this.damageBoss(note?.type === 'DOUBLE' ? 2 : 1);
     if (note && note.type !== 'HOLD' && note.type !== 'MASH') {
       this.spawnKnockedMonster(note, judge);
     }
@@ -2435,6 +3039,7 @@ class NeonBeatArcade {
     // 遍历音符处理：AI 自动演示 / 副歌 Boss 贴脸连打 (MASH) / 长按持续加分 / 尖刺齿轮闪避结算 / 超时 MISS
     this.activeMashNote = null;
     for (const note of this.notes) {
+      if (this.state !== 'PLAYING') break; // 本帧内体力归零 → 进入失败演出
       if (note.missed || note.holdCompleted) continue;
 
       // 0. 副歌高潮 Boss 贴脸连打对决 (MASH Note · 提前 2.4 秒召唤 16:9 魔王机甲巨图预警！)
@@ -2460,7 +3065,6 @@ class NeonBeatArcade {
           note.holding = false;
           note.holdCompleted = true;
           this.bossKnockbackTimer = 0.85;
-          this.bossHp = 100; // Boss 被轰飞后刷新下一轮护甲
           this.score += 5000;
           this.synth.playHitSfx('BOSS_KO');
           this.triggerScreenShake(true);
@@ -2582,17 +3186,27 @@ class NeonBeatArcade {
       }
     }
 
-    // 谱面结束 -> 音乐 2 秒渐弱淡出 -> 弹出街机结算画面
+    if (this.state !== 'PLAYING') return;
+
+    // 音乐真实结束（durationSec = 离线测得的曲尾）→ 收尾淡出 → 弹出街机结算画面
     if (songTime >= track.durationSec && !this.songEnding) {
       this.songEnding = true;
-      this.synth.fadeOutMusic(2.0);
+      this.synth.fadeOutMusic(1.0);
+      if (this.bossHp <= 8) {
+        this.bossKnockbackTimer = 0.85;
+        this.bossHp = 0;
+        this.synth.playHitSfx('BOSS_KO');
+        this.triggerScreenShake(true);
+        this.spawnPopup('DEMON QUEEN K.O.!!', '#FFE600', '👑 魔王女王被彻底击破！', 540, 175);
+      }
     }
-    if (songTime >= track.durationSec + 2.0) {
+    if (songTime >= track.durationSec + 1.4) {
       this.finishSongToResult();
     }
   }
 
-  finishSongToResult() {
+  finishSongToResult({ failed = false } = {}) {
+    this.clearFailTimer();
     this.synth.stopSong();
     this.state = 'RESULT';
     this.isFever = false;
@@ -2608,16 +3222,20 @@ class NeonBeatArcade {
       mode: this.gameMode,
       partnerId: this.selectedPartnerId,
       isPreview: false,
-      autoUsed: this.autoPlay
+      autoUsed: this.autoPlay,
+      noFail: false,
+      hpDepleted: false
     };
     const autoUsed = session.autoUsed || this.autoPlay;
+    const noFailRun = !!session.noFail && !autoUsed;
     const track = session.track;
     const partner = PARTNERS[session.partnerId] || this.getActivePartner();
     const diff = track.diffs[session.diffIdx] || track.diffs[0];
     const acc = this.getAccuracyPercent();
+    const progressPct = failed ? this.failProgressPct || 0 : 100;
 
-    // 计算街机评级徽章：👑 S+ (ALL PERFECT) / 🌟 S (FULL COMBO 或 ACC >= 95%) / 🔥 A / 🍬 B
-    let rank = 'B';
+    // 计算街机评级徽章：通关 S+ / S / A / B / C；失败（或不死模式下体力曾归零）一律 F
+    let rank = 'C';
     let badgeText = '🍬 CLEAR STAGE';
     const isAllPerfect =
       this.counts.MISS === 0 &&
@@ -2626,7 +3244,13 @@ class NeonBeatArcade {
       this.counts.PERFECT > 0;
     const isFullCombo = this.counts.MISS === 0 && this.counts.PERFECT + this.counts.GREAT > 0;
 
-    if (isAllPerfect) {
+    if (failed) {
+      rank = 'F';
+      badgeText = `💔 STAGE FAILED · 进度 ${progressPct.toFixed(1)}%`;
+    } else if (noFailRun && session.hpDepleted) {
+      rank = 'F';
+      badgeText = '🛡️ 体力曾归零';
+    } else if (isAllPerfect) {
       rank = 'S+';
       badgeText = '👑 ALL PERFECT!!';
     } else if (isFullCombo || acc >= 94.5) {
@@ -2635,34 +3259,70 @@ class NeonBeatArcade {
     } else if (acc >= 84.0) {
       rank = 'A';
       badgeText = '🔥 GREAT RHYTHM!';
+    } else if (acc >= 70.0) {
+      rank = 'B';
+      badgeText = '🍬 CLEAR STAGE';
+    } else {
+      badgeText = '🍭 勉强过关 CLEAR';
     }
 
     if (autoUsed) {
       badgeText = '🤖 AUTO PLAY · 不计入纪录';
+    } else if (noFailRun) {
+      badgeText = `${badgeText} · 不死模式不计排名`;
     }
 
-    // AUTO PLAY（本局任意时刻开启过）不写入本地纪录
-    const isNewRecord = autoUsed
-      ? false
-      : this.saveRecord(session.trackId, session.diffIdx, session.mode, {
-      trackId: track.id,
-      trackTitle: track.title,
-      diffName: diff.name,
-      mode: session.mode,
-      partnerName: partner.name,
-      score: this.score,
-      maxCombo: this.maxCombo,
-      acc: Number(acc.toFixed(2)),
-      rank,
-      badgeText
-    });
+    // 只有「正常模式下通关」才写入高分榜；失败局仅记录最佳进度；AUTO / 不死模式均不计入
+    const recordKey = this.getRecordKey(session.trackId, session.diffIdx, session.mode);
+    const ranked = !autoUsed && !noFailRun && !failed;
+    const isNewRecord = ranked
+      ? this.saveRecord(session.trackId, session.diffIdx, session.mode, {
+          trackId: track.id,
+          trackTitle: track.title,
+          diffName: diff.name,
+          mode: session.mode,
+          partnerName: partner.name,
+          score: this.score,
+          maxCombo: this.maxCombo,
+          acc: Number(acc.toFixed(2)),
+          rank,
+          badgeText
+        })
+      : false;
+    let bestProgress = null;
+    if (failed && !autoUsed && !noFailRun) {
+      this.saveBestProgress(recordKey, progressPct);
+      bestProgress = this.loadBestProgress()[recordKey] || progressPct;
+    }
+
+    const stampEl = document.getElementById('resultRankStamp');
+    stampEl.classList.toggle('is-failed', rank === 'F' && !autoUsed);
+    const progressLine = document.getElementById('resultProgressLine');
+    if (progressLine) {
+      progressLine.hidden = !failed;
+      if (failed) {
+        progressLine.textContent = `演奏进度 ${progressPct.toFixed(1)}%${
+          bestProgress != null ? ` · 最佳进度 ${Number(bestProgress).toFixed(1)}%` : ''
+        } · 体力耗尽，本局不计入高分榜`;
+      }
+    }
+    document.getElementById('stageResultOverlay').classList.toggle('is-failed', failed);
 
     // 填充结算 DOM
     document.getElementById('resultHeroineCg').src = partner.cutinCg;
     document.getElementById('resultRankStamp').textContent = autoUsed ? 'AUTO' : rank;
     document.getElementById('resultRankStamp').classList.toggle('is-auto', autoUsed);
     const clearTag = document.getElementById('resultClearTag');
-    if (clearTag) clearTag.textContent = autoUsed ? 'AUTO PLAY DEMO' : 'STAGE CLEAR!!';
+    if (clearTag) {
+      clearTag.textContent = autoUsed
+        ? 'AUTO PLAY DEMO'
+        : failed
+        ? 'STAGE FAILED...'
+        : noFailRun
+        ? '🛡️ NO FAIL CLEAR'
+        : 'STAGE CLEAR!!';
+      clearTag.classList.toggle('is-failed', failed);
+    }
     document.getElementById('resultBadgeRibbon').textContent = badgeText;
     document.getElementById('resultSongTitle').textContent = `${track.icon} 《${track.title}》`;
     document.getElementById('resultModeAndDiff').textContent =
@@ -2682,7 +3342,9 @@ class NeonBeatArcade {
       this.offsetSamples > 0 ? (this.offsetSumMs / this.offsetSamples).toFixed(1) : '0.0';
     document.getElementById('resTimingSummary').textContent =
       `FAST: ${this.fastCount} · LATE: ${this.lateCount} · 平均毫秒偏差: ±${avgOffset} ms`;
-    document.getElementById('resPartnerComment').textContent = partner.clearLine;
+    document.getElementById('resPartnerComment').textContent = failed
+      ? `${partner.name}：“差一点点！调整一下节奏再来一局，下次一定能打完全曲～”`
+      : partner.clearLine;
 
     document.getElementById('stageResultOverlay').hidden = false;
     this.synth.playHitSfx('CUTIN');
@@ -4425,6 +5087,16 @@ class NeonBeatArcade {
       calibReset.addEventListener('click', () => this.setCalibrationMs(0));
     }
     this.setCalibrationMs(this.calibrationMs);
+
+    // 不死模式 (NO FAIL) 切换：体力归零也不会失败，但成绩不计入排名
+    const btnNoFail = document.getElementById('btnToggleNoFail');
+    if (btnNoFail) {
+      btnNoFail.addEventListener('click', () => {
+        if (this.areLiveControlsLocked()) return;
+        this.setNoFail(!this.noFail);
+      });
+    }
+    this.setNoFail(this.noFail);
 
     // 5. 立即预览看板娘 SKILL CUT-IN & 巨型魔王女王 16:9 机甲巨图阶段
     document.getElementById('btnTriggerCutInTest').addEventListener('click', () => {

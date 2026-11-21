@@ -16,6 +16,22 @@
 
   const STORAGE_KEY = 'pxlsan-game:arcade:cafe';
 
+  // ==================== 0. 营业时段目标 / 口碑 / 吧台升级 平衡参数 ====================
+  const SHIFT_ORDER = ['dusk', 'rain', 'late']; // 白天 → 下午 → 晚上 → (第二天) 白天
+  const SHIFT_DURATION_SEC = 180; // 每个时段营业 3 分钟
+  const REP_MAX = 3; // 口碑 ❤ 上限：客人等太久生气离开 / 1 星出餐各扣 1 颗
+  const TALK_CHOICE_SEC = 8; // 出餐后吧台闲聊气泡停留秒数（不选择则自动道别）
+  const TALK_TIP = 30; // 闲聊选项小费
+  const LEVEL_UPGRADE_COSTS = { 2: 400, 3: 900, 4: 1600 }; // 吧台升级所需营业款
+  const SHIFT_TARGET_MULT = { dusk: 1, rain: 1.15, late: 1.3 };
+
+  // 营业额目标：基础 ¥800，每多一夜 +¥150（第 8 夜封顶），吧台每高 1 级 +¥250，下午 ×1.15 / 晚上 ×1.3，取整到 ¥50
+  function getShiftTarget(night, level, shift) {
+    const n = Math.min(8, Math.max(1, night));
+    const raw = (800 + 150 * (n - 1) + 250 * (Math.max(1, level) - 1)) * (SHIFT_TARGET_MULT[shift] || 1);
+    return Math.round(raw / 50) * 50;
+  }
+
   // ==================== 1. 营业时段配置 ====================
   const SHIFTS = {
     dusk: {
@@ -1619,15 +1635,17 @@
 
   // ==================== 6. 游戏核心状态机 ====================
   const state = {
-    shift: 'rain',
+    shift: 'dusk',
     night: 1,
     coins: 320,
     combo: 0, // 连续按时出餐连击数
     rushModeEnabled: true, // 多客耐心倒计时冲刺模式
     activeSeats: [], // 吧台当前排队的 1~3 位客人席位 [{ seatUid, heroineId, orderIdx, maxTime, timeLeft, status, reactionText, portraitOverride }]
     focusedSeatIdx: 0, // 当前瞄准制作的席位下标
-    servedCount: 0, // 累计完成奉茶杯数，驱动 Lv.1 -> Lv.4 渐进解锁
-    unlockAllProps: false, // 是否开启自由全解锁模式
+    servedCount: 0, // 累计完成奉茶杯数
+    baristaLevel: 1, // 吧台等级 Lv.1~4：在时段结算时花营业款升级
+    round: null, // 当前时段营业回合 { active, timeLeft, target, earned, served, bestCombo, rep, affection }
+    roundSnapshot: null, // 时段开始时的存档快照（重来 / 刷新页面时还原）
     unlockedRecipes: ['rec_kaguya', 'rec_takagi'],
     heroineStats: {},
     currentHeroineId: 'kaguya',
@@ -1654,10 +1672,14 @@
   };
 
   function getBaristaLevel() {
-    if (state.unlockAllProps) return 4;
-    if (state.servedCount >= 5) return 4;
-    if (state.servedCount >= 3) return 3;
-    if (state.servedCount >= 1) return 2;
+    return Math.max(1, Math.min(4, Math.floor(state.baristaLevel) || 1));
+  }
+
+  // 旧存档（按已服务杯数自动升级）迁移用
+  function levelFromServedCount(n) {
+    if (n >= 5) return 4;
+    if (n >= 3) return 3;
+    if (n >= 1) return 2;
     return 1;
   }
 
@@ -1685,6 +1707,51 @@
     });
   }
 
+  // 时段开始快照：失败「重来这个时段」或中途刷新页面时还原到这里
+  function takeRoundSnapshot() {
+    return {
+      night: state.night,
+      shift: state.shift,
+      coins: state.coins,
+      servedCount: state.servedCount,
+      baristaLevel: state.baristaLevel,
+      unlockedRecipes: state.unlockedRecipes.slice(),
+      heroineStats: JSON.parse(JSON.stringify(state.heroineStats))
+    };
+  }
+
+  function applySavedFields(parsed) {
+    if (!parsed || typeof parsed !== 'object') return;
+    const isNum = (v) => typeof v === 'number' && Number.isFinite(v);
+    if (isNum(parsed.night) && parsed.night >= 1) state.night = Math.floor(parsed.night);
+    if (isNum(parsed.coins) && parsed.coins >= 0) state.coins = Math.floor(parsed.coins);
+    if (isNum(parsed.servedCount) && parsed.servedCount >= 0) state.servedCount = Math.floor(parsed.servedCount);
+    if (typeof parsed.shift === 'string' && SHIFTS[parsed.shift]) state.shift = parsed.shift;
+    if (isNum(parsed.baristaLevel)) {
+      state.baristaLevel = Math.max(1, Math.min(4, Math.floor(parsed.baristaLevel)));
+    } else if (isNum(parsed.servedCount)) {
+      // 旧存档没有吧台等级字段：沿用旧的「按杯数升级」进度，不让老玩家掉级
+      state.baristaLevel = levelFromServedCount(state.servedCount);
+    }
+    if (Array.isArray(parsed.unlockedRecipes)) {
+      const validIds = new Set(RECIPES.map((r) => r.id));
+      state.unlockedRecipes = Array.from(
+        new Set(['rec_kaguya', 'rec_takagi', ...parsed.unlockedRecipes])
+      ).filter((id) => typeof id === 'string' && validIds.has(id));
+    }
+    if (parsed.heroineStats && typeof parsed.heroineStats === 'object') {
+      Object.keys(parsed.heroineStats).forEach((k) => {
+        const saved = parsed.heroineStats[k];
+        if (!state.heroineStats[k] || !saved || typeof saved !== 'object') return;
+        const cur = state.heroineStats[k];
+        if (isNum(saved.visits) && saved.visits >= 0) cur.visits = Math.floor(saved.visits);
+        if (isNum(saved.affection)) cur.affection = Math.max(0, Math.min(100, saved.affection));
+        if (typeof saved.unlockedPostcard === 'boolean') cur.unlockedPostcard = saved.unlockedPostcard;
+        if (isNum(saved.outfitIdx) && saved.outfitIdx >= 0) cur.outfitIdx = Math.floor(saved.outfitIdx);
+      });
+    }
+  }
+
   function loadSavedState() {
     initHeroineStats();
     try {
@@ -1692,27 +1759,10 @@
       if (!raw) return;
       const parsed = JSON.parse(raw);
       if (!parsed || typeof parsed !== 'object') return;
-      const isNum = (v) => typeof v === 'number' && Number.isFinite(v);
-      if (isNum(parsed.night) && parsed.night >= 1) state.night = Math.floor(parsed.night);
-      if (isNum(parsed.coins) && parsed.coins >= 0) state.coins = Math.floor(parsed.coins);
-      if (isNum(parsed.servedCount) && parsed.servedCount >= 0) state.servedCount = Math.floor(parsed.servedCount);
-      if (typeof parsed.unlockAllProps === 'boolean') state.unlockAllProps = parsed.unlockAllProps;
-      if (Array.isArray(parsed.unlockedRecipes)) {
-        const validIds = new Set(RECIPES.map((r) => r.id));
-        state.unlockedRecipes = Array.from(
-          new Set(['rec_kaguya', 'rec_takagi', ...parsed.unlockedRecipes])
-        ).filter((id) => typeof id === 'string' && validIds.has(id));
-      }
-      if (parsed.heroineStats && typeof parsed.heroineStats === 'object') {
-        Object.keys(parsed.heroineStats).forEach((k) => {
-          const saved = parsed.heroineStats[k];
-          if (!state.heroineStats[k] || !saved || typeof saved !== 'object') return;
-          const cur = state.heroineStats[k];
-          if (isNum(saved.visits) && saved.visits >= 0) cur.visits = Math.floor(saved.visits);
-          if (isNum(saved.affection)) cur.affection = Math.max(0, Math.min(100, saved.affection));
-          if (typeof saved.unlockedPostcard === 'boolean') cur.unlockedPostcard = saved.unlockedPostcard;
-          if (isNum(saved.outfitIdx) && saved.outfitIdx >= 0) cur.outfitIdx = Math.floor(saved.outfitIdx);
-        });
+      applySavedFields(parsed);
+      // 中途刷新 = 重来当前时段：还原到该时段开始时的快照，避免刷新保留半局收入
+      if (parsed.roundSnapshot && typeof parsed.roundSnapshot === 'object') {
+        applySavedFields(parsed.roundSnapshot);
       }
       if (parsed.currentHeroineId && HEROINES.some((h) => h.id === parsed.currentHeroineId)) {
         state.currentHeroineId = parsed.currentHeroineId;
@@ -1728,10 +1778,12 @@
         night: state.night,
         coins: state.coins,
         servedCount: state.servedCount,
-        unlockAllProps: state.unlockAllProps,
+        shift: state.shift,
+        baristaLevel: state.baristaLevel,
         unlockedRecipes: state.unlockedRecipes,
         heroineStats: state.heroineStats,
         currentHeroineId: state.currentHeroineId,
+        roundSnapshot: state.roundSnapshot,
         updatedAt: new Date().toISOString()
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
@@ -2272,7 +2324,6 @@
     const lv = getBaristaLevel();
     const tagEl = document.getElementById('barista-lv-tag');
     const nextEl = document.getElementById('barista-lv-next');
-    const toggleBtn = document.getElementById('btn-toggle-all-props');
 
     const levelTitles = {
       1: '🌱 Lv.1 见习吧台 (2客同台 · 2茶2料)',
@@ -2280,18 +2331,19 @@
       3: '🍫 Lv.3 特调工坊 (3客同台 · 5茶6料)',
       4: '👑 Lv.4 深夜主理人 (3客同台 · 全器具满贯)'
     };
-    const nextHints = {
-      1: `再完成 ${Math.max(1, 1 - state.servedCount)} 杯 ➔ 解锁【意式浓缩 & 宇治抹茶 & 焦糖/蜂蜜】`,
-      2: `再完成 ${Math.max(1, 3 - state.servedCount)} 杯 ➔ 解锁【法式可可 & 覆盆子果露/香草奶油】`,
-      3: `再完成 ${Math.max(1, 5 - state.servedCount)} 杯 ➔ 解锁【气泡苏打 & 锡兰肉桂粉】`,
-      4: `已解锁全部 6 款基底壶与 7 款配料瓶 (已服务 ${state.servedCount} 杯)`
+    const unlockNames = {
+      2: '意式浓缩 & 宇治抹茶 & 焦糖/蜂蜜',
+      3: '法式可可 & 覆盆子果露/香草奶油',
+      4: '气泡苏打 & 锡兰肉桂粉'
     };
+    const nextLv = lv + 1;
+    const nextHint =
+      lv >= 4
+        ? `已解锁全部 6 款基底壶与 7 款配料瓶 (已服务 ${state.servedCount} 杯)`
+        : `时段结算时花 ¥${LEVEL_UPGRADE_COSTS[nextLv]} 升级 ➔ 解锁【${unlockNames[nextLv]}】`;
 
     if (tagEl) tagEl.textContent = levelTitles[lv] || levelTitles[1];
-    if (nextEl) nextEl.textContent = state.unlockAllProps ? '自由全开模式 · 全部器具已摆上吧台' : nextHints[lv];
-    if (toggleBtn) {
-      toggleBtn.textContent = state.unlockAllProps ? '🌱 切回渐进解锁' : '🔓 解锁全部器具';
-    }
+    if (nextEl) nextEl.textContent = nextHint;
   }
 
   function renderTopStats() {
@@ -2301,6 +2353,7 @@
     const comboEl = document.getElementById('stat-combo');
     if (comboEl) comboEl.textContent = `${state.combo}x`;
     renderBaristaLevelHUD();
+    renderRoundHUD();
   }
 
   function renderShiftEnvironment() {
@@ -2370,11 +2423,11 @@
 
         return `
           <div
-            class="customer-seat-card ${isFocused ? 'is-focused-seat' : ''} ${isFullyMatched ? 'is-ready-to-serve' : ''} ${seat.status === 'celebrating' ? 'is-celebrating' : ''}"
+            class="customer-seat-card ${isFocused ? 'is-focused-seat' : ''} ${isFullyMatched ? 'is-ready-to-serve' : ''} ${seat.status !== 'waiting' ? 'is-celebrating' : ''}"
             data-seat-idx="${idx}"
           >
             ${
-              seat.celebrateBanner
+              seat.celebrateBanner && seat.status === 'waiting'
                 ? `<div class="seat-celebrate-burst">${seat.celebrateBanner}</div>`
                 : ''
             }
@@ -2383,7 +2436,7 @@
               <div class="seat-drop-serve-badge">🛎️ 松手递给 ${heroine.name}！</div>
             </div>
 
-            <div class="seat-ticket-col">
+            ${seat.status !== 'waiting' ? renderSeatTalkColumn(seat, idx, heroine) : `<div class="seat-ticket-col">
               <div class="seat-ticket-top">
                 <div class="seat-guest-name-wrap">
                   <span class="seat-focus-dot">${isFocused ? '🎯 制作中' : `#${idx + 1} 候餐`}</span>
@@ -2424,7 +2477,7 @@
                   🛎️ 奉茶
                 </button>
               </div>
-            </div>
+            </div>`}
           </div>
         `;
       })
@@ -2450,6 +2503,58 @@
         serveDrinkToSeat(idx);
       });
     });
+
+    container.querySelectorAll('[data-talk-choice]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        chooseSeatTalk(Number(btn.dataset.talkSeat), Number(btn.dataset.talkChoice));
+      });
+    });
+    container.querySelectorAll('[data-talk-skip]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const seat = state.activeSeats[Number(btn.dataset.talkSkip)];
+        if (seat && seat.status !== 'waiting') {
+          seat.talkTimeLeft = 0;
+          finishSeatTalk(seat.seatUid);
+        }
+      });
+    });
+  }
+
+  const escapeHtml = (str) =>
+    String(str == null ? '' : str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  // 出餐后的吧台闲聊气泡：客人说出品鉴台词 + 2 个夜谈选项（好感 & ¥30 小费），不选则倒计时后自动道别
+  function renderSeatTalkColumn(seat, idx, heroine) {
+    const talk = seat.talk || {};
+    const choices = !talk.answered && Array.isArray(talk.choices) ? talk.choices : [];
+    const line = talk.answered ? talk.reply : seat.quoteOverride || talk.quote || '';
+    return `
+      <div class="seat-ticket-col seat-talk-col ${talk.answered ? 'is-answered' : ''}">
+        <div class="seat-ticket-top">
+          <span class="seat-talk-reward">${escapeHtml(seat.celebrateBanner || '💬 吧台夜谈')}</span>
+          <span class="seat-talk-timer" data-seat-talk-sec="${idx}">${Math.max(0, Math.ceil(seat.talkTimeLeft || 0))}s</span>
+        </div>
+        <p class="seat-talk-line" title="${escapeHtml(line)}"><strong>${escapeHtml(heroine.name)}：</strong>${escapeHtml(line)}</p>
+        ${
+          choices.length
+            ? `<div class="seat-talk-choices">
+                ${choices
+                  .map(
+                    (c, ci) => `
+                  <button type="button" class="seat-talk-choice" data-talk-seat="${idx}" data-talk-choice="${ci}" title="${escapeHtml(c.text)}">
+                    <span class="talk-choice-text">💬 ${escapeHtml(c.text)}</span>
+                    <small>♥+${c.bonusAffection || 12} · ¥${TALK_TIP}</small>
+                  </button>`
+                  )
+                  .join('')}
+                <button type="button" class="seat-talk-skip" data-talk-skip="${idx}">👋 下次再聊</button>
+              </div>`
+            : ''
+        }
+      </div>
+    `;
   }
 
   function renderHeroineAndOrder() {
@@ -3208,6 +3313,8 @@
         ? seatIdxOverride
         : state.focusedSeatIdx;
     const seat = state.activeSeats[sIdx];
+    // 时段已结束（结算中）不能再出餐
+    if (!state.round || !state.round.active) return;
     // 防重复结算：只有正在候餐的客人才能被奉茶（庆祝动画期间忽略按钮与拖杯）
     if (seat && seat.status !== 'waiting') return;
     // 空杯（没加任何配料）不允许出餐
@@ -3320,8 +3427,7 @@
       newlyUnlockedRecipe = heroRecipe;
     }
 
-    // 更新存档数据、连击 COMBO 与吧台渐进升级判定
-    const prevLv = getBaristaLevel();
+    // 更新存档数据、连击 COMBO 与本时段营业统计
     state.servedCount += 1;
     if (tierKey === 'perfect' || tierKey === 'good') {
       state.combo += 1;
@@ -3335,25 +3441,20 @@
 
     const hStat = state.heroineStats[heroine.id];
     hStat.visits += 1;
+    const prevAffection = hStat.affection;
     hStat.affection = Math.min(100, hStat.affection + affectionGain);
     if (tierKey === 'perfect' || hStat.visits >= 2) {
       hStat.unlockedPostcard = true;
     }
-    const newLv = getBaristaLevel();
+    const round = state.round;
+    if (round) {
+      round.earned += totalEarned;
+      round.served += 1;
+      round.bestCombo = Math.max(round.bestCombo, state.combo);
+      round.affection[heroine.id] = (round.affection[heroine.id] || 0) + (hStat.affection - prevAffection);
+    }
     saveState();
     renderTopStats();
-    if (newLv > prevLv) {
-      ensureCustomerSeats();
-      renderStep1Ingredients();
-      const unlockMsgs = {
-        2: '🎉 吧台升至 Lv.2！开启【3位客人同台排队】，新解锁【意式浓缩壶、宇治抹茶碗、焦糖瓶、蜂蜜罐】！',
-        3: '🎉 吧台升至 Lv.3！新解锁【法式热可可铜壶、覆盆子果露瓶、香草奶油喷枪】！',
-        4: '👑 吧台升至 Lv.4 满级！新解锁【清爽气泡苏打虹吸瓶、锡兰肉桂粉筛罐】，全器具满贯！'
-      };
-      setTimeout(() => {
-        showToast(unlockMsgs[newLv] || `🎉 吧台升级到 Lv.${newLv}！新茶壶与配料已摆上吧台！`);
-      }, 450);
-    }
 
     // 填充品鉴结算弹窗 (供悠闲模式或点击查看)
     document.getElementById('tasting-stars').textContent = stars;
@@ -3394,7 +3495,6 @@
       `🪙 营业收入 +¥${totalEarned} · ♥ 羁绊好感 +${affectionGain}`;
 
     document.getElementById('dialogue-text').textContent = reaction.quote;
-    renderNightTalkChoices(heroine, order);
 
     // 立即清空重置中央杯子，准备做下一位客人的单！（温度与基底一并复位，避免下一杯直接继承得分）
     state.cup.addons = [];
@@ -3406,86 +3506,102 @@
     latteArtController.resetBaseCrema();
     updateExtractionUI();
 
-    if (state.rushModeEnabled && seat) {
-      // 快节奏冲刺模式：不弹大弹窗打断节奏，直接在客人头顶炸出星级与赏金特效，1.5秒后自动迎来新客人！
-      seat.status = 'celebrating';
+    if (seat) {
+      // 出餐后客人留在吧台：头顶炸出星级与赏金，票据栏变成夜谈气泡（2~3★ 才有夜谈选项），其他客人照常计时
+      const canTalk = tierKey !== 'try' && Array.isArray(order.nightTalk) && order.nightTalk.length > 0;
+      seat.status = canTalk ? 'talking' : 'celebrating';
       seat.portraitOverride = newPortraitSrc;
       seat.quoteOverride = reaction.quote;
       seat.celebrateBanner = `${stars} +¥${totalEarned} ${state.combo > 1 ? `· 🔥${state.combo}连击!` : ''}`;
+      seat.talk = {
+        quote: reaction.quote,
+        choices: canTalk ? order.nightTalk.slice(0, 3) : [],
+        answered: false,
+        reply: ''
+      };
+      seat.talkTimeLeft = canTalk ? TALK_CHOICE_SEC : 1.6;
+      focusMostUrgentSeat();
+    }
+
+    if (state.rushModeEnabled) {
       showToast(
-        `${stars} ${heroine.name}：「${reaction.quote.slice(0, 26)}…」 收入 +¥${totalEarned}${
+        `${stars} ${heroine.name} 收入 +¥${totalEarned}${
           newlyUnlockedRecipe ? ` · 解锁配方 ${newlyUnlockedRecipe.code}!` : ''
         }`
       );
-      renderStep1Ingredients();
-      updateLiveChalkboardPreview();
-
-      const oldUid = seat.seatUid;
-      setTimeout(() => {
-        const curIdx = state.activeSeats.findIndex((s) => s.seatUid === oldUid);
-        if (curIdx !== -1) {
-          state.activeSeats[curIdx] = createGuestSeat(null, 4);
-          // 自动将焦点切换到当前剩余时间最短的候餐客人
-          let urgentIdx = 0;
-          let minT = Infinity;
-          state.activeSeats.forEach((s, i) => {
-            if (s.status === 'waiting' && s.timeLeft < minT) {
-              minT = s.timeLeft;
-              urgentIdx = i;
-            }
-          });
-          state.focusedSeatIdx = urgentIdx;
-          state.currentHeroineId = state.activeSeats[urgentIdx].heroineId;
-        }
-        ensureCustomerSeats();
-        renderStep1Ingredients();
-        updateLiveChalkboardPreview();
-      }, 1500);
     } else {
-      // 悠闲夜谈模式：弹出完整品鉴与明信片结算卡
-      if (seat) {
-        state.activeSeats[sIdx] = createGuestSeat(null, 4);
-      }
-      renderStep1Ingredients();
-      updateLiveChalkboardPreview();
+      // 悠闲夜谈模式：额外弹出完整品鉴与明信片结算卡（关闭后吧台夜谈气泡继续）
       document.getElementById('modal-tasting-result').classList.remove('hidden');
+    }
+    renderStep1Ingredients();
+    updateLiveChalkboardPreview();
+
+    // 1 星出餐：客人不满意，口碑 -1
+    if (tierKey === 'try') {
+      loseReputation(`😣 ${heroine.name} 对这杯不太满意…口碑 -1`);
     }
   }
 
-  function renderNightTalkChoices(heroine, order) {
-    const box = document.getElementById('night-talk-choices');
-    const list = document.getElementById('choices-list');
-    if (!box || !list || !order.nightTalk) return;
-
-    box.classList.remove('hidden');
-    list.innerHTML = order.nightTalk
-      .map(
-        (item, idx) => `
-        <button class="talk-choice-btn" data-talk-idx="${idx}">
-          💬 ${item.text}
-        </button>
-      `
-      )
-      .join('');
-
-    list.querySelectorAll('.talk-choice-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const idx = Number(btn.dataset.talkIdx);
-        const item = order.nightTalk[idx];
-        if (!item) return;
-        audio.playStirClinkSound();
-        document.getElementById('dialogue-text').textContent = item.reply;
-        state.heroineStats[heroine.id].affection = Math.min(
-          100,
-          state.heroineStats[heroine.id].affection + (item.bonusAffection || 12)
-        );
-        state.coins += 30;
-        saveState();
-        renderTopStats();
-        box.classList.add('hidden');
-        showToast(`♥ 与 ${heroine.name} 深夜交心，羁绊好感 +${item.bonusAffection}，收到打赏小费 ¥30！`);
-      });
+  // 焦点切到剩余耐心最少的候餐客人
+  function focusMostUrgentSeat() {
+    let urgentIdx = -1;
+    let minT = Infinity;
+    state.activeSeats.forEach((s, i) => {
+      if (s.status === 'waiting' && s.timeLeft < minT) {
+        minT = s.timeLeft;
+        urgentIdx = i;
+      }
     });
+    if (urgentIdx !== -1) {
+      state.focusedSeatIdx = urgentIdx;
+      state.currentHeroineId = state.activeSeats[urgentIdx].heroineId;
+    }
+  }
+
+  // 夜谈选项：好感 + 小费（计入本时段营业额），客人回一句话后道别
+  function chooseSeatTalk(seatIdx, choiceIdx) {
+    const seat = state.activeSeats[seatIdx];
+    if (!seat || seat.status !== 'talking' || !seat.talk || seat.talk.answered) return;
+    const item = seat.talk.choices[choiceIdx];
+    if (!item) return;
+    const heroine = HEROINES.find((h) => h.id === seat.heroineId);
+    const hStat = state.heroineStats[seat.heroineId];
+    const bonus = item.bonusAffection || 12;
+    audio.playStirClinkSound();
+    let gained = 0;
+    if (hStat) {
+      const before = hStat.affection;
+      hStat.affection = Math.min(100, hStat.affection + bonus);
+      gained = hStat.affection - before;
+    }
+    state.coins += TALK_TIP;
+    if (state.round) {
+      state.round.earned += TALK_TIP;
+      state.round.affection[seat.heroineId] = (state.round.affection[seat.heroineId] || 0) + gained;
+    }
+    seat.talk.answered = true;
+    seat.talk.reply = item.reply;
+    seat.celebrateBanner = `♥+${bonus} · 小费 +¥${TALK_TIP}`;
+    if (heroine && heroine.expressions.blush) seat.portraitOverride = heroine.expressions.blush;
+    seat.talkTimeLeft = 2.6;
+    const dlg = document.getElementById('dialogue-text');
+    if (dlg) dlg.textContent = item.reply;
+    saveState();
+    renderTopStats();
+    renderMultiCustomerStage();
+  }
+
+  // 夜谈结束：客人离席，换下一位新客人入座
+  function finishSeatTalk(seatUid) {
+    const curIdx = state.activeSeats.findIndex((s) => s.seatUid === seatUid);
+    if (curIdx === -1) return;
+    const wasFocused = curIdx === state.focusedSeatIdx;
+    state.activeSeats[curIdx] = createGuestSeat(null, 4);
+    const focused = state.activeSeats[state.focusedSeatIdx];
+    if (wasFocused || !focused || focused.status !== 'waiting') focusMostUrgentSeat();
+    ensureCustomerSeats();
+    renderStep1Ingredients();
+    updateLiveChalkboardPreview();
   }
 
   // ==================== 12. 18款秘密特调手账 & 12位女主名册弹窗 ====================
@@ -3519,34 +3635,11 @@
           <p class="recipe-lore-text">${r.lore}</p>
           <div class="recipe-card-foot">
             <span style="font-size:11px;color:#A7C4B0;">推荐模具：${r.stencil.toUpperCase()}</span>
-            <button class="clue-autofill-btn" data-load-recipe="${r.id}">
-              ✨ 一键按方备料
-            </button>
           </div>
         </div>
       `;
     }).join('');
 
-    grid.querySelectorAll('[data-load-recipe]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const rec = RECIPES.find((x) => x.id === btn.dataset.loadRecipe);
-        if (!rec) return;
-        state.cup.temp = rec.temp;
-        state.cup.base = rec.base;
-        state.cup.addons = [...rec.addons];
-        if (!state.unlockedRecipes.includes(rec.id)) {
-          state.unlockedRecipes.push(rec.id);
-          saveState();
-          renderTopStats();
-        }
-        renderStep1Ingredients();
-        updateLiveChalkboardPreview();
-        latteArtController.applyStencil(rec.stencil);
-        document.getElementById('modal-recipe-book').classList.add('hidden');
-        switchWorkbenchStep(1);
-        showToast(`📖 已载入《${rec.name}》配方与拉花模具！`);
-      });
-    });
   }
 
   function renderGuestBookModal() {
@@ -3595,9 +3688,19 @@
     const heroine = HEROINES.find((h) => h.id === heroineId);
     if (!heroine) return;
     ensureCustomerSeats();
+    if (state.activeSeats.some((s) => s.heroineId === heroine.id)) {
+      showToast(`🛎️ ${heroine.name} 已经坐在吧台前啦～`);
+      return;
+    }
+    // 只能请她坐到空位上：不能用邀约替换正在候餐的客人来躲避耐心倒计时
+    if (state.activeSeats.length >= 3) {
+      showToast('🛎️ 吧台 3 个客席已满座！先把手头的饮品递出去，空出位子再邀约吧～');
+      return;
+    }
+    state.activeSeats.push(createGuestSeat(heroine.id, 0));
+    state.focusedSeatIdx = state.activeSeats.length - 1;
     state.currentHeroineId = heroine.id;
     state.currentOrderIdx = 0;
-    state.activeSeats[state.focusedSeatIdx] = createGuestSeat(heroine.id, 0);
     audio.playServeBellSound();
     saveState();
     renderHeroineAndOrder();
@@ -3606,20 +3709,294 @@
     showToast(`🛎️ 铜铃轻响，${heroine.name}推开木门坐上了吧台！`);
   }
 
-  // 多客耐心倒计时循环引擎 (每 250ms 刷新一次倒计时条，不重建 DOM)
-  function startRushPatienceTicker() {
-    setInterval(() => {
-      if (!state.rushModeEnabled) return;
-      // 如果有弹窗打开，则暂停倒计时，不惩罚正在看手账或拉花的玩家
-      const anyModalOpen = Array.from(document.querySelectorAll('.cafe-modal-backdrop')).some(
-        (m) => !m.classList.contains('hidden')
-      );
-      if (anyModalOpen) return;
+  // ==================== 营业时段回合：3 分钟计时 / 营业额目标 / 口碑 ❤ / 结算 ====================
+  // 任意弹窗（教程、手账、名册、拉花、品鉴、结算）打开或页面切到后台时，所有计时都暂停
+  function isGamePaused() {
+    if (document.hidden) return true;
+    return Array.from(document.querySelectorAll('.cafe-modal-backdrop')).some(
+      (m) => !m.classList.contains('hidden')
+    );
+  }
 
+  function formatClock(sec) {
+    const t = Math.max(0, Math.ceil(sec));
+    return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+  }
+
+  function renderRoundHUD() {
+    const round = state.round;
+    const hud = document.getElementById('shift-round-hud');
+    if (!hud || !round) return;
+    const clockEl = document.getElementById('round-clock-val');
+    const earnedEl = document.getElementById('round-earned-val');
+    const targetEl = document.getElementById('round-target-val');
+    const fillEl = document.getElementById('round-goal-fill');
+    const repEl = document.getElementById('round-rep');
+    if (clockEl) clockEl.textContent = formatClock(round.timeLeft);
+    hud.classList.toggle('is-urgent', round.active && round.timeLeft <= 30);
+    if (earnedEl) earnedEl.textContent = `¥${round.earned}`;
+    if (targetEl) targetEl.textContent = String(round.target);
+    const pct = Math.min(100, Math.round((round.earned / Math.max(1, round.target)) * 100));
+    if (fillEl) fillEl.style.width = `${pct}%`;
+    hud.classList.toggle('goal-met', round.earned >= round.target);
+    if (repEl) {
+      repEl.textContent = '❤️'.repeat(Math.max(0, round.rep)) + '🤍'.repeat(Math.max(0, REP_MAX - round.rep));
+      repEl.title = `口碑 ${round.rep}/${REP_MAX}：客人等太久生气离开或 1 星出餐各扣 1 颗，扣光本时段立即失败`;
+    }
+  }
+
+  function resetCupForNewRound() {
+    state.cup.addons = [];
+    state.cup.temp = 'hot';
+    state.cup.base = (getUnlockedBases()[0] || BASES[0]).id;
+    state.cup.extractBonus = 0;
+    state.cup.extractPos = 8;
+    state.cup.extractGrade = '待冲泡';
+    if (latteArtController.canvas) latteArtController.resetBaseCrema();
+  }
+
+  function startRound(announce = true) {
+    if (!state.roundSnapshot) state.roundSnapshot = takeRoundSnapshot();
+    state.round = {
+      active: true,
+      shift: state.shift,
+      timeLeft: SHIFT_DURATION_SEC,
+      target: getShiftTarget(state.night, getBaristaLevel(), state.shift),
+      earned: 0,
+      served: 0,
+      bestCombo: 0,
+      rep: REP_MAX,
+      affection: {},
+      failReason: ''
+    };
+    state.combo = 0;
+    state.activeSeats = [];
+    state.focusedSeatIdx = 0;
+    ensureCustomerSeats();
+    resetCupForNewRound();
+    saveState();
+    renderShiftEnvironment();
+    renderTopStats();
+    renderStep1Ingredients();
+    renderHeroineAndOrder();
+    updateLiveChalkboardPreview();
+    updateExtractionUI();
+    if (announce) {
+      const cfg = SHIFTS[state.shift];
+      showToast(
+        `${cfg.weatherIcon} 第 ${state.night} 夜 · ${cfg.name}开门！${Math.round(SHIFT_DURATION_SEC / 60)} 分钟内营业额达到 ¥${state.round.target}，口碑 ❤️×${REP_MAX}`
+      );
+    }
+  }
+
+  function loseReputation(msg) {
+    const round = state.round;
+    if (!round || !round.active) return;
+    round.rep = Math.max(0, round.rep - 1);
+    renderRoundHUD();
+    const repEl = document.getElementById('round-rep');
+    if (repEl) {
+      repEl.classList.remove('rep-shake');
+      void repEl.offsetWidth;
+      repEl.classList.add('rep-shake');
+    }
+    showToast(`${msg}（口碑剩 ${round.rep}/${REP_MAX}）`);
+    if (round.rep <= 0) {
+      endShift(false, '口碑耗尽：客人们开始在门口议论这家店了……');
+    }
+  }
+
+  function getNextShiftInfo() {
+    const idx = SHIFT_ORDER.indexOf(state.shift);
+    if (idx === -1 || idx >= SHIFT_ORDER.length - 1) return { shift: SHIFT_ORDER[0], night: state.night + 1 };
+    return { shift: SHIFT_ORDER[idx + 1], night: state.night };
+  }
+
+  function endShift(success, failReason = '') {
+    const round = state.round;
+    if (!round || !round.active) return;
+    round.active = false;
+    round.success = success;
+    round.failReason = failReason;
+    if (state.brewingActive) stopExtractionMeter();
+    const playedShift = state.shift;
+    const playedNight = state.night;
+    if (success) {
+      // 成功：立即推进到下一时段并存下新快照（结算界面里刷新页面也不会丢失收入）
+      const next = getNextShiftInfo();
+      state.shift = next.shift;
+      state.night = next.night;
+      state.combo = 0;
+      state.roundSnapshot = takeRoundSnapshot();
+      audio.playServeBellSound();
+    }
+    saveState();
+    renderTopStats();
+    renderShiftSummary(round, playedShift, playedNight);
+  }
+
+  function renderShiftSummary(round, playedShift, playedNight) {
+    const modal = document.getElementById('modal-shift-summary');
+    if (!modal) return;
+    const cfg = SHIFTS[playedShift] || SHIFTS.dusk;
+    const success = !!round.success;
+    const setText = (id, txt) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = txt;
+    };
+    setText('summary-badge', success ? '🎉 ⭐ 时段达成 ⭐' : '🌧️ 本时段未达成');
+    setText('summary-title', `第 ${playedNight} 夜 · ${cfg.name}${success ? ' 圆满打烊' : ' 营业失利'}`);
+    setText(
+      'summary-subtitle',
+      success
+        ? round.earned >= round.target * 1.5
+          ? '营业额远超目标，熟客们都在打听明天的特调！'
+          : '营业额达标，吧台的灯光在雨声里显得格外温暖。'
+        : round.failReason || `营业额差 ¥${Math.max(0, round.target - round.earned)} 没有达标……`
+    );
+
+    const statsEl = document.getElementById('summary-stats');
+    if (statsEl) {
+      const pct = Math.min(100, Math.round((round.earned / Math.max(1, round.target)) * 100));
+      statsEl.innerHTML = `
+        <div class="summary-stat"><span>☕ 出餐</span><strong>${round.served} 杯</strong></div>
+        <div class="summary-stat"><span>🪙 营业额 / 目标</span><strong class="${round.earned >= round.target ? 'is-met' : 'is-miss'}">¥${round.earned} / ¥${round.target}</strong>
+          <span class="summary-goal-bar"><i style="width:${pct}%"></i></span></div>
+        <div class="summary-stat"><span>🔥 最高连击</span><strong>${round.bestCombo}x</strong></div>
+        <div class="summary-stat"><span>❤️ 剩余口碑</span><strong>${round.rep}/${REP_MAX}</strong></div>
+      `;
+    }
+
+    const affEl = document.getElementById('summary-affection');
+    if (affEl) {
+      const rows = Object.keys(round.affection)
+        .filter((id) => round.affection[id] > 0)
+        .map((id) => {
+          const h = HEROINES.find((x) => x.id === id);
+          return h ? `<span class="summary-aff-chip">${escapeHtml(h.name)} ♥+${round.affection[id]}</span>` : '';
+        })
+        .join('');
+      affEl.innerHTML = rows
+        ? `<div class="summary-aff-title">💌 本时段羁绊好感</div><div class="summary-aff-row">${rows}</div>`
+        : '<div class="summary-aff-title">💌 本时段没有和熟客增进羁绊……下次出餐后试着和她们聊两句吧</div>';
+    }
+
+    renderSummaryUpgrade(success);
+
+    const nextBtn = document.getElementById('btn-summary-next');
+    const retryBtn = document.getElementById('btn-summary-retry');
+    const dayBtn = document.getElementById('btn-summary-day');
+    if (nextBtn) {
+      nextBtn.classList.toggle('hidden', !success);
+      const nextCfg = SHIFTS[state.shift];
+      const label = nextBtn.querySelector('span');
+      if (label) {
+        label.textContent =
+          state.shift === SHIFT_ORDER[0]
+            ? `进入下一时段 ▸ 第 ${state.night} 夜 · ${nextCfg.name}`
+            : `进入下一时段 ▸ ${nextCfg.name}`;
+      }
+    }
+    if (retryBtn) retryBtn.classList.toggle('hidden', success);
+    if (dayBtn) dayBtn.classList.toggle('hidden', success || playedShift === SHIFT_ORDER[0]);
+    modal.classList.remove('hidden');
+  }
+
+  // 结算界面里花营业款升级吧台（只在时段成功后、下一时段开始前可用）
+  function renderSummaryUpgrade(success) {
+    const box = document.getElementById('summary-upgrade');
+    if (!box) return;
+    const lv = getBaristaLevel();
+    if (!success || lv >= 4) {
+      box.innerHTML = success ? '<span class="summary-upgrade-note">👑 吧台已满级，全部器具都摆上吧台了</span>' : '';
+      return;
+    }
+    const nextLv = lv + 1;
+    const cost = LEVEL_UPGRADE_COSTS[nextLv];
+    const perks = {
+      2: '3 位客人同台 · 意式浓缩 / 宇治抹茶 / 焦糖 / 蜂蜜',
+      3: '法式可可 / 覆盆子果露 / 香草奶油',
+      4: '气泡苏打 / 锡兰肉桂粉 · 全器具满贯'
+    };
+    const afford = state.coins >= cost;
+    box.innerHTML = `
+      <div class="summary-upgrade-info">
+        <strong>🔧 升级吧台 Lv.${lv} → Lv.${nextLv}</strong>
+        <small>解锁：${perks[nextLv]}（之后的时段目标 +¥250 起）</small>
+      </div>
+      <button type="button" class="mini-wood-btn summary-upgrade-btn" id="btn-summary-upgrade" ${afford ? '' : 'disabled'}>
+        ${afford ? `花 ¥${cost} 升级` : `还差 ¥${cost - state.coins}`}
+      </button>
+    `;
+    const btn = document.getElementById('btn-summary-upgrade');
+    if (btn && afford) {
+      btn.addEventListener('click', () => {
+        if (state.coins < cost || getBaristaLevel() !== lv) return;
+        state.coins -= cost;
+        state.baristaLevel = nextLv;
+        state.roundSnapshot = takeRoundSnapshot();
+        saveState();
+        renderTopStats();
+        renderStep1Ingredients();
+        audio.playServeBellSound();
+        showToast(`🎉 吧台升至 Lv.${nextLv}！新器具已摆上吧台：${perks[nextLv]}`);
+        renderSummaryUpgrade(true);
+      });
+    }
+  }
+
+  function closeSummaryAndStart() {
+    const modal = document.getElementById('modal-shift-summary');
+    if (modal) modal.classList.add('hidden');
+    startRound(true);
+  }
+
+  function restoreRoundSnapshot() {
+    const snap = state.roundSnapshot;
+    if (!snap) return;
+    state.night = snap.night;
+    state.shift = snap.shift;
+    state.coins = snap.coins;
+    state.servedCount = snap.servedCount;
+    state.baristaLevel = snap.baristaLevel;
+    state.unlockedRecipes = snap.unlockedRecipes.slice();
+    state.heroineStats = JSON.parse(JSON.stringify(snap.heroineStats));
+    initHeroineStats();
+  }
+
+  // 多客耐心倒计时 + 时段营业时钟 + 吧台夜谈气泡（每 250ms 刷新，不重建 DOM）
+  function startRushPatienceTicker() {
+    const TICK = 0.25;
+    setInterval(() => {
+      const round = state.round;
+      if (!round || !round.active) return;
+      if (isGamePaused()) return;
+
+      // 1) 时段营业时钟
+      round.timeLeft = Math.max(0, round.timeLeft - TICK);
+      renderRoundHUD();
+      if (round.timeLeft <= 0) {
+        endShift(round.earned >= round.target, round.earned >= round.target ? '' : `营业额差 ¥${round.target - round.earned} 没有达标……`);
+        return;
+      }
+
+      // 2) 出餐后的夜谈 / 庆祝气泡倒计时
+      const finishedTalks = [];
+      state.activeSeats.forEach((seat, idx) => {
+        if (seat.status === 'waiting') return;
+        seat.talkTimeLeft = (seat.talkTimeLeft || 0) - TICK;
+        const tEl = document.querySelector(`[data-seat-talk-sec="${idx}"]`);
+        if (tEl) tEl.textContent = `${Math.max(0, Math.ceil(seat.talkTimeLeft))}s`;
+        if (seat.talkTimeLeft <= 0) finishedTalks.push(seat.seatUid);
+      });
+      finishedTalks.forEach((uid) => finishSeatTalk(uid));
+
+      // 3) 候餐客人耐心倒计时（悠闲模式下不扣耐心）
+      if (!state.rushModeEnabled) return;
       let expiredSeatIdx = -1;
       state.activeSeats.forEach((seat, idx) => {
         if (seat.status !== 'waiting') return;
-        seat.timeLeft = Math.max(0, seat.timeLeft - 0.25);
+        seat.timeLeft = Math.max(0, seat.timeLeft - TICK);
         const pct = Math.max(0, Math.min(100, Math.round((seat.timeLeft / seat.maxTime) * 100)));
         const colorCls = pct > 50 ? 'timer-green' : pct > 24 ? 'timer-amber' : 'timer-red';
 
@@ -3646,13 +4023,14 @@
         const expSeat = state.activeSeats[expiredSeatIdx];
         const expHeroine = HEROINES.find((h) => h.id === expSeat.heroineId);
         state.combo = 0;
-        renderTopStats();
-        showToast(`⏰ ${expHeroine ? expHeroine.name : '客人'}等太久先走啦，连击中断！新客人已入座～`);
         state.activeSeats[expiredSeatIdx] = createGuestSeat(null, 5);
+        if (expiredSeatIdx === state.focusedSeatIdx) focusMostUrgentSeat();
+        renderTopStats();
         renderMultiCustomerStage();
         updateLiveStepGuide();
+        loseReputation(`😤 ${expHeroine ? expHeroine.name : '客人'}等太久生气离开了，连击中断！`);
       }
-    }, 250);
+    }, TICK * 1000);
   }
 
   function switchWorkbenchStep(stepNum) {
@@ -3683,20 +4061,33 @@
     document.querySelectorAll('.shift-pill').forEach((btn) => {
       btn.addEventListener('click', () => {
         const newShift = btn.dataset.shift;
-        if (!SHIFTS[newShift]) return;
-        // 已处于该时段：什么也不做（避免重复累加营业夜数）
-        if (newShift === state.shift) return;
-        const prevShift = state.shift;
-        state.shift = newShift;
-        // 仅在「晚上雨夜档 → 白天晴朗档」（打烊后迎来新的一天）时营业夜数 +1
-        if (prevShift === 'late' && newShift === 'dusk') state.night += 1;
-        renderShiftEnvironment();
-        renderTopStats();
-        saveState();
-        // 不替换正在候餐的客人（避免借切换时段躲过倒计时）；之后新入座的客人会按新时段的熟客池挑选
-        showToast(`🕰️ 已切换到${SHIFTS[newShift].name}，之后入座的客人会是这个时段的熟客～`);
+        if (!SHIFTS[newShift] || newShift === state.shift) return;
+        // 时段随营业时钟推进：营业中不能手动跳过时段（避免躲过营业额目标与倒计时）
+        showToast(
+          `⏳ 时段会随营业时钟推进～撑过本时段并达成 ¥${state.round ? state.round.target : ''} 营业额，就能在结算里进入下一时段！`
+        );
       });
     });
+
+    // 时段结算弹窗按钮
+    const summaryNextBtn = document.getElementById('btn-summary-next');
+    if (summaryNextBtn) summaryNextBtn.addEventListener('click', () => closeSummaryAndStart());
+    const summaryRetryBtn = document.getElementById('btn-summary-retry');
+    if (summaryRetryBtn) {
+      summaryRetryBtn.addEventListener('click', () => {
+        restoreRoundSnapshot();
+        closeSummaryAndStart();
+      });
+    }
+    const summaryDayBtn = document.getElementById('btn-summary-day');
+    if (summaryDayBtn) {
+      summaryDayBtn.addEventListener('click', () => {
+        restoreRoundSnapshot();
+        state.shift = SHIFT_ORDER[0];
+        state.roundSnapshot = takeRoundSnapshot();
+        closeSummaryAndStart();
+      });
+    }
 
     // 2. Lo-Fi 音乐盒与拟音开关
     const lofiToggleBtn = document.getElementById('btn-lofi-toggle');
@@ -3838,23 +4229,6 @@
       drawer.classList.toggle('hidden');
     });
 
-    // 一键按推理备料
-    document.getElementById('btn-autofill-order').addEventListener('click', () => {
-      const order = getCurrentOrder();
-      if (!order) return;
-      state.cup.temp = order.temp;
-      state.cup.base = order.idealBases[0];
-      state.cup.addons = order.idealAddons.slice(0, 2);
-      if (order.temp === 'iced') audio.playIceClinkSound();
-      else audio.playPourSound();
-      renderStep1Ingredients();
-      updateLiveChalkboardPreview();
-      if (order.favoriteStencil) {
-        latteArtController.applyStencil(order.favoriteStencil);
-      }
-      showToast('✨ 已根据店长心事推理自动备好基底、辅料与拉花模具！');
-    });
-
     // 4. 步骤切换标签
     document.querySelectorAll('.step-tab').forEach((tab) => {
       tab.addEventListener('click', () => {
@@ -3870,23 +4244,6 @@
     document.getElementById('btn-to-step-3').addEventListener('click', () => switchWorkbenchStep(3));
 
     // 5. 第一人称按住左键拿起杯具、黄铜冰桶、拉花缸与成品杯交互
-    const toggleAllPropsBtn = document.getElementById('btn-toggle-all-props');
-    if (toggleAllPropsBtn) {
-      toggleAllPropsBtn.addEventListener('click', () => {
-        state.unlockAllProps = !state.unlockAllProps;
-        saveState();
-        renderTopStats();
-        renderHeroineAndOrder();
-        renderStep1Ingredients();
-        updateLiveChalkboardPreview();
-        showToast(
-          state.unlockAllProps
-            ? '🔓 已开启【全器具自由模式】：全部 6 款基底壶与 7 款配料瓶已摆上桌面！'
-            : '🌱 已切回【渐进解锁模式】：随完成订单杯数逐步解锁新茶壶与配料！'
-        );
-      });
-    }
-
     const hotCupBtn = document.getElementById('btn-temp-hot');
     if (hotCupBtn) {
       hotCupBtn.addEventListener('pointerdown', (e) => {
@@ -4082,15 +4439,6 @@
         if (target) target.classList.add('hidden');
       });
     });
-
-    document.getElementById('btn-unlock-all-recipes').addEventListener('click', () => {
-      state.unlockedRecipes = RECIPES.map((r) => r.id);
-      saveState();
-      renderTopStats();
-      renderRecipeBookModal();
-      audio.playServeBellSound();
-      showToast('🔓 已点亮全部 18 款秘密特调配方手账！');
-    });
   }
 
   // ==================== 启动初始化 ====================
@@ -4106,6 +4454,7 @@
     updateLiveChalkboardPreview();
     updateExtractionUI();
     bindGlobalEvents();
+    startRound(true);
     startRushPatienceTicker();
     startCafeLiveCharacterAnimation();
     if (window.location.hash === '#recipes') {

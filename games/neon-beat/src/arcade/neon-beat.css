@@ -2231,3 +2231,61 @@ body.c1-pop-theme {
     font-size: 12px !important;
   }
 }
+
+/* ---------- 失败结算 (STAGE FAILED) / 不死模式 (NO FAIL) ---------- */
+.result-rank-stamp.is-failed {
+  background: #3A2A4A;
+  color: #FF2E4C;
+  box-shadow: 5px 5px 0 #FF2E4C;
+}
+
+.result-clear-tag.is-failed {
+  background: #FF2E4C;
+  color: var(--pop-white);
+}
+
+.stage-result-overlay.is-failed .result-left-cg img {
+  filter: grayscale(0.75) brightness(0.85);
+}
+
+.stage-result-overlay.is-failed .result-badge-ribbon {
+  background: #3A2A4A;
+}
+
+.result-header p.result-progress-line {
+  margin-top: 4px;
+  color: #C0143C;
+}
+
+body.nofail-on .hp-group .bar-label::after {
+  content: ' 🛡️∞';
+  font-size: 0.85em;
+}
+
+/* 顶栏开关按钮的「开启」态（覆盖上方统一的玻璃胶囊样式） */
+.pop-action-btn.active {
+  background: rgba(0, 245, 212, 0.28) !important;
+  border-color: #00F5D4 !important;
+}
+
+.pop-action-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* 手机窄屏：舞台仅约 170px 高，结算板（含失败进度 / 重开 / 返回选曲）改为全屏可滚动弹层 */
+@media (max-width: 760px) {
+  .stage-result-overlay {
+    position: fixed;
+    z-index: 60;
+    align-items: flex-start;
+    overflow-y: auto;
+    padding: 14px 12px 28px;
+  }
+  .stage-result-overlay .result-left-cg {
+    max-height: 220px;
+  }
+  .stage-result-overlay .result-left-cg img {
+    object-position: top;
+  }
+}

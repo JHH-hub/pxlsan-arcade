@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>放学以后的深夜咖啡馆 · 第一人称咖啡师料理台 (Pxlsan Midnight Cafe)</title>
   <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
-  <link rel="stylesheet" href="src/arcade/midnight-cafe.css?v=8" />
+  <link rel="stylesheet" href="src/arcade/midnight-cafe.css?v=12" />
 </head>
 <body class="pov-cafe-body">
   <!-- 暖钨丝灯环境光晕与暗角层 -->
@@ -35,7 +35,7 @@
 
     <!-- 营业时段切换器 (白天 / 下午夕阳 / 深夜雨夜 3个时段) -->
     <div class="beam-center">
-      <div class="shift-selector" role="tablist" aria-label="营业时段切换">
+      <div class="shift-selector" role="tablist" aria-label="营业时段（随营业时钟推进）" title="时段随营业时钟推进：达成本时段目标后在结算里进入下一时段">
         <button class="shift-pill" data-shift="dusk" role="tab" aria-selected="false">
           <span class="shift-icon">☀️</span>
           <span class="shift-info">
@@ -57,6 +57,18 @@
             <small>21:30 · 霓虹夜雨</small>
           </span>
         </button>
+      </div>
+
+      <!-- 本时段营业回合：剩余时间 / 营业额目标 / 口碑 -->
+      <div class="shift-round-hud" id="shift-round-hud" aria-live="off">
+        <span class="round-chip round-clock" title="本时段剩余营业时间（打开弹窗或切到后台时暂停）">
+          ⏳ <strong id="round-clock-val">3:00</strong>
+        </span>
+        <span class="round-chip round-goal" title="本时段营业额 / 目标营业额（含连击赏金与夜谈小费）">
+          🎯 <strong id="round-earned-val">¥0</strong><small>/ ¥<span id="round-target-val">800</span></small>
+          <span class="round-goal-bar"><i id="round-goal-fill"></i></span>
+        </span>
+        <span class="round-chip round-rep" id="round-rep" title="口碑：客人等太久生气离开或 1 星出餐各扣 1 颗，扣光本时段立即失败">❤️❤️❤️</span>
       </div>
     </div>
 
@@ -154,9 +166,6 @@
           <button class="mini-wood-btn" id="btn-spawn-extra-guest" title="立即摇铃再招揽一位客人上吧台排队 (最多3位同时点单)">
             ➕ 加客排队
           </button>
-          <button class="mini-wood-btn" id="btn-autofill-order" title="按当前选中客人的配方一键自动做好饮品">
-            ✨ 一键代做
-          </button>
           <button class="mini-wood-btn" id="btn-invite-modal" title="指定邀约12位女主中的任意一位">
             🛎️ 指定邀约
           </button>
@@ -207,13 +216,10 @@
       <!-- 顶部操作提示与当前吧台等级/杯内配方即时灯牌 -->
       <div class="workbench-hud-strip">
         <div class="hud-strip-left">
-          <div class="barista-level-badge" id="barista-level-badge" title="完成客人订单可自动升级吧台，逐步解锁更多茶底与配料">
+          <div class="barista-level-badge" id="barista-level-badge" title="每个时段达成目标后，可在结算界面花营业款升级吧台，解锁更多茶底与配料">
             <span class="lv-tag" id="barista-lv-tag">Lv.1 新手吧台 (已服务 0 杯)</span>
             <span class="lv-next-hint" id="barista-lv-next">再完成 1 杯解锁【意式浓缩 &amp; 宇治抹茶 &amp; 焦糖】</span>
           </div>
-          <button type="button" class="mini-wood-btn unlock-all-props-btn" id="btn-toggle-all-props" title="一键解锁或恢复渐进教学模式">
-            🔓 解锁全部器具
-          </button>
         </div>
         <div class="hud-strip-center">
           <span class="pov-guide-pill">🖐️ <strong>按住左键</strong>拿起茶壶/糖浆瓶移到杯口倾倒，做完<strong>按住杯子</strong>递给客人！</span>
@@ -604,15 +610,12 @@
           <h2>📖 放学以后的 18 款秘密特调手账</h2>
         </div>
         <div class="modal-top-actions">
-          <button class="mini-wood-btn" id="btn-unlock-all-recipes" title="店长研读模式：一键点亮全部18款特调">
-            🔓 研读全配方
-          </button>
           <button class="modal-close-btn" data-close-modal="modal-recipe-book">✕</button>
         </div>
       </div>
 
       <p class="modal-intro-desc">
-        收录 12 位女主的专属心事特调与 6 款深夜馆藏配方。点击任意配方的<strong>「一键按方备料」</strong>即可直接载入第一人称吧台！
+        收录 12 位女主的专属心事特调与 6 款深夜馆藏配方。照着配方<strong>亲手</strong>在吧台上倒茶加料，就能把它收进手账；给女主做出 ⭐⭐⭐ 完美出品会点亮她的专属特调！
       </p>
 
       <div class="recipe-book-grid" id="recipe-book-grid"></div>
@@ -638,6 +641,25 @@
     </div>
   </div>
 
+  <!-- ================= 模态弹窗 5：时段结算 (Shift Summary) ================= -->
+  <div class="cafe-modal-backdrop hidden" id="modal-shift-summary" role="dialog" aria-modal="true" aria-labelledby="summary-title">
+    <div class="cafe-modal-card shift-summary-card">
+      <div class="tasting-card-header">
+        <span class="summary-badge" id="summary-badge">🎉 时段达成</span>
+        <h2 class="tasting-verdict-title" id="summary-title">第 1 夜 · 白天晴朗档</h2>
+        <span class="tasting-subtitle" id="summary-subtitle"></span>
+      </div>
+      <div class="summary-stats-grid" id="summary-stats"></div>
+      <div class="summary-affection" id="summary-affection"></div>
+      <div class="summary-upgrade" id="summary-upgrade"></div>
+      <div class="summary-actions">
+        <button type="button" class="primary-wood-cta" id="btn-summary-next"><span>进入下一时段 ▸</span></button>
+        <button type="button" class="primary-wood-cta" id="btn-summary-retry"><span>↺ 重来这个时段</span></button>
+        <button type="button" class="mini-wood-btn" id="btn-summary-day">☀️ 回到白天</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= 模态弹窗 4：30秒图文上手教程 & 咖啡机萃取用法说明 ================= -->
   <div class="cafe-modal-backdrop hidden" id="modal-how-to-play" role="dialog" aria-modal="true">
     <div class="cafe-modal-card wide-modal tutorial-modal-card">
@@ -650,6 +672,19 @@
       </div>
 
       <div class="tutorial-steps-grid">
+        <div class="tut-step-card tut-rules-card highlight">
+          <div class="tut-step-num">营业规则 · 每个时段都是一局 3 分钟的挑战</div>
+          <div class="tut-step-body">
+            <strong>⏳ 时段目标 · ❤️ 口碑 · 💬 吧台夜谈</strong>
+            <p>
+              ☀️ 白天 → 🌇 下午 → 🌧️ 晚上，每个时段营业 <strong>3 分钟</strong>（顶栏 <code>⏳</code> 时钟），营业额要达到 <code>🎯 目标</code>（随夜数与吧台等级上涨）。<br/>
+              ❤️ 口碑共 3 颗：客人<strong>等太久生气离开</strong>或 <strong>1 星出餐</strong>各扣 1 颗，扣光本时段立即失败。<br/>
+              💬 出餐 2~3 星后客人会留在吧台和你聊两句：点一个话题可得 <strong>♥ 好感 + ¥30 小费</strong>（计入营业额），不选也会自动道别，不耽误其他客人。<br/>
+              🧾 时段结束弹出结算：达成就进入下一时段（晚上之后迎来新的一夜），还能花营业款<strong>升级吧台</strong>解锁新器具；没达成可以重来这个时段或回到白天。打开任何弹窗或切到后台时，所有计时都会暂停。
+            </p>
+          </div>
+        </div>
+
         <div class="tut-step-card">
           <div class="tut-step-num">STEP 1 · 看头顶配方单与倒计时</div>
           <div class="tut-step-body">
@@ -702,6 +737,6 @@
   </div>
 
   <script src="src/arcade/spine-rig-player.js?v=8"></script>
-  <script src="src/arcade/midnight-cafe.js?v=8"></script>
+  <script src="src/arcade/midnight-cafe.js?v=11"></script>
 </body>
 </html>

@@ -1617,6 +1617,40 @@ body {
   color: #fbbf24;
 }
 
+/* 失败结算：红色警示边框 + 止步关卡横跨整行 */
+#runEndModal.is-defeat .run-end-card {
+  border-color: rgba(248, 113, 113, 0.75);
+  box-shadow: 0 0 32px rgba(220, 38, 38, 0.35);
+}
+
+#runEndModal.is-defeat #runEndTitle {
+  color: #fca5a5;
+}
+
+.run-stat-box.stat-wide {
+  grid-column: span 2;
+}
+
+#runEndModal.is-defeat .run-stat-box.stat-wide strong,
+#runEndModal.is-defeat .run-stat-box.stat-wide + .run-stat-box strong {
+  color: #f87171;
+}
+
+@media (max-width: 520px) {
+  .run-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .run-stat-box {
+    padding: 8px;
+  }
+
+  .run-stat-box strong {
+    font-size: 16px;
+  }
+}
+
 .run-end-footer,
 .shop-footer {
   display: flex;
@@ -2638,4 +2672,29 @@ body {
   .joker-slots-row {
     gap: 8px;
   }
+}
+
+/* 选中但不计分的陪打牌：半透明 + 「不计分」角标 */
+.classic-playing-card.selected.non-scoring {
+  opacity: 0.55;
+  filter: saturate(0.5);
+}
+
+.classic-playing-card.selected.non-scoring::after {
+  content: '不计分';
+  position: absolute;
+  inset: auto;
+  border: none;
+  left: 50%;
+  bottom: 4px;
+  transform: translateX(-50%);
+  font-size: 10px;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 6px;
+  background: rgba(15, 10, 25, 0.85);
+  color: #e2e8f0;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 6;
 }

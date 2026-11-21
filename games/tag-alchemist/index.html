@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>次元小丑牌：魔王讨伐战</title>
   <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
-  <link rel="stylesheet" href="src/arcade/tag-alchemist.css?v=28" />
+  <link rel="stylesheet" href="src/arcade/tag-alchemist.css?v=31" />
 </head>
 <body>
   <!-- 顶部正式游戏状态栏（单行不换行：左侧返回/音效/5颗红心，中间关数，右侧铜钱/牌型/主角/CG/重开） -->
@@ -225,7 +225,7 @@
               </tr>
             </thead>
             <tbody id="rulesSynergyTbody">
-              <!-- JS 渲染 9 行：同花顺(100×8)、四条(60×7)、葫芦(40×4)、同花(35×4)、顺子(30×4)、三条(30×3)、两对(20×2)、对子(10×2)、高牌(5×1) -->
+              <!-- JS 渲染 9 行：同花顺(100×8)、四条(60×7)、葫芦(40×4)、同花(35×4)、顺子(30×4)、三条(30×3)、两对(20×2)、对子(10×2)、高牌(5×1)；每升 1 级按牌型分别增加（见 PROMPT_SYNERGIES.lvPixels/lvMult），且只有组成牌型的计分牌才计入点数 -->
             </tbody>
           </table>
         </div>
@@ -376,6 +376,6 @@
     </div>
   </div>
 
-  <script src="src/arcade/tag-alchemist.js?v=28"></script>
+  <script src="src/arcade/tag-alchemist.js?v=32"></script>
 </body>
 </html>
