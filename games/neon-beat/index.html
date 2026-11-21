@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>次元节拍：糖果风暴 (Pxlsan Neon Beat) · 高饱和糖果波普音游街机</title>
   <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
-  <link rel="stylesheet" href="src/arcade/neon-beat.css" />
+  <link rel="stylesheet" href="src/arcade/neon-beat.css?v=20261121" />
 </head>
 <body class="c1-pop-theme">
   <!-- 动态波普网点与斜切漫画速度线背景层 -->
@@ -44,6 +44,9 @@
       <button type="button" class="pop-action-btn" id="btnTriggerCutInTest" title="立即预览看板娘全屏斜切漫画 SKILL CUT-IN">
         ⚡ 看板娘 CUT-IN
       </button>
+      <button type="button" class="pop-action-btn" id="btnTriggerBossPhaseTest" title="立即召唤巨型电音魔王女王 16:9 巨图演出">
+        👑 魔王巨图演出
+      </button>
       <button type="button" class="pop-action-btn" id="btnOpenLeaderboard" title="查看本地街机高分榜">
         🏆 高分榜
       </button>
@@ -69,7 +72,7 @@
       <section class="comic-panel track-selector-panel">
         <div class="panel-header-strip">
           <span class="panel-tag">STAGE SELECT</span>
-          <h2>🎵 5首电音曲库 &amp; 自生成谱面</h2>
+          <h2>🎵 5首电音曲库 · STAGE SELECT</h2>
         </div>
 
         <div class="track-list" id="trackListContainer" role="listbox" aria-label="曲目选择">
@@ -93,10 +96,18 @@
           </div>
         </div>
 
+        <div class="calib-row" title="正值：判定整体延后（总是按晚 LATE / 蓝牙耳机延迟时调大）；负值：判定提前">
+          <label for="judgeOffsetRange">判定校准</label>
+          <input type="range" id="judgeOffsetRange" min="-200" max="200" step="5" value="0" aria-label="判定校准偏移（毫秒）" />
+          <span class="calib-val" id="judgeOffsetText">0 ms</span>
+          <button type="button" class="calib-reset-btn" id="btnJudgeOffsetReset" title="重置为 0 ms">归零</button>
+        </div>
+
         <div class="audio-source-row">
           <label for="audioSourceMode">音源引擎：</label>
           <select id="audioSourceMode" class="pop-select">
-            <option value="synth" selected>⚡ WebAudio 实时多轨合成电音</option>
+            <option value="studio" selected>🎵 Flow Music 原创高清音游曲</option>
+            <option value="synth">⚡ WebAudio 实时多轨合成电音</option>
             <option value="hybrid">🎶 合成器主旋律 + 本地 BGM 混音</option>
           </select>
         </div>
@@ -133,18 +144,12 @@
         </div>
       </section>
 
-      <!-- 3. 拖入本地音乐自动生成谱面 Dropzone -->
-      <section class="comic-panel custom-audio-panel" id="dropzonePanel">
-        <div class="dropzone-box" id="audioDropzone">
-          <input type="file" id="customAudioInput" accept=".mp3,.ogg,.wav,audio/*" hidden />
-          <div class="dropzone-icon">💿</div>
-          <div class="dropzone-text">
-            <strong>拖入本地 .mp3 / .ogg / .wav 自动生成谱面！</strong>
-            <span>WebAudio 实时能量峰值检测 + 自动测算 BPM 与双轨/4K 音符</span>
-          </div>
-          <button type="button" class="pop-mini-btn" id="btnPickAudioFile">选择音频文件</button>
-        </div>
-      </section>
+      <!-- 3. 本地音频输入节点（仅保留隐藏 input 防 JS 报错，已取消本地上传面板） -->
+      <div hidden aria-hidden="true">
+        <div id="audioDropzone"></div>
+        <input type="file" id="customAudioInput" accept=".mp3,.ogg,.wav,audio/*" hidden />
+        <button type="button" id="btnPickAudioFile" hidden></button>
+      </div>
     </aside>
 
     <!-- 右栏：核心音游街机舞台 -->
@@ -256,6 +261,24 @@
             </div>
           </div>
         </div>
+
+        <!-- 暂停覆盖层 (Pause Overlay) -->
+        <div class="stage-start-overlay stage-pause-overlay" id="stagePauseOverlay" hidden>
+          <div class="start-comic-card pause-comic-card">
+            <div class="start-card-ribbon">⏸️ PAUSED · 已暂停</div>
+            <h2 class="start-card-title">休息一下～</h2>
+            <p class="start-card-sub">按 <kbd>Esc</kbd> / <kbd>P</kbd> 继续演奏</p>
+            <div class="pause-countdown" id="pauseCountdown" hidden>3</div>
+            <div class="start-btn-row pause-actions" id="pauseActions">
+              <button type="button" class="mega-start-btn" id="btnPauseContinue">▶️ 继续</button>
+              <button type="button" class="sub-preview-btn" id="btnPauseRestart">🔄 重来</button>
+              <button type="button" class="sub-preview-btn" id="btnPauseExit">💿 退出</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 曲目音频解码中提示 -->
+        <div class="stage-loading-badge" id="stageLoadingBadge" role="status" hidden>🎵 加载中…</div>
 
         <!-- 街机结算评级覆盖层 (Result Overlay) -->
         <div class="stage-result-overlay" id="stageResultOverlay" hidden>
@@ -415,6 +438,6 @@
     </div>
   </div>
 
-  <script src="src/arcade/neon-beat.js"></script>
+  <script src="src/arcade/neon-beat.js?v=20261121"></script>
 </body>
 </html>

@@ -4359,3 +4359,271 @@ body.pov-cafe-body {
   display: flex;
   justify-content: center;
 }
+
+/* ==========================================================================
+   触屏拖拽：所有用 pointer 事件拿起的道具禁止浏览器触摸手势抢占（滚动/缩放）
+   ========================================================================== */
+.prop-cup-switch-btn,
+#btn-temp-hot,
+#btn-temp-iced,
+#btn-ice-bucket-scoop,
+#center-draggable-cup,
+.center-interactive-cup-wrap,
+.cup-and-side-meter-group,
+#btn-open-latte-loupe,
+.latte-pitcher-trigger-btn,
+#btn-brew-hold {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* ==========================================================================
+   移动端 (≤ 768px)：改为纵向自然滚动布局；≥ 769px 桌面布局不受影响
+   ========================================================================== */
+@media (max-width: 768px) {
+  body.pov-cafe-body {
+    height: auto;
+    min-height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  /* 顶部横梁：允许换行，按钮保持正常横排文字 */
+  .cafe-top-beam {
+    position: relative !important;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 12px !important;
+  }
+  .beam-left,
+  .beam-center,
+  .beam-right {
+    flex-wrap: wrap;
+    gap: 6px;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .shift-selector {
+    flex-wrap: nowrap;
+    max-width: 100%;
+  }
+  .shift-pill,
+  .wood-action-btn,
+  .wood-nav-btn,
+  .stat-chip,
+  .mini-wood-btn {
+    white-space: nowrap;
+    writing-mode: horizontal-tb;
+  }
+  .beam-action-group,
+  .cafe-stats-ledger {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* 主舞台：不再锁死 100vh，上下两区按内容高度排列 */
+  .pov-cafe-viewport {
+    flex: none;
+    overflow: visible;
+    justify-content: flex-start;
+  }
+  .pov-upper-customer-zone {
+    flex: none !important;
+    max-height: none !important;
+    min-height: 0;
+    padding: 8px 12px 0 !important;
+    gap: 8px;
+  }
+  .hanging-lamps {
+    display: none;
+  }
+
+  /* 指引横幅 + 客人工具栏：纵向排列，文字正常横排 */
+  .pov-top-hud-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .live-step-guide-banner {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    border-radius: 16px;
+    padding: 8px 12px;
+  }
+  .live-step-guide-banner > * {
+    min-width: 0;
+  }
+  .guide-step-text {
+    flex: 1 1 180px;
+    min-width: 160px;
+    word-break: normal;
+  }
+  .pov-top-hud-bar .counter-guest-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+    position: static !important;
+  }
+  .counter-guest-toolbar .mini-wood-btn {
+    flex: 0 0 auto;
+    min-width: 72px;
+    height: auto;
+    padding: 6px 10px;
+  }
+
+  /* 客人席位：横向滚动一排，每位客人一张卡片 */
+  .pov-customer-center-stage {
+    flex: none;
+    width: 100%;
+    max-width: 100%;
+    display: block;
+  }
+  .multi-customer-seats-row {
+    height: auto;
+    justify-content: flex-start;
+    align-items: stretch;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: 10px;
+    padding: 4px 2px 8px;
+  }
+  .customer-seat-card {
+    flex: 0 0 min(340px, 92%);
+    min-width: 0;
+    max-width: 340px;
+    height: auto;
+    max-height: none;
+    min-height: 210px;
+    align-items: flex-end;
+    scroll-snap-align: start;
+    padding: 6px 6px 0;
+  }
+  .seat-portrait-col {
+    width: 84px;
+    height: auto;
+    align-self: stretch;
+  }
+  .seat-heroine-img {
+    max-height: 190px;
+  }
+  .seat-drop-serve-badge {
+    font-size: 10px;
+  }
+
+  /* 下半屏操作台：四个工位纵向堆叠，道具保持可点按尺寸 */
+  .pov-lower-workbench {
+    flex: none;
+    padding: 6px 12px 16px !important;
+  }
+  .workbench-hud-strip {
+    border-radius: 16px !important;
+    padding: 8px 12px !important;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .hud-strip-left,
+  .hud-strip-center {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  .pov-stations-deck {
+    flex: none;
+    display: flex !important;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .pov-station,
+  .station-center-prep-mat {
+    width: 100%;
+    min-width: 0;
+    height: auto;
+  }
+  .station-header-tag {
+    flex-wrap: wrap;
+    white-space: normal;
+    writing-mode: horizontal-tb;
+  }
+  .station-machine-row {
+    grid-template-columns: 1fr 1fr !important;
+    align-items: stretch;
+  }
+  .espresso-machine-rig {
+    height: auto;
+  }
+  .machine-img-wrap {
+    min-height: 160px;
+  }
+  .prop-machine-img {
+    max-height: 170px !important;
+    transform: none;
+  }
+  .cups-and-ice-column {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .prop-cup-switch-btn {
+    min-height: 56px;
+    height: auto;
+  }
+  .prop-cup-switch-btn img {
+    max-height: 44px;
+  }
+  .pov-props-grid,
+  .station-addons-rack .pov-props-grid,
+  .base-grid,
+  .addon-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)) !important;
+    gap: 8px !important;
+    height: auto;
+  }
+  .ing-card.pov-prop-item {
+    width: auto !important;
+    min-width: 0;
+    min-height: 96px;
+    height: auto !important;
+  }
+  .pov-prop-thumb-wrap {
+    width: 64px !important;
+    height: 64px !important;
+    margin: 0 auto;
+  }
+  .ing-meta {
+    width: 100% !important;
+    text-align: center;
+    white-space: normal;
+  }
+  .prep-mat-stage {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    height: auto;
+  }
+  .prep-side-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .latte-pitcher-trigger-btn,
+  .serve-bell-cta {
+    min-height: 52px;
+  }
+  .chalk-slots-grid.pov-slots-bar {
+    grid-template-columns: repeat(2, 1fr) !important;
+    width: 100%;
+  }
+
+  /* 教程弹窗：单列卡片，避免窄屏下两列挤成竖排 */
+  .tutorial-steps-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

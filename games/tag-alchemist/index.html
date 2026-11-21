@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>次元小丑牌：魔王讨伐战</title>
   <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
-  <link rel="stylesheet" href="src/arcade/tag-alchemist.css?v=27" />
+  <link rel="stylesheet" href="src/arcade/tag-alchemist.css?v=28" />
 </head>
 <body>
   <!-- 顶部正式游戏状态栏（单行不换行：左侧返回/音效/5颗红心，中间关数，右侧铜钱/牌型/主角/CG/重开） -->
@@ -166,7 +166,6 @@
       <button type="button" id="btnInspectCg"></button>
       <button type="button" id="btnSortPixels"></button>
       <button type="button" id="btnSortSuit"></button>
-      <button type="button" id="btnSuggestBest"></button>
       <button type="button" id="btnClearSelect"></button>
       <button type="button" id="btnHeroActiveSkill"><span id="heroActiveSkillName"></span><span id="heroSkillCharges"></span></button>
     </div>
@@ -179,9 +178,12 @@
         <!-- JS 渲染 8 张纯正经典扑克牌 -->
       </div>
 
-      <!-- 底部极简居中操作栏：仅保留 弃牌 + 出牌 -->
+      <!-- 底部极简居中操作栏：💡提示 + 弃牌 + 出牌 -->
       <div class="poker-bottom-bar centered-only">
         <div class="bottom-center-actions">
+          <button type="button" class="poker-main-btn hint" id="btnSuggestBest" title="自动选出当前正面手牌中伤害最高的一手（盲牌不计入）">
+            <span>💡 提示</span>
+          </button>
           <button type="button" class="poker-main-btn discard" id="btnDiscard">
             <span>弃牌 (<strong id="rerollsLeftDisplay">3</strong>)</span>
           </button>
@@ -368,12 +370,12 @@
         <button type="button" class="modal-close-btn" data-close-modal="heroSelectModal">✕</button>
       </div>
       <p class="hero-select-subtitle">
-        深渊魅惑魔王「阿斯莫德」率领三大魔将与魅魔军团侵蚀了学园与街区。每局只能选定 <strong>1 位专属女主</strong> 出战，利用她的<strong>专属主动必杀技</strong>与顶部 5 槽位<strong>魔导小鬼圣遗物</strong>击溃魔城军团！
+        深渊魅惑魔王「阿斯莫德」率领三大魔将与魅魔军团侵蚀了学园与街区。每局只能选定 <strong>1 位专属女主</strong> 出战，利用她的<strong>专属被动天赋</strong>与手牌上方 5 槽位<strong>魔导小鬼圣遗物</strong>击溃魔城军团！
       </p>
       <div class="hero-select-grid" id="heroSelectGrid"></div>
     </div>
   </div>
 
-  <script src="src/arcade/tag-alchemist.js?v=27"></script>
+  <script src="src/arcade/tag-alchemist.js?v=28"></script>
 </body>
 </html>

@@ -13,6 +13,20 @@
  */
 
 const STORAGE_KEY = 'pxlsan-game:arcade:neonbeat';
+const CALIBRATION_STORAGE_KEY = 'pxlsan-game:arcade:neonbeat:calibMs';
+// 4K 下落轨道几何（Canvas 坐标系，绘制与触控命中共用）
+const MANIA_HIGHWAY = { left: 450, laneWidth: 132, lanes: 4 };
+// 双押重拍：两键必须在该时间窗内先后按下
+const DOUBLE_PRESS_WINDOW_SEC = 0.08;
+
+function escapeHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 /* ==========================================================================
    1. 5 位搭档看板娘配置（全部路径均指向仓库 100% 真实存在立绘与 CG）
@@ -37,7 +51,19 @@ const PARTNERS = {
     spriteAction: 'assets/neonbeat/partners/takagi_action.webp',
     spriteFever: 'assets/neonbeat/partners/takagi_fever.webp',
     cutinCg: 'assets/neonbeat/cutins/cutin_takagi.webp',
-    accent: '#FF1493'
+    chibiRun1: 'assets/neonbeat/chibi/takagi_run1.webp',
+    chibiRun2: 'assets/neonbeat/chibi/takagi_run2.webp',
+    chibiAir: 'assets/neonbeat/chibi/takagi_air.webp',
+    chibiSmash: 'assets/neonbeat/chibi/takagi_smash.webp',
+    chibiRunSheet: 'assets/neonbeat/chibi/takagi_run_sheet.webp',
+    chibiActionSheet: 'assets/neonbeat/chibi/takagi_action_sheet.webp',
+    accent: '#FF1493',
+    hairColor: '#5C3327',
+    eyeColor: '#A84B2B',
+    outfitPrimary: '#FFFFFF',
+    outfitSecondary: '#2C4C7E',
+    weaponName: '柠檬苏打重锤',
+    weaponColor: '#FFE600'
   },
   nagatoro: {
     id: 'nagatoro',
@@ -58,7 +84,19 @@ const PARTNERS = {
     spriteAction: 'assets/neonbeat/partners/nagatoro_action.webp',
     spriteFever: 'assets/neonbeat/partners/nagatoro_fever.webp',
     cutinCg: 'assets/neonbeat/cutins/cutin_nagatoro.webp',
-    accent: '#FFE600'
+    chibiRun1: 'assets/neonbeat/chibi/nagatoro_run1.webp',
+    chibiRun2: 'assets/neonbeat/chibi/nagatoro_run2.webp',
+    chibiAir: 'assets/neonbeat/chibi/nagatoro_air.webp',
+    chibiSmash: 'assets/neonbeat/chibi/nagatoro_smash.webp',
+    chibiRunSheet: 'assets/neonbeat/chibi/nagatoro_run_sheet.webp',
+    chibiActionSheet: 'assets/neonbeat/chibi/nagatoro_action_sheet.webp',
+    accent: '#FFE600',
+    hairColor: '#1E1A24',
+    eyeColor: '#B5633A',
+    outfitPrimary: '#F3E5AB',
+    outfitSecondary: '#2A334B',
+    weaponName: '小恶魔画笔巨锤',
+    weaponColor: '#FF1493'
   },
   marin: {
     id: 'marin',
@@ -79,7 +117,19 @@ const PARTNERS = {
     spriteAction: 'assets/neonbeat/partners/marin_action.webp',
     spriteFever: 'assets/neonbeat/partners/marin_fever.webp',
     cutinCg: 'assets/neonbeat/cutins/cutin_marin.webp',
-    accent: '#00F5D4'
+    chibiRun1: 'assets/neonbeat/chibi/marin_run1.webp',
+    chibiRun2: 'assets/neonbeat/chibi/marin_run2.webp',
+    chibiAir: 'assets/neonbeat/chibi/marin_air.webp',
+    chibiSmash: 'assets/neonbeat/chibi/marin_smash.webp',
+    chibiRunSheet: 'assets/neonbeat/chibi/marin_run_sheet.webp',
+    chibiActionSheet: 'assets/neonbeat/chibi/marin_action_sheet.webp',
+    accent: '#00F5D4',
+    hairColor: '#FFE07D',
+    eyeColor: '#FF2E7E',
+    outfitPrimary: '#FF1493',
+    outfitSecondary: '#1E1633',
+    weaponName: '星光霓虹电吉他',
+    weaponColor: '#00F5D4'
   },
   kaguya: {
     id: 'kaguya',
@@ -100,7 +150,19 @@ const PARTNERS = {
     spriteAction: 'assets/neonbeat/partners/kaguya_action.webp',
     spriteFever: 'assets/neonbeat/partners/kaguya_fever.webp',
     cutinCg: 'assets/neonbeat/cutins/cutin_kaguya.webp',
-    accent: '#FF1493'
+    chibiRun1: 'assets/neonbeat/chibi/kaguya_run1.webp',
+    chibiRun2: 'assets/neonbeat/chibi/kaguya_run2.webp',
+    chibiAir: 'assets/neonbeat/chibi/kaguya_air.webp',
+    chibiSmash: 'assets/neonbeat/chibi/kaguya_smash.webp',
+    chibiRunSheet: 'assets/neonbeat/chibi/kaguya_run_sheet.webp',
+    chibiActionSheet: 'assets/neonbeat/chibi/kaguya_action_sheet.webp',
+    accent: '#FF1493',
+    hairColor: '#191522',
+    eyeColor: '#D91E48',
+    outfitPrimary: '#1A1A26',
+    outfitSecondary: '#D91E48',
+    weaponName: '学生会黄金折扇刃',
+    weaponColor: '#FFE600'
   },
   kuroneko: {
     id: 'kuroneko',
@@ -121,7 +183,19 @@ const PARTNERS = {
     spriteAction: 'assets/neonbeat/partners/kuroneko_action.webp',
     spriteFever: 'assets/neonbeat/partners/kuroneko_fever.webp',
     cutinCg: 'assets/neonbeat/cutins/cutin_kuroneko.webp',
-    accent: '#00F5D4'
+    chibiRun1: 'assets/neonbeat/chibi/kuroneko_run1.webp',
+    chibiRun2: 'assets/neonbeat/chibi/kuroneko_run2.webp',
+    chibiAir: 'assets/neonbeat/chibi/kuroneko_air.webp',
+    chibiSmash: 'assets/neonbeat/chibi/kuroneko_smash.webp',
+    chibiRunSheet: 'assets/neonbeat/chibi/kuroneko_run_sheet.webp',
+    chibiActionSheet: 'assets/neonbeat/chibi/kuroneko_action_sheet.webp',
+    accent: '#00F5D4',
+    hairColor: '#1F1B2C',
+    eyeColor: '#B81D4E',
+    outfitPrimary: '#1D152B',
+    outfitSecondary: '#9B4DFF',
+    weaponName: '堕天圣暗黑十字镰',
+    weaponColor: '#00F5D4'
   }
 };
 
@@ -136,11 +210,12 @@ const BUILTIN_TRACKS = [
     title: '放学后的捉弄节拍',
     enTitle: 'After-School Tease Beat',
     bpm: 124,
+    beatOffsetSec: 0.015, // 离线 onset 分析：124 BPM，首拍相位 ≈ 15ms
     durationSec: 54,
     defaultPartner: 'takagi',
     sceneBg: 'assets/neonbeat/covers/track_01.webp',
     coverImg: 'assets/neonbeat/covers/track_01.webp',
-    localBgm: null,
+    localBgm: 'assets/neonbeat/bgm/track_01_tease.mp3',
     diffs: [
       { name: 'EASY ★★', stars: 2, density: 0.55, hazardRate: 0.12, doubleRate: 0.1, holdRate: 0.15 },
       { name: 'HARD ★★★★', stars: 4, density: 0.85, hazardRate: 0.22, doubleRate: 0.22, holdRate: 0.2 }
@@ -162,12 +237,13 @@ const BUILTIN_TRACKS = [
     icon: '🎨',
     title: '美术室的柠檬苏打风暴',
     enTitle: 'Lemon Soda Blitz',
-    bpm: 136,
+    bpm: 132, // 原标注 136；离线 onset/自相关分析实测 132.0 BPM（全曲相位稳定）
+    beatOffsetSec: 0.0,
     durationSec: 58,
     defaultPartner: 'nagatoro',
     sceneBg: 'assets/neonbeat/covers/track_02.webp',
     coverImg: 'assets/neonbeat/covers/track_02.webp',
-    localBgm: null,
+    localBgm: 'assets/neonbeat/bgm/track_02_lemon.mp3',
     diffs: [
       { name: 'NORMAL ★★★', stars: 3, density: 0.68, hazardRate: 0.18, doubleRate: 0.16, holdRate: 0.16 },
       { name: 'HARD ★★★★★', stars: 5, density: 0.94, hazardRate: 0.28, doubleRate: 0.26, holdRate: 0.22 }
@@ -190,11 +266,12 @@ const BUILTIN_TRACKS = [
     title: '星光舞台 Cosplay 狂想',
     enTitle: 'Starlight Dress-Up',
     bpm: 148,
+    beatOffsetSec: 0.0,
     durationSec: 60,
     defaultPartner: 'marin',
     sceneBg: 'assets/neonbeat/covers/track_03.webp',
     coverImg: 'assets/neonbeat/covers/track_03.webp',
-    localBgm: null,
+    localBgm: 'assets/neonbeat/bgm/track_03_starlight.mp3',
     diffs: [
       { name: 'NORMAL ★★★', stars: 3, density: 0.72, hazardRate: 0.18, doubleRate: 0.18, holdRate: 0.22 },
       { name: 'MASTER ★★★★★★', stars: 6, density: 1.05, hazardRate: 0.30, doubleRate: 0.30, holdRate: 0.26 }
@@ -216,12 +293,13 @@ const BUILTIN_TRACKS = [
     icon: '💘',
     title: '学生会室的恋爱头脑战',
     enTitle: 'Love is War Step',
-    bpm: 158,
+    bpm: 150, // 原标注 158；离线分析实测 150 BPM（自相关峰 75/150，取 150）
+    beatOffsetSec: 0.0,
     durationSec: 62,
     defaultPartner: 'kaguya',
     sceneBg: 'assets/neonbeat/covers/track_04.webp',
     coverImg: 'assets/neonbeat/covers/track_04.webp',
-    localBgm: null,
+    localBgm: 'assets/neonbeat/bgm/track_04_lovewar.mp3',
     diffs: [
       { name: 'HARD ★★★★★', stars: 5, density: 0.88, hazardRate: 0.24, doubleRate: 0.24, holdRate: 0.2 },
       { name: 'MASTER ★★★★★★★', stars: 7, density: 1.18, hazardRate: 0.34, doubleRate: 0.34, holdRate: 0.24 }
@@ -244,11 +322,12 @@ const BUILTIN_TRACKS = [
     title: '夜魔女王的终焉十字',
     enTitle: 'Crimson Fallen Angel',
     bpm: 172,
+    beatOffsetSec: 0.0,
     durationSec: 64,
     defaultPartner: 'kuroneko',
     sceneBg: 'assets/neonbeat/covers/track_05.webp',
     coverImg: 'assets/neonbeat/covers/track_05.webp',
-    localBgm: null,
+    localBgm: 'assets/neonbeat/bgm/track_05_crimson.mp3',
     diffs: [
       { name: 'HARD ★★★★★', stars: 5, density: 0.96, hazardRate: 0.26, doubleRate: 0.26, holdRate: 0.22 },
       { name: 'CHAOS ★★★★★★★★', stars: 8, density: 1.32, hazardRate: 0.38, doubleRate: 0.38, holdRate: 0.28 }
@@ -288,6 +367,68 @@ class NeonSynthEngine {
     this.songStartContextTime = 0;
     this.pausedElapsedSec = 0;
     this.onBeatCallback = null;
+    // 内置 BGM 以 AudioBuffer 方式解码缓存（按 URL），与 AudioContext 时钟采样级同步
+    this.bgmBufferCache = new Map();
+    this.musicGain = null;
+    this.isPaused = false;
+    this.isFadingOut = false;
+  }
+
+  // 拉取并解码内置 mp3 为 AudioBuffer（同一曲目只解码一次；失败时清除缓存以便重试）
+  loadBgmBuffer(url) {
+    this.ensureContext();
+    if (!this.bgmBufferCache.has(url)) {
+      const promise = fetch(url)
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.arrayBuffer();
+        })
+        .then(
+          (arrayBuf) =>
+            new Promise((resolve, reject) => {
+              // 兼容旧版 Safari 的回调式 decodeAudioData
+              const ret = this.ctx.decodeAudioData(arrayBuf, resolve, reject);
+              if (ret && typeof ret.then === 'function') ret.then(resolve, reject);
+            })
+        );
+      promise.catch(() => this.bgmBufferCache.delete(url));
+      this.bgmBufferCache.set(url, promise);
+    }
+    return this.bgmBufferCache.get(url);
+  }
+
+  // 暂停：冻结 AudioContext 时钟（歌曲时间随之冻结）
+  pause() {
+    this.isPaused = true;
+    if (this.ctx && this.ctx.state === 'running') {
+      return this.ctx.suspend();
+    }
+    return Promise.resolve();
+  }
+
+  resume() {
+    this.isPaused = false;
+    if (this.ctx && this.ctx.state === 'suspended') {
+      return this.ctx.resume();
+    }
+    return Promise.resolve();
+  }
+
+  // 谱面结束后音乐渐弱淡出（停止合成器继续排程）
+  fadeOutMusic(durationSec = 2.0) {
+    if (!this.ctx || this.isFadingOut) return;
+    this.isFadingOut = true;
+    if (this.stepTimer) {
+      clearTimeout(this.stepTimer);
+      this.stepTimer = null;
+    }
+    if (this.musicGain) {
+      const now = this.ctx.currentTime;
+      const g = this.musicGain.gain;
+      g.cancelScheduledValues(now);
+      g.setValueAtTime(g.value, now);
+      g.linearRampToValueAtTime(0.0001, now + durationSec);
+    }
   }
 
   ensureContext() {
@@ -304,7 +445,8 @@ class NeonSynthEngine {
       this.fftData = new Uint8Array(this.analyser.frequencyBinCount);
       this.createNoiseBuffer();
     }
-    if (this.ctx.state === 'suspended') {
+    // 暂停期间（ctx.suspend）不允许被打击音效等调用意外恢复时钟
+    if (this.ctx.state === 'suspended' && !this.isPaused) {
       this.ctx.resume();
     }
   }
@@ -437,47 +579,90 @@ class NeonSynthEngine {
     osc2.stop(time + dur);
   }
 
-  // 音符打击清脆反馈音效 (Juice Hit SFX)
+  // 音符打击清脆反馈音效 (Muse Dash 级：重低音 Sub 808 Punch + 架子鼓 Rimshot 脆响 + 糖果高频泛音)
   playHitSfx(type = 'PERFECT') {
     this.ensureContext();
     const now = this.ctx.currentTime;
+
+    // 1. 底层重低音 Sub Punch（拳拳到肉的鼓点胸腔震动感）
+    if (type !== 'MISS') {
+      const subOsc = this.ctx.createOscillator();
+      const subGain = this.ctx.createGain();
+      subOsc.type = 'sine';
+      const startFreq = type === 'DOUBLE' || type === 'BOSS_KO' ? 195 : 165;
+      subOsc.frequency.setValueAtTime(startFreq, now);
+      subOsc.frequency.exponentialRampToValueAtTime(42, now + 0.085);
+      subGain.gain.setValueAtTime(type === 'DOUBLE' || type === 'BOSS_KO' ? 0.68 : 0.48, now);
+      subGain.gain.exponentialRampToValueAtTime(0.004, now + 0.095);
+      subOsc.connect(subGain);
+      subGain.connect(this.masterGain);
+      subOsc.start(now);
+      subOsc.stop(now + 0.1);
+    }
+
+    // 2. 架子鼓 Rimshot / 棒球棍清脆瞬态噪音声 (Crisp Transient Snap)
+    if (this.noiseBuffer && type !== 'MISS') {
+      const snap = this.ctx.createBufferSource();
+      snap.buffer = this.noiseBuffer;
+      const bp = this.ctx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.setValueAtTime(type === 'MASH' ? 3200 : 2450, now);
+      bp.Q.value = 1.8;
+      const snapGain = this.ctx.createGain();
+      snapGain.gain.setValueAtTime(type === 'PERFECT' || type === 'DOUBLE' ? 0.42 : 0.28, now);
+      snapGain.gain.exponentialRampToValueAtTime(0.005, now + 0.045);
+      snap.connect(bp);
+      bp.connect(snapGain);
+      snapGain.connect(this.masterGain);
+      snap.start(now);
+      snap.stop(now + 0.05);
+    }
+
+    // 3. 糖果高频泛音旋律脆响
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
 
     if (type === 'PERFECT') {
       osc.type = 'triangle';
-      osc.frequency.setValueAtTime(880, now);
-      osc.frequency.exponentialRampToValueAtTime(1760, now + 0.065);
-      gain.gain.setValueAtTime(0.34, now);
-      gain.gain.exponentialRampToValueAtTime(0.005, now + 0.085);
-    } else if (type === 'DOUBLE') {
+      osc.frequency.setValueAtTime(987.77, now); // B5
+      osc.frequency.exponentialRampToValueAtTime(1975.5, now + 0.06);
+      gain.gain.setValueAtTime(0.32, now);
+      gain.gain.exponentialRampToValueAtTime(0.005, now + 0.08);
+    } else if (type === 'DOUBLE' || type === 'BOSS_KO') {
       osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(660, now);
-      osc.frequency.exponentialRampToValueAtTime(1980, now + 0.11);
+      osc.frequency.setValueAtTime(783.99, now); // G5
+      osc.frequency.exponentialRampToValueAtTime(2349.3, now + 0.12);
       gain.gain.setValueAtTime(0.42, now);
-      gain.gain.exponentialRampToValueAtTime(0.005, now + 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.005, now + 0.14);
+    } else if (type === 'MASH') {
+      osc.type = 'square';
+      const randomPitch = 880 + Math.random() * 520;
+      osc.frequency.setValueAtTime(randomPitch, now);
+      osc.frequency.exponentialRampToValueAtTime(randomPitch * 1.65, now + 0.05);
+      gain.gain.setValueAtTime(0.30, now);
+      gain.gain.exponentialRampToValueAtTime(0.005, now + 0.055);
     } else if (type === 'DODGE') {
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(520, now);
-      osc.frequency.exponentialRampToValueAtTime(1240, now + 0.09);
+      osc.frequency.setValueAtTime(580, now);
+      osc.frequency.exponentialRampToValueAtTime(1480, now + 0.09);
       gain.gain.setValueAtTime(0.3, now);
       gain.gain.exponentialRampToValueAtTime(0.005, now + 0.1);
     } else if (type === 'CUTIN') {
       osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(440, now);
-      osc.frequency.exponentialRampToValueAtTime(1760, now + 0.25);
-      gain.gain.setValueAtTime(0.38, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.28);
+      osc.frequency.setValueAtTime(523.25, now);
+      osc.frequency.exponentialRampToValueAtTime(2093.0, now + 0.24);
+      gain.gain.setValueAtTime(0.36, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.26);
     } else if (type === 'MISS') {
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(190, now);
-      osc.frequency.linearRampToValueAtTime(95, now + 0.14);
-      gain.gain.setValueAtTime(0.28, now);
-      gain.gain.exponentialRampToValueAtTime(0.005, now + 0.15);
+      osc.frequency.linearRampToValueAtTime(88, now + 0.15);
+      gain.gain.setValueAtTime(0.30, now);
+      gain.gain.exponentialRampToValueAtTime(0.005, now + 0.16);
     } else {
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(680, now);
-      osc.frequency.exponentialRampToValueAtTime(1120, now + 0.06);
+      osc.frequency.setValueAtTime(740, now);
+      osc.frequency.exponentialRampToValueAtTime(1240, now + 0.06);
       gain.gain.setValueAtTime(0.26, now);
       gain.gain.exponentialRampToValueAtTime(0.005, now + 0.075);
     }
@@ -485,7 +670,7 @@ class NeonSynthEngine {
     osc.connect(gain);
     gain.connect(this.masterGain);
     osc.start(now);
-    osc.stop(now + 0.3);
+    osc.stop(now + 0.28);
   }
 
   scheduleStep(stepIndex, time) {
@@ -525,40 +710,74 @@ class NeonSynthEngine {
     }
   }
 
-  startSong(track, mode = 'synth') {
+  /**
+   * 开始播放：所有音频源都以 AudioContext 时钟 songStartContextTime 为零点
+   * @param {object} track
+   * @param {string} mode 'studio' | 'synth' | 'hybrid'
+   * @param {AudioBuffer|null} bgmBuffer 已解码的内置 BGM（解码失败时为 null → 回退合成器）
+   */
+  startSong(track, mode = 'synth', bgmBuffer = null) {
     this.ensureContext();
     this.stopSong();
     this.activeTrack = track;
     this.audioSourceMode = mode;
     this.isPlaying = true;
+    this.isFadingOut = false;
     this.currentStep = 0;
     this.pausedElapsedSec = 0;
-    this.songStartContextTime = this.ctx.currentTime + 0.05;
-    this.nextStepTime = this.songStartContextTime;
+    this.songStartContextTime = this.ctx.currentTime + 0.1;
+    this.nextStepTime = this.songStartContextTime + (track.beatOffsetSec || 0);
+
+    // 每首歌独立的音乐总线（用于谱面结束后的渐弱淡出，不影响打击音效）
+    this.musicGain = this.ctx.createGain();
+    this.musicGain.gain.value = 1.0;
+    this.musicGain.connect(this.masterGain);
+
+    const playBuffer = (buffer, volume) => {
+      const src = this.ctx.createBufferSource();
+      src.buffer = buffer;
+      const vol = this.ctx.createGain();
+      vol.gain.value = volume;
+      src.connect(vol);
+      vol.connect(this.musicGain);
+      src.start(this.songStartContextTime);
+      this.customBufferSource = src;
+    };
 
     // 若为用户拖入的自定义 AudioBuffer，直接播放解码后的音频流
     if (track.isCustom && track.audioBuffer) {
-      const src = this.ctx.createBufferSource();
-      src.buffer = track.audioBuffer;
-      src.connect(this.masterGain);
-      src.start(this.songStartContextTime);
-      this.customBufferSource = src;
+      playBuffer(track.audioBuffer, 1.0);
+      return;
+    }
+
+    // 优先使用 Flow Music 原创高清音游曲（AudioBufferSourceNode 精确对齐时钟，仅保留静音节拍时钟）
+    if (mode === 'studio' && bgmBuffer) {
+      playBuffer(bgmBuffer, 0.92);
+      const beatDur = 60 / track.bpm;
+      const beatClock = () => {
+        if (!this.isPlaying || this.isFadingOut) return;
+        while (this.nextStepTime < this.ctx.currentTime + 0.12) {
+          if (typeof this.onBeatCallback === 'function') {
+            this.onBeatCallback(this.currentStep);
+          }
+          this.nextStepTime += beatDur;
+          this.currentStep += 1;
+        }
+        this.stepTimer = window.setTimeout(beatClock, 25);
+      };
+      beatClock();
       return;
     }
 
     // 若选择了混音伴奏模式 (hybrid)，叠加播放本地 BGM
-    if (mode === 'hybrid' && track.localBgm) {
-      try {
-        this.bgAudioEl = new Audio(track.localBgm);
-        this.bgAudioEl.volume = 0.36;
-        this.bgAudioEl.currentTime = 0;
-        this.bgAudioEl.play().catch(() => {});
-      } catch (_) {}
+    if (mode === 'hybrid' && bgmBuffer) {
+      playBuffer(bgmBuffer, 0.36);
     }
 
+    // 合成器（含 studio 模式 BGM 解码失败时的回退）
     const stepDur = (60 / track.bpm) / 4;
     const scheduler = () => {
-      if (!this.isPlaying) return;
+      if (!this.isPlaying || this.isFadingOut) return;
       while (this.nextStepTime < this.ctx.currentTime + 0.12) {
         this.scheduleStep(this.currentStep, this.nextStepTime);
         this.nextStepTime += stepDur;
@@ -575,7 +794,11 @@ class NeonSynthEngine {
   }
 
   stopSong() {
+    if (this.ctx && this.isPlaying) {
+      this.pausedElapsedSec = this.getElapsedSec();
+    }
     this.isPlaying = false;
+    this.isFadingOut = false;
     if (this.stepTimer) {
       clearTimeout(this.stepTimer);
       this.stepTimer = null;
@@ -586,6 +809,12 @@ class NeonSynthEngine {
         this.customBufferSource.disconnect();
       } catch (_) {}
       this.customBufferSource = null;
+    }
+    if (this.musicGain) {
+      try {
+        this.musicGain.disconnect();
+      } catch (_) {}
+      this.musicGain = null;
     }
     if (this.bgAudioEl) {
       try {
@@ -635,12 +864,39 @@ function generateBuiltinChart(track, diffIdx = 0) {
   const notes = [];
   let noteId = 1;
 
-  const startSec = 1.8;
+  // 谱面网格对齐到实测首拍相位（原先固定 1.8s 起点不在拍点上，会导致整张谱面偏离节拍）
+  const beatOffset = track.beatOffsetSec || 0;
+  const startSec = beatOffset + Math.ceil((1.8 - beatOffset) / beatSec) * beatSec;
   const endSec = track.durationSec - 2.0;
   let nextAvailableTime = startSec;
+  let nextBossMashTime = 14.5; // 每隔约 18 秒在副歌高潮处触发一次「Boss 冲锋狂按连打 (MASH!!)」
 
   for (let t = startSec; t < endSec; t += subStepSec) {
     if (t < nextAvailableTime - 0.02) continue;
+
+    // 0. 副歌高潮 Boss 贴脸连打对决 (MASH Note · 对标喵斯快跑连打怪/Boss互殴)
+    if (t >= nextBossMashTime && t + 2.2 < endSec) {
+      const mashDur = beatSec * 3.5;
+      notes.push({
+        id: noteId++,
+        time: t,
+        type: 'MASH',
+        lane2: 1,
+        lane4: 1,
+        endTime: t + mashDur,
+        mashHits: 0,
+        targetHits: 10,
+        hit: false,
+        holding: false,
+        holdCompleted: false,
+        lastTickTime: t,
+        missed: false,
+        entryStyle: 'BOSS_CHARGE'
+      });
+      nextAvailableTime = t + mashDur + beatSec * 1.0;
+      nextBossMashTime = t + 18.5;
+      continue;
+    }
 
     const beatIndex = Math.round((t - startSec) / subStepSec);
     const isDownbeat = beatIndex % 2 === 0;
@@ -663,7 +919,8 @@ function generateBuiltinChart(track, diffIdx = 0) {
         lane4Pair: 2,
         endTime: t,
         hit: false,
-        missed: false
+        missed: false,
+        entryStyle: 'SWOOP'
       });
       nextAvailableTime = t + subStepSec * 0.95;
       continue;
@@ -685,15 +942,16 @@ function generateBuiltinChart(track, diffIdx = 0) {
         holding: false,
         holdCompleted: false,
         lastTickTime: t,
-        missed: false
+        missed: false,
+        entryStyle: 'WAVE'
       });
       nextAvailableTime = t + holdDuration + subStepSec * 0.5;
       continue;
     }
 
-    // 3. 尖刺齿轮弹幕 (HAZARD) — 仅在双轨跑酷模式下需要跳跃/俯身闪避，4K模式下转为高能重音单键
+    // 3. 尖刺齿轮弹幕 (HAZARD)
     if (!isPhraseAccent && typeRoll >= diff.doubleRate + diff.holdRate && typeRoll < diff.doubleRate + diff.holdRate + diff.hazardRate) {
-      const hazardLane2 = rng() < 0.55 ? 1 : 0; // 1=地面齿轮(跳起躲), 0=高空齿轮(俯身躲)
+      const hazardLane2 = rng() < 0.55 ? 1 : 0;
       notes.push({
         id: noteId++,
         time: t,
@@ -703,15 +961,28 @@ function generateBuiltinChart(track, diffIdx = 0) {
         endTime: t,
         hit: false,
         dodged: false,
-        missed: false
+        missed: false,
+        entryStyle: 'SNIPER'
       });
       nextAvailableTime = t + subStepSec * 0.9;
       continue;
     }
 
-    // 4. 常规空中糖果 / 地面节拍怪 (TAP)
+    // 4. 常规空中飞翼怪 / 地面蹦跳音响怪 / 幽灵隐身怪 (TAP + 喵斯快跑风弧线/弹跳轨迹)
     const lane2 = rng() < 0.5 ? 0 : 1;
     const lane4 = lane2 === 0 ? (rng() < 0.5 ? 0 : 1) : (rng() < 0.5 ? 2 : 3);
+    const styleRoll = rng();
+    const entryStyle =
+      styleRoll < 0.18
+        ? 'GHOST'
+        : lane2 === 0
+        ? styleRoll < 0.62
+          ? 'SWOOP'
+          : 'WAVE'
+        : styleRoll < 0.72
+        ? 'BOUNCE'
+        : 'SNIPER';
+
     notes.push({
       id: noteId++,
       time: t,
@@ -720,7 +991,8 @@ function generateBuiltinChart(track, diffIdx = 0) {
       lane4,
       endTime: t,
       hit: false,
-      missed: false
+      missed: false,
+      entryStyle
     });
 
     // 高难度偶发 16 分音符交互连打
@@ -906,14 +1178,55 @@ class NeonBeatArcade {
     this.offsetSamples = 0;
     this.lastOffsetMs = 0;
 
-    // 跑酷角色姿态状态
+    // 跑酷角色姿态与满配物理状态 (Muse Dash 风 Q 版跑酷引擎)
     this.runnerLane = 1; // 0 = 空中跃起 (AIR), 1 = 地面奔跑 (GROUND)
     this.runnerJumpTimer = 0;
     this.runnerAttackPoseTimer = 0;
+    this.runnerAnimState = 'RUN'; // 'RUN' | 'AIR_SLASH' | 'GROUND_SMASH' | 'DOUBLE_BURST' | 'HURT'
+    this.comboAttackStage = 0; // 0 = A段上挑斩, 1 = B段重锤下砸, 2 = C段旋风回旋击
+    this.runnerBaseX = 215;
+    this.runnerY = 375;
+    this.runnerVy = 0;
+    this.runnerLungeX = 0;
+    this.runnerScaleX = 1.0;
+    this.runnerScaleY = 1.0;
+    this.runnerTilt = 0;
+    this.runnerStepPhase = 0;
+    this.lastStepIndex = -1;
+    this.slashParity = 0;
+
+    // 驻场巨型 Q 版魔王 Boss 状态 (右侧常驻巨体 + 16:9 魔王机甲王座大图阶段 + 副歌冲锋连打 MASH 互殴)
+    this.bossHp = 100;
+    this.bossHurtTimer = 0;
+    this.bossKnockbackTimer = 0;
+    this.bossSplashTimer = 0;
+    this.activeMashNote = null;
+
+    // 4 层高速视差卷轴偏移 & 镜头打击反馈
+    this.parallaxOffsets = [0, 0, 0, 0];
+    this.cameraZoom = 1.0;
+    this.cameraPunchX = 0;
+    this.cameraPunchY = 0;
+    this.hitstopTimer = 0;
+
+    // 刀光挥击弧线、Q 版残影、脚底星尘与被击飞怪物物理队列
+    this.slashEffects = [];
+    this.runnerAfterimages = [];
+    this.knockedMonsters = [];
+    this.footstepDust = [];
+
     this.beatPulseValue = 0;
     this.receptorBounce = [0, 0, 0, 0];
     this.keyDownLanes = [false, false, false, false];
     this.lastLanePressTime = [0, 0, 0, 0];
+
+    // 本局会话快照（开局时锁定曲目/难度/模式/搭档，结算时据此存档）
+    this.liveSession = null;
+    this.songEnding = false;
+    this.loadToken = 0;
+    this.resumeCountdownTimer = null;
+    this.canvasPointerLanes = new Map();
+    this.calibrationMs = this.loadCalibrationMs();
 
     // 预加载角色与舞台贴图缓存
     this.imageCache = new Map();
@@ -936,6 +1249,7 @@ class NeonBeatArcade {
     // WebAudio 节拍呼吸回调
     this.synth.onBeatCallback = () => {
       this.beatPulseValue = 1.0;
+      this.cameraZoom = Math.max(this.cameraZoom, 1.024);
       document.documentElement.style.setProperty('--beat-pulse', '1.035');
       setTimeout(() => {
         document.documentElement.style.setProperty('--beat-pulse', '1');
@@ -946,19 +1260,38 @@ class NeonBeatArcade {
   }
 
   preloadAllImages() {
-    const urls = new Set();
+    const urls = new Set([
+      'assets/neonbeat/stage/stage_bg_city.webp',
+      'assets/neonbeat/stage/stage_bg_fever.webp',
+      'assets/neonbeat/vfx/vfx_hazard_saw.webp',
+      'assets/neonbeat/vfx/vfx_receptor_air.webp',
+      'assets/neonbeat/vfx/vfx_receptor_gnd.webp',
+      'assets/neonbeat/vfx/vfx_slash_arc.webp',
+      'assets/neonbeat/monsters/monster_air_bat.webp',
+      'assets/neonbeat/monsters/monster_gnd_slime.webp',
+      'assets/neonbeat/monsters/monster_ghost.webp',
+      'assets/neonbeat/monsters/boss_mecha_king.webp',
+      'assets/neonbeat/monsters/boss_mecha_hurt.webp',
+      'assets/neonbeat/monsters/boss_queen_cg.webp'
+    ]);
     Object.values(PARTNERS).forEach((p) => {
       urls.add(p.avatar);
       urls.add(p.spriteNormal);
       urls.add(p.spriteAction);
       urls.add(p.spriteFever);
       urls.add(p.cutinCg);
+      if (p.chibiRun1) urls.add(p.chibiRun1);
+      if (p.chibiRun2) urls.add(p.chibiRun2);
+      if (p.chibiAir) urls.add(p.chibiAir);
+      if (p.chibiSmash) urls.add(p.chibiSmash);
+      if (p.chibiRunSheet) urls.add(p.chibiRunSheet);
+      if (p.chibiActionSheet) urls.add(p.chibiActionSheet);
     });
     this.tracks.forEach((t) => urls.add(t.sceneBg));
 
     urls.forEach((src) => {
       const img = new Image();
-      img.src = src;
+      img.src = `${src}?v=md4`;
       this.imageCache.set(src, img);
     });
   }
@@ -1025,22 +1358,22 @@ class NeonBeatArcade {
       card.setAttribute('aria-selected', String(isSelected));
       card.innerHTML = `
         <div class="track-card-left">
-          <img class="track-avatar-mini" src="${track.coverImg || partner.avatar}" alt="${track.title}" />
+          <img class="track-avatar-mini" src="${escapeHtml(track.coverImg || partner.avatar)}" alt="${escapeHtml(track.title)}" />
           <div class="track-meta">
             <div class="track-title-row">
-              <span class="track-idx">${track.indexLabel}</span>
-              <span class="track-name">${track.icon} 《${track.title}》</span>
+              <span class="track-idx">${escapeHtml(track.indexLabel)}</span>
+              <span class="track-name">${escapeHtml(track.icon)} 《${escapeHtml(track.title)}》</span>
             </div>
-            <div class="track-sub">${track.enTitle} · 搭档：${partner.name}</div>
+            <div class="track-sub">${escapeHtml(track.enTitle)} · 搭档：${escapeHtml(partner.name)}</div>
           </div>
         </div>
         <div class="track-card-right">
-          <span class="bpm-pill">BPM ${track.bpm}</span>
-          <span class="rank-mini-badge">${best ? `👑 ${best.rank} · ${best.score}` : 'NEW'}</span>
+          <span class="bpm-pill">BPM ${escapeHtml(track.bpm)}</span>
+          <span class="rank-mini-badge">${best ? `👑 ${escapeHtml(best.rank)} · ${escapeHtml(best.score)}` : 'NEW'}</span>
         </div>
       `;
       card.addEventListener('click', () => {
-        if (this.state === 'PLAYING') {
+        if (this.areLiveControlsLocked()) {
           this.stopLiveToIdle();
         }
         this.selectTrack(track.id);
@@ -1057,11 +1390,13 @@ class NeonBeatArcade {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = `partner-tab-btn${p.id === this.selectedPartnerId ? ' active' : ''}`;
+      btn.disabled = this.areLiveControlsLocked();
       btn.innerHTML = `
-        <img src="${p.avatar}" alt="${p.name}" />
+        <img src="${p.avatar}?v=md3" alt="${p.name}" />
         <span>${p.name.replace('同学', '').replace('(黑猫)', '')}</span>
       `;
       btn.addEventListener('click', () => {
+        if (this.areLiveControlsLocked()) return;
         this.selectPartner(p.id);
       });
       tabsContainer.appendChild(btn);
@@ -1087,6 +1422,11 @@ class NeonBeatArcade {
 
     this.updateStartOverlayInfo();
     this.renderTrackList();
+
+    // AudioContext 已创建（用户已交互）时预解码所选曲目 BGM，缩短开局加载
+    if (this.synth.ctx && track.localBgm && !track.isCustom) {
+      this.synth.loadBgmBuffer(track.localBgm).catch(() => {});
+    }
   }
 
   selectPartner(partnerId) {
@@ -1094,7 +1434,7 @@ class NeonBeatArcade {
     this.selectedPartnerId = partnerId;
     const p = this.getActivePartner();
 
-    document.getElementById('partnerCardImg').src = p.spriteAction;
+    document.getElementById('partnerCardImg').src = `${p.spriteAction}?v=md3`;
     document.getElementById('partnerNameDisplay').textContent = p.name;
     document.getElementById('partnerSkillName').textContent = p.badge;
     document.getElementById('partnerSkillDesc').textContent = p.desc;
@@ -1131,15 +1471,251 @@ class NeonBeatArcade {
   /* ------------------------------------------------------------------------
      开始打歌、暂停与停止流程
      ------------------------------------------------------------------------ */
-  startLive() {
+  isLiveState() {
+    return this.state === 'PLAYING' || this.state === 'PAUSED';
+  }
+
+  // 判定用歌曲时间（叠加用户校准偏移：正值 = 判定整体后移，适合总是按晚/蓝牙耳机延迟）
+  getJudgeTime() {
+    return this.synth.getElapsedSec() - this.calibrationMs / 1000;
+  }
+
+  loadCalibrationMs() {
+    try {
+      const v = Number(localStorage.getItem(CALIBRATION_STORAGE_KEY));
+      return Number.isFinite(v) ? Math.max(-200, Math.min(200, Math.round(v))) : 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  setCalibrationMs(ms) {
+    this.calibrationMs = Math.max(-200, Math.min(200, Math.round(Number(ms) || 0)));
+    try {
+      localStorage.setItem(CALIBRATION_STORAGE_KEY, String(this.calibrationMs));
+    } catch (_) {}
+    const range = document.getElementById('judgeOffsetRange');
+    const text = document.getElementById('judgeOffsetText');
+    if (range) range.value = String(this.calibrationMs);
+    if (text) text.textContent = `${this.calibrationMs > 0 ? '+' : ''}${this.calibrationMs} ms`;
+  }
+
+  setAutoPlay(on) {
+    this.autoPlay = !!on;
+    const btnAuto = document.getElementById('btnToggleAutoPlay');
+    if (btnAuto) {
+      btnAuto.classList.toggle('active', this.autoPlay);
+      btnAuto.textContent = this.autoPlay ? '🤖 AUTO: ON' : '🤖 AUTO: OFF';
+    }
+    if (this.autoPlay && this.liveSession && this.isLiveState()) {
+      this.liveSession.autoUsed = true;
+    }
+  }
+
+  // 打歌中（含暂停/加载）锁定难度、模式与搭档，避免中途篡改导致存档串档
+  setLiveControlsLocked(locked) {
+    document
+      .querySelectorAll('.mode-btn, .diff-pill, .partner-tab-btn')
+      .forEach((btn) => {
+        btn.disabled = locked;
+      });
+  }
+
+  areLiveControlsLocked() {
+    return this.state === 'PLAYING' || this.state === 'PAUSED' || this.state === 'LOADING';
+  }
+
+  releaseAllLanes() {
+    for (let i = 0; i < 4; i++) {
+      if (this.keyDownLanes[i]) this.handleLaneInput(i, false);
+    }
+    this.canvasPointerLanes.clear();
+  }
+
+  showToast(message, durationMs = 3200) {
+    let toast = document.getElementById('nbToast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'nbToast';
+      toast.className = 'nb-toast';
+      toast.setAttribute('role', 'status');
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.add('show');
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => toast.classList.remove('show'), durationMs);
+  }
+
+  setLoadingBadge(visible) {
+    const badge = document.getElementById('stageLoadingBadge');
+    if (badge) badge.hidden = !visible;
+    ['btnStartSong', 'btnRetrySong', 'btnPreviewSynth'].forEach((id) => {
+      const btn = document.getElementById(id);
+      if (btn) btn.disabled = visible;
+    });
+  }
+
+  ensurePlayfieldVisible() {
+    const frame = this.stageFrame;
+    if (!frame || typeof frame.scrollIntoView !== 'function') return;
+    const rect = frame.getBoundingClientRect();
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    if (rect.top < 0 || rect.bottom > vh) {
+      frame.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }
+
+  /* ------------------------------------------------------------------------
+     暂停 / 继续（AudioContext.suspend 冻结歌曲时钟）
+     ------------------------------------------------------------------------ */
+  pauseLive() {
+    if (this.state !== 'PLAYING') return;
+    this.state = 'PAUSED';
+    this.synth.pause();
+    this.releaseAllLanes();
+    this.cancelResumeCountdown();
+    const overlay = document.getElementById('stagePauseOverlay');
+    if (overlay) overlay.hidden = false;
+    this.updateBottomJudge('PAUSED', 0, false);
+    document.getElementById('bottomOffsetText').textContent = 'Esc / P 继续';
+  }
+
+  cancelResumeCountdown() {
+    if (this.resumeCountdownTimer) {
+      clearTimeout(this.resumeCountdownTimer);
+      this.resumeCountdownTimer = null;
+    }
+    const cd = document.getElementById('pauseCountdown');
+    const actions = document.getElementById('pauseActions');
+    if (cd) cd.hidden = true;
+    if (actions) actions.hidden = false;
+  }
+
+  resumeLive() {
+    if (this.state !== 'PAUSED' || this.resumeCountdownTimer) return;
+    const cd = document.getElementById('pauseCountdown');
+    const actions = document.getElementById('pauseActions');
+    if (actions) actions.hidden = true;
+    let n = 3;
+    const tick = () => {
+      if (this.state !== 'PAUSED') return;
+      if (n <= 0) {
+        this.resumeCountdownTimer = null;
+        if (cd) cd.hidden = true;
+        if (actions) actions.hidden = false;
+        document.getElementById('stagePauseOverlay').hidden = true;
+        this.state = 'PLAYING';
+        this.synth.resume();
+        this.updateBottomJudge('GO!!', 0, false);
+        return;
+      }
+      if (cd) {
+        cd.hidden = false;
+        cd.textContent = String(n);
+      }
+      n -= 1;
+      this.resumeCountdownTimer = setTimeout(tick, 520);
+    };
+    tick();
+  }
+
+  togglePause() {
+    if (this.state === 'PLAYING') this.pauseLive();
+    else if (this.state === 'PAUSED') {
+      if (this.resumeCountdownTimer) this.cancelResumeCountdown();
+      else this.resumeLive();
+    }
+  }
+
+  resetPerSongState() {
+    this.bossHp = 100;
+    this.bossHurtTimer = 0;
+    this.bossKnockbackTimer = 0;
+    this.bossSplashTimer = 0;
+    this.activeMashNote = null;
+    this.hitstopTimer = 0;
+    this.cameraZoom = 1.0;
+    this.cameraPunchX = 0;
+    this.cameraPunchY = 0;
+    this.runnerJumpTimer = 0;
+    this.runnerAttackPoseTimer = 0;
+    this.comboAttackStage = 0;
+    this.slashParity = 0;
+    this.runnerStepPhase = 0;
+    this.lastStepIndex = -1;
+    this.beatPulseValue = 0;
+    this.receptorBounce = [0, 0, 0, 0];
+    this.lastLanePressTime = [0, 0, 0, 0];
+    this.songEnding = false;
+    // 清除上一局残留的 Cut-in 演出
+    if (this.cutinHideTimer) {
+      clearTimeout(this.cutinHideTimer);
+      this.cutinHideTimer = null;
+    }
+    this.cutinActive = false;
+    this.cutinBannerData = null;
+    const cutinOverlay = document.getElementById('mangaCutinOverlay');
+    if (cutinOverlay) cutinOverlay.classList.remove('active');
+    this.stageFrame.classList.remove('shake-micro', 'shake-heavy');
+    document.getElementById('hudSongProgress').style.width = '0%';
+  }
+
+  async startLive({ preview = false } = {}) {
+    if (this.state === 'LOADING') return;
     const track = this.getActiveTrack();
+    const audioMode = document.getElementById('audioSourceMode').value;
+
+    // 退出暂停 / 上一局
+    this.cancelResumeCountdown();
+    const pauseOverlay = document.getElementById('stagePauseOverlay');
+    if (pauseOverlay) pauseOverlay.hidden = true;
+    this.synth.stopSong();
+    this.synth.resume();
+
+    // 内置曲目：先完整解码 mp3 → AudioBuffer，再以 AudioContext 时钟精确起播
+    this.pendingPreview = !!preview;
+    let bgmBuffer = null;
+    if (!track.isCustom && track.localBgm && (audioMode === 'studio' || audioMode === 'hybrid')) {
+      const token = ++this.loadToken;
+      this.state = 'LOADING';
+      this.setLiveControlsLocked(true);
+      this.setLoadingBadge(true);
+      try {
+        bgmBuffer = await this.synth.loadBgmBuffer(track.localBgm);
+      } catch (err) {
+        bgmBuffer = null;
+        this.showToast('⚠️ 音乐加载失败，已切换为合成器节拍伴奏');
+      }
+      if (token !== this.loadToken) return; // 加载期间被取消（返回选曲/切歌）
+      this.setLoadingBadge(false);
+    }
+
+    this.beginLive(track, audioMode, bgmBuffer, preview);
+  }
+
+  beginLive(track, audioMode, bgmBuffer, preview) {
     const partner = this.getActivePartner();
+    this.liveSession = {
+      track,
+      trackId: track.id,
+      diffIdx: this.selectedDiffIdx,
+      mode: this.gameMode,
+      partnerId: partner.id,
+      isPreview: !!preview,
+      autoUsed: this.autoPlay
+    };
+    this.resetPerSongState();
     this.notes = track.isCustom
       ? analyzeAudioBufferToChart(track.audioBuffer, this.selectedDiffIdx).notes
       : generateBuiltinChart(track, this.selectedDiffIdx);
 
     this.particles = [];
     this.popups = [];
+    this.slashEffects = [];
+    this.runnerAfterimages = [];
+    this.knockedMonsters = [];
+    this.footstepDust = [];
     this.score = 0;
     this.combo = 0;
     this.maxCombo = 0;
@@ -1157,19 +1733,42 @@ class NeonBeatArcade {
     this.offsetSamples = 0;
     this.lastOffsetMs = 0;
     this.runnerLane = 1;
+    this.runnerY = 375;
+    this.runnerVy = 0;
+    this.runnerLungeX = 0;
+    this.runnerScaleX = 1.0;
+    this.runnerScaleY = 1.0;
+    this.runnerTilt = 0;
+    this.runnerAnimState = 'RUN';
 
     document.getElementById('stageStartOverlay').hidden = true;
     document.getElementById('stageResultOverlay').hidden = true;
 
-    const audioMode = document.getElementById('audioSourceMode').value;
     this.state = 'PLAYING';
-    this.synth.startSong(track, audioMode);
+    this.setLiveControlsLocked(true);
+    this.synth.startSong(track, audioMode, bgmBuffer);
     this.updateHud();
+    this.updateBottomJudge('READY TO ROCK!!', 0, false);
+    this.ensurePlayfieldVisible();
   }
 
   stopLiveToIdle() {
+    this.loadToken += 1; // 取消进行中的加载
+    this.setLoadingBadge(false);
+    this.cancelResumeCountdown();
+    const pauseOverlay = document.getElementById('stagePauseOverlay');
+    if (pauseOverlay) pauseOverlay.hidden = true;
     this.synth.stopSong();
+    this.synth.resume();
+    this.releaseAllLanes();
+    const wasPreview =
+      (this.liveSession && this.liveSession.isPreview) || (this.state === 'LOADING' && this.pendingPreview);
+    if (wasPreview) this.setAutoPlay(false);
+    this.pendingPreview = false;
+    this.liveSession = null;
+    this.songEnding = false;
     this.state = 'IDLE';
+    this.setLiveControlsLocked(false);
     this.isFever = false;
     document.body.classList.remove('fever-mode-active');
     document.getElementById('stageStartOverlay').hidden = false;
@@ -1189,29 +1788,30 @@ class NeonBeatArcade {
     const lineEl = document.getElementById('cutinVoiceLine');
 
     imgEl.src = partner.cutinCg;
-    badgeEl.textContent = customReason || `${this.combo} COMBO!! SKILL CUT-IN`;
-    titleEl.textContent = partner.cutinTitle;
+    const badgeText = customReason || `${this.combo} COMBO!! SKILL CUT-IN`;
     const randomLine = partner.cutinLines[Math.floor(Math.random() * partner.cutinLines.length)];
+    badgeEl.textContent = badgeText;
+    titleEl.textContent = partner.cutinTitle;
     lineEl.textContent = randomLine;
+
+    this.cutinActive = true;
+    this.cutinBannerData = {
+      cgSrc: partner.cutinCg,
+      badgeText,
+      title: partner.cutinTitle,
+      line: randomLine,
+      accent: partner.accent
+    };
 
     overlay.classList.add('active');
     this.synth.playHitSfx('CUTIN');
-    this.triggerScreenShake(true);
-
-    // 喷发全屏糖果星芒粒子
-    for (let i = 0; i < 36; i++) {
-      this.spawnParticles(
-        260 + Math.random() * 680,
-        140 + Math.random() * 280,
-        i % 2 === 0 ? '#FFE600' : '#00F5D4',
-        4
-      );
-    }
+    this.triggerScreenShake(false);
 
     if (this.cutinHideTimer) clearTimeout(this.cutinHideTimer);
     this.cutinHideTimer = setTimeout(() => {
       overlay.classList.remove('active');
-    }, 1850);
+      this.cutinActive = false;
+    }, 1750);
   }
 
   triggerScreenShake(heavy = false) {
@@ -1232,16 +1832,16 @@ class NeonBeatArcade {
     }
 
     if (!isKeyDown) return;
+    // 暂停/加载中只记录按键状态，不触发判定与动作
+    if (this.state === 'PAUSED' || this.state === 'LOADING') return;
 
-    const nowTime = this.state === 'PLAYING' ? this.synth.getElapsedSec() : performance.now() / 1000;
+    const nowTime = this.state === 'PLAYING' ? this.getJudgeTime() : performance.now() / 1000;
     this.lastLanePressTime[laneIdx] = nowTime;
     this.receptorBounce[laneIdx] = 1.0;
 
     // 跑酷模式下：lane 0/1 为跃起至上轨 (AIR)，lane 2/3 为落回下轨重击 (GROUND)
     const targetLane2 = laneIdx < 2 ? 0 : 1;
-    this.runnerLane = targetLane2;
-    this.runnerJumpTimer = targetLane2 === 0 ? 0.42 : 0;
-    this.runnerAttackPoseTimer = 0.22;
+    this.triggerRunnerParkourAction(targetLane2, false);
 
     if (this.state !== 'PLAYING') {
       this.synth.playHitSfx('PERFECT');
@@ -1251,7 +1851,157 @@ class NeonBeatArcade {
     this.evaluateNoteHit(laneIdx, targetLane2, nowTime);
   }
 
+  // 触发 Q 版跑酷角色的 A/B/C 三段交替连招（上挑斩 / 重锤破地砸 / 旋风回旋连击）、武器残影与物理
+  triggerRunnerParkourAction(targetLane2, isDouble = false) {
+    const partner = this.getActivePartner();
+    const upperY = 195;
+    const lowerY = 375;
+    const hitX = 330;
+
+    this.runnerLane = targetLane2;
+    this.runnerAttackPoseTimer = 0.26;
+    this.slashParity = 1 - this.slashParity;
+    this.comboAttackStage = (this.comboAttackStage + 1) % 3;
+
+    const stageColors = ['#FF1493', '#FFE600', '#00F5D4'];
+    const stageColor = stageColors[this.comboAttackStage] || partner.weaponColor || '#00F5D4';
+
+    if (isDouble) {
+      this.runnerAnimState = 'DOUBLE_BURST';
+      this.runnerJumpTimer = 0.36;
+      this.runnerLungeX = 48;
+      this.runnerScaleX = 1.05;
+      this.runnerScaleY = 1.05;
+      this.runnerTilt = 0.12;
+      this.spawnSlashEffect(hitX, upperY, '#FFE600', -1, true, 2);
+      this.spawnSlashEffect(hitX, lowerY, '#00F5D4', 1, true, 2);
+    } else if (targetLane2 === 0) {
+      // 空中跃起 A/B/C 三段连招斩击（保持 1:1 等比缩放，禁止非等比拉伸变形）
+      this.runnerAnimState = 'AIR_SLASH';
+      this.runnerJumpTimer = 0.44;
+      this.runnerVy = -1480;
+      this.runnerLungeX = 34 + this.comboAttackStage * 6;
+      this.runnerScaleX = 1.04;
+      this.runnerScaleY = 1.04;
+      this.runnerTilt = this.comboAttackStage === 0 ? -0.10 : this.comboAttackStage === 1 ? 0.10 : -0.06;
+      this.spawnSlashEffect(hitX, upperY, stageColor, this.slashParity ? -1 : 1, false, this.comboAttackStage);
+    } else {
+      // 地面俯冲 A/B/C 三段连招重击（保持 1:1 等比缩放，禁止非等比拉伸变形）
+      this.runnerAnimState = 'GROUND_SMASH';
+      this.runnerJumpTimer = 0;
+      if (this.runnerY < lowerY - 25) {
+        this.runnerVy = 2650;
+      }
+      this.runnerLungeX = 36 + this.comboAttackStage * 6;
+      this.runnerScaleX = 1.05;
+      this.runnerScaleY = 1.05;
+      this.runnerTilt = this.comboAttackStage === 0 ? -0.08 : 0.10;
+      this.spawnSlashEffect(hitX, lowerY, stageColor, this.slashParity ? 1 : -1, false, this.comboAttackStage);
+    }
+
+    // 生成高速糖果霓虹残影
+    this.spawnRunnerAfterimage();
+  }
+
+  spawnSlashEffect(x, y, color, dir = 1, isHeavy = false, comboStage = 0) {
+    this.slashEffects.push({
+      x,
+      y,
+      color,
+      dir,
+      isHeavy,
+      comboStage,
+      radius: isHeavy ? 92 : comboStage === 2 ? 82 : 70,
+      life: 1.0,
+      angleOffset: (Math.random() - 0.5) * 0.28
+    });
+  }
+
+  spawnRunnerAfterimage() {
+    const colors = ['#00F5D4', '#FF1493', '#FFE600'];
+    this.runnerAfterimages.push({
+      x: this.runnerBaseX + this.runnerLungeX * 0.5,
+      y: this.runnerY,
+      scaleX: this.runnerScaleX,
+      scaleY: this.runnerScaleY,
+      tilt: this.runnerTilt,
+      state: this.runnerAnimState,
+      stepPhase: this.runnerStepPhase,
+      color: colors[this.runnerAfterimages.length % colors.length],
+      life: 1.0
+    });
+  }
+
+  spawnKnockedMonster(note, judge) {
+    if (!note || this.gameMode !== 'RUN_2L') return;
+    const hitX = 330;
+    const upperY = 195;
+    const lowerY = 375;
+    const spawnLanes = note.type === 'DOUBLE' ? [0, 1] : [note.lane2];
+    const words = ['POW!!', 'BAM!!', 'SMASH!!', 'CRIT!!', 'YEET!!', 'KO!!', 'WHAM!!'];
+
+    spawnLanes.forEach((lane2, idx) => {
+      const y = lane2 === 0 ? upperY : lowerY;
+      const launchAngle = lane2 === 0
+        ? -0.45 - Math.random() * 0.35
+        : -0.28 - Math.random() * 0.42;
+      const speed = (judge === 'PERFECT' ? 1220 : 940) + Math.random() * 340;
+      this.knockedMonsters.push({
+        x: hitX + 12,
+        y,
+        vx: Math.cos(launchAngle) * speed,
+        vy: Math.sin(launchAngle) * speed - (idx * 120),
+        rot: 0,
+        vRot: (Math.random() > 0.5 ? 1 : -1) * (18 + Math.random() * 14),
+        lane2,
+        entryStyle: note.entryStyle || 'SWOOP',
+        isDouble: note.type === 'DOUBLE',
+        color: note.type === 'DOUBLE' ? '#FFE600' : lane2 === 0 ? '#FF1493' : '#00F5D4',
+        comicWord: words[Math.floor(Math.random() * words.length)],
+        flashTimer: 0.065,
+        scale: 1.22,
+        life: 1.0
+      });
+    });
+  }
+
+  // 处理副歌 Boss 贴脸连打对决 (MASH Note 连按暴揍 Boss)
+  registerBossMashStrike(mashNote) {
+    mashNote.mashHits = (mashNote.mashHits || 0) + 1;
+    this.bossHurtTimer = 0.18;
+    this.bossHp = Math.max(5, this.bossHp - 4.5);
+    this.hitstopTimer = 0.016;
+    this.cameraZoom = 1.042;
+    this.cameraPunchX = (Math.random() - 0.3) * 14;
+    this.cameraPunchY = (Math.random() - 0.5) * 10;
+
+    this.score += this.isFever ? 1200 : 800;
+    this.combo += 1;
+    if (this.combo > this.maxCombo) this.maxCombo = this.combo;
+
+    const hitX = 395 + (Math.random() - 0.5) * 35;
+    const hitY = 285 + (Math.random() - 0.5) * 55;
+    const mashWords = ['ORA!!', 'MASH!!', 'POW!!', 'SMASH!!', 'combo!!'];
+    const word = mashWords[mashNote.mashHits % mashWords.length];
+    this.spawnParticles(hitX, hitY, mashNote.mashHits % 2 === 0 ? '#FFE600' : '#FF1493', 12);
+    this.spawnPopup(`${word} ×${mashNote.mashHits}`, '#FFE600', '⚡ BOSS 贴脸狂按连打！', hitX, hitY - 40);
+    this.synth.playHitSfx('MASH');
+    this.bounceComboBox();
+    this.updateHud();
+  }
+
   evaluateNoteHit(lane4Idx, lane2Idx, songTime) {
+    // 0. 优先检测是否正处于「副歌 Boss 贴脸连打对决 (MASH Note)」阶段
+    for (const note of this.notes) {
+      if (note.type === 'MASH' && !note.holdCompleted && songTime >= note.time - 0.12 && songTime <= note.endTime + 0.08) {
+        note.hit = true;
+        note.holding = true;
+        this.activeMashNote = note;
+        this.registerBossMashStrike(note);
+        return;
+      }
+    }
+
     const PERFECT_WIN = 0.045;
     const GREAT_WIN = 0.090;
     const GOOD_WIN = 0.135;
@@ -1261,7 +2011,7 @@ class NeonBeatArcade {
     let bestAbsDiff = Infinity;
 
     for (const note of this.notes) {
-      if (note.hit || note.missed || note.type === 'HAZARD') continue;
+      if (note.hit || note.missed || note.type === 'HAZARD' || note.type === 'MASH') continue;
       const diff = songTime - note.time;
       const absDiff = Math.abs(diff);
       if (absDiff > GOOD_WIN) continue;
@@ -1290,6 +2040,19 @@ class NeonBeatArcade {
     }
 
     if (!candidate) return;
+
+    // 双押重拍：必须两个对应键（2 轨：上轨+下轨；4K：lane4 + lane4Pair）在 80ms 内先后按下
+    if (candidate.type === 'DOUBLE') {
+      const isPartA = this.gameMode === 'RUN_2L' ? lane2Idx === 0 : lane4Idx === candidate.lane4;
+      if (isPartA) candidate.dblPressA = songTime;
+      else candidate.dblPressB = songTime;
+      const a = candidate.dblPressA;
+      const b = candidate.dblPressB;
+      if (a == null || b == null || Math.abs(a - b) > DOUBLE_PRESS_WINDOW_SEC) {
+        return; // 只按下一半：等待另一键
+      }
+      songTime = (a + b) / 2;
+    }
 
     const offsetMs = (songTime - candidate.time) * 1000;
     const absSec = Math.abs(songTime - candidate.time);
@@ -1392,11 +2155,29 @@ class NeonBeatArcade {
       this.triggerMangaCutIn(`${this.combo} COMBO BURST!!`);
     }
 
-    // 粒子与漫画爆炸字反馈
+    // 粒子、刀光挥击、怪物击飞物理与漫画爆炸字反馈
     const hitPos = this.getNoteReceptorCoords(note);
     const color =
       judge === 'PERFECT' ? '#FFE600' : judge === 'GREAT' ? '#00F5D4' : '#FF1493';
-    this.spawnParticles(hitPos.x, hitPos.y, color, note?.type === 'DOUBLE' ? 26 : 16);
+    this.spawnParticles(hitPos.x, hitPos.y, color, note?.type === 'DOUBLE' ? 28 : 18);
+
+    // 击中音符时：把 Q 版节拍怪旋转击飞出去 + 24ms 打击微顿帧 (Hitstop) + 镜头前冲缩放
+    this.bossHp = Math.max(5, this.bossHp - (note?.type === 'DOUBLE' ? 2.5 : 1.0));
+    if (note && note.type !== 'HOLD' && note.type !== 'MASH') {
+      this.spawnKnockedMonster(note, judge);
+    }
+    if (note && note.type === 'DOUBLE') {
+      this.triggerRunnerParkourAction(0, true);
+      this.hitstopTimer = 0.028;
+      this.cameraZoom = 1.055;
+      this.cameraPunchX = 12;
+    } else {
+      if (judge === 'PERFECT') {
+        this.hitstopTimer = 0.022;
+      }
+      this.cameraZoom = Math.max(this.cameraZoom, judge === 'PERFECT' ? 1.034 : 1.018);
+      this.cameraPunchX = 7;
+    }
 
     const subTag = calibrated
       ? '💘 会长校准 PERFECT!!'
@@ -1473,13 +2254,155 @@ class NeonBeatArcade {
   }
 
   /* ------------------------------------------------------------------------
+     4 层高速视差跑酷卷轴 & Q 版角色物理状态更新 (60FPS 恒定驱动)
+     ------------------------------------------------------------------------ */
+  updateParkourPhysics(dt) {
+    // 24ms 街机打击微顿帧 (Hitstop)：定格角色与受击帧瞬间，释放拳拳到肉的打击张力
+    if (this.hitstopTimer > 0) {
+      this.hitstopTimer = Math.max(0, this.hitstopTimer - dt);
+      this.cameraZoom += (1.0 - this.cameraZoom) * Math.min(1, dt * 8);
+      return;
+    }
+
+    if (this.bossHurtTimer > 0) {
+      this.bossHurtTimer = Math.max(0, this.bossHurtTimer - dt);
+    }
+    if (this.bossKnockbackTimer > 0) {
+      this.bossKnockbackTimer = Math.max(0, this.bossKnockbackTimer - dt);
+    }
+    if (this.bossSplashTimer > 0) {
+      this.bossSplashTimer = Math.max(0, this.bossSplashTimer - dt);
+    }
+
+    const track = this.getActiveTrack();
+    const bpm = track ? track.bpm : 132;
+    const speedFactor =
+      (this.state === 'PLAYING' ? 1.0 : 0.48) *
+      this.noteSpeedMult *
+      (this.isFever ? 1.35 : 1.0) *
+      (bpm / 130);
+
+    // 1. 4 层视差横版卷轴推进（远景星空都市 / 中景街机霓虹街区 / 高速跑酷公路 / 前景灯柱掠影）
+    const layerSpeeds = [110, 390, 1180, 1960];
+    for (let i = 0; i < 4; i++) {
+      this.parallaxOffsets[i] = (this.parallaxOffsets[i] + layerSpeeds[i] * speedFactor * dt) % 4800;
+    }
+
+    // 2. 镜头打击缩放与前冲回弹
+    this.cameraZoom += (1.0 - this.cameraZoom) * Math.min(1, dt * 14);
+    this.cameraPunchX += (0 - this.cameraPunchX) * Math.min(1, dt * 16);
+    this.cameraPunchY += (0 - this.cameraPunchY) * Math.min(1, dt * 16);
+
+    // 3. Q 版角色迈腿跑步相位（与 BPM 严格同频：每拍迈 2 步 = 4 个关键帧姿态）
+    const stepsPerSec = (bpm / 60) * 2.0 * (this.state === 'PLAYING' ? 1.0 : 0.65);
+    this.runnerStepPhase += stepsPerSec * Math.PI * 2 * dt;
+    const stepIndex = Math.floor(this.runnerStepPhase / Math.PI);
+
+    const upperY = 195;
+    const lowerY = 375;
+    const targetY = this.runnerLane === 0 ? upperY : lowerY;
+
+    // 4. Q 版角色垂直跳跃/滞空/急速俯冲弹簧物理
+    const yDiff = targetY - this.runnerY;
+    this.runnerVy += yDiff * 115 * dt;
+    this.runnerVy *= Math.pow(0.0008, dt);
+    this.runnerY += this.runnerVy * dt;
+
+    // 落地瞬间产生踏地星尘（保持 1:1 等比，不压扁角色）
+    if (this.runnerLane === 1 && Math.abs(this.runnerY - lowerY) < 8) {
+      if (this.runnerVy > 380) {
+        this.runnerScaleX = 1.03;
+        this.runnerScaleY = 1.03;
+        this.spawnFootstepDust(this.runnerBaseX - 10, lowerY + 42, 6, true);
+      }
+      this.runnerY = lowerY;
+      this.runnerVy = 0;
+    }
+
+    // 地面奔跑每迈一步在脚底向后喷射糖果踏地烟尘
+    if (stepIndex !== this.lastStepIndex) {
+      this.lastStepIndex = stepIndex;
+      if (this.runnerLane === 1 && Math.abs(this.runnerY - lowerY) < 18) {
+        this.spawnFootstepDust(this.runnerBaseX - 14, lowerY + 42, 3, false);
+      } else if (this.isFever) {
+        this.spawnRunnerAfterimage();
+      }
+    }
+
+    // 5. 角色前冲位移 (Lunge) 与挤压拉伸 (Squash & Stretch) 弹性回中
+    this.runnerLungeX += (0 - this.runnerLungeX) * Math.min(1, dt * 15);
+    this.runnerScaleX += (1.0 - this.runnerScaleX) * Math.min(1, dt * 14);
+    this.runnerScaleY += (1.0 - this.runnerScaleY) * Math.min(1, dt * 14);
+    this.runnerTilt += (0.06 - this.runnerTilt) * Math.min(1, dt * 12);
+
+    if (this.runnerAttackPoseTimer <= 0 && this.runnerLane === 1 && Math.abs(this.runnerY - lowerY) < 16) {
+      this.runnerAnimState = 'RUN';
+    }
+
+    // 6. 更新脚底向后飞驰的踏地星尘
+    for (let i = this.footstepDust.length - 1; i >= 0; i--) {
+      const d = this.footstepDust[i];
+      d.x += d.vx * dt;
+      d.y += d.vy * dt;
+      d.size += 18 * dt;
+      d.life -= dt * 2.6;
+      if (d.life <= 0) this.footstepDust.splice(i, 1);
+    }
+
+    // 7. 更新 Q 版角色高速残影
+    for (let i = this.runnerAfterimages.length - 1; i >= 0; i--) {
+      const g = this.runnerAfterimages[i];
+      g.x -= 520 * speedFactor * dt;
+      g.life -= dt * 3.8;
+      if (g.life <= 0) this.runnerAfterimages.splice(i, 1);
+    }
+
+    // 8. 更新巨型波普月牙刀光
+    for (let i = this.slashEffects.length - 1; i >= 0; i--) {
+      const s = this.slashEffects[i];
+      s.life -= dt * 5.2;
+      if (s.life <= 0) this.slashEffects.splice(i, 1);
+    }
+
+    // 9. 更新被一锤打飞旋转飞出屏幕的 Q 版节拍怪 (Ragdoll Knockback)
+    for (let i = this.knockedMonsters.length - 1; i >= 0; i--) {
+      const m = this.knockedMonsters[i];
+      m.x += m.vx * dt;
+      m.y += m.vy * dt;
+      m.vy += 1480 * dt; // 重力抛物线
+      m.rot += m.vRot * dt;
+      m.flashTimer = Math.max(0, m.flashTimer - dt);
+      m.life -= dt * 1.35;
+      if (m.life <= 0 || m.x > 1240 || m.y > 660) {
+        this.knockedMonsters.splice(i, 1);
+      }
+    }
+  }
+
+  spawnFootstepDust(x, y, count = 3, isHeavy = false) {
+    const colors = ['#FFFFFF', '#FFE600', '#00F5D4', '#FF1493'];
+    for (let i = 0; i < count; i++) {
+      this.footstepDust.push({
+        x: x + (Math.random() - 0.5) * 14,
+        y: y + (Math.random() - 0.5) * 6,
+        vx: -(420 + Math.random() * 440) * (isHeavy ? 1.25 : 1.0),
+        vy: -(25 + Math.random() * (isHeavy ? 130 : 70)),
+        size: (isHeavy ? 9 : 6) + Math.random() * 6,
+        color: colors[i % colors.length],
+        life: 1.0
+      });
+    }
+  }
+
+  /* ------------------------------------------------------------------------
      主更新与结算循环
      ------------------------------------------------------------------------ */
   updateGameLogic(dt) {
     if (this.state !== 'PLAYING') return;
 
-    const track = this.getActiveTrack();
+    const track = this.liveSession ? this.liveSession.track : this.getActiveTrack();
     const songTime = this.synth.getElapsedSec();
+    const judgeTime = songTime - this.calibrationMs / 1000;
 
     // 进度条更新
     const pct = Math.min(100, (songTime / track.durationSec) * 100);
@@ -1509,16 +2432,53 @@ class NeonBeatArcade {
       this.runnerAttackPoseTimer = Math.max(0, this.runnerAttackPoseTimer - dt);
     }
 
-    // 遍历音符处理：AI 自动演示 / 长按持续加分 / 尖刺齿轮闪避结算 / 超时 MISS
+    // 遍历音符处理：AI 自动演示 / 副歌 Boss 贴脸连打 (MASH) / 长按持续加分 / 尖刺齿轮闪避结算 / 超时 MISS
+    this.activeMashNote = null;
     for (const note of this.notes) {
       if (note.missed || note.holdCompleted) continue;
+
+      // 0. 副歌高潮 Boss 贴脸连打对决 (MASH Note · 提前 2.4 秒召唤 16:9 魔王机甲巨图预警！)
+      if (note.type === 'MASH') {
+        if (!note.warningTriggered && songTime >= note.time - 2.4 && songTime < note.time) {
+          note.warningTriggered = true;
+          this.bossSplashTimer = 4.6;
+          this.synth.playHitSfx('CUTIN');
+        }
+        if (songTime >= note.time - 0.18 && songTime <= note.endTime) {
+          this.activeMashNote = note;
+          this.bossSplashTimer = Math.max(this.bossSplashTimer, 0.5);
+          note.hit = true;
+          note.holding = true;
+          // AUTO PLAY 模式下自动以每秒 14 次鬼畜出拳暴揍 Boss
+          if (this.autoPlay && songTime >= note.time && songTime - note.lastTickTime >= 0.075) {
+            note.lastTickTime = songTime;
+            this.triggerRunnerParkourAction(note.mashHits % 2, false);
+            this.registerBossMashStrike(note);
+          }
+          continue;
+        } else if (songTime > note.endTime && !note.holdCompleted) {
+          note.holding = false;
+          note.holdCompleted = true;
+          this.bossKnockbackTimer = 0.85;
+          this.bossHp = 100; // Boss 被轰飞后刷新下一轮护甲
+          this.score += 5000;
+          this.synth.playHitSfx('BOSS_KO');
+          this.triggerScreenShake(true);
+          this.spawnParticles(420, 275, '#FFE600', 36);
+          this.spawnPopup('BOSS BLASTED!! +5000', '#FFE600', `🔥 连打 ${note.mashHits || 1} HIT 把魔王轰飞啦！`, 520, 175);
+          this.updateHud();
+          continue;
+        }
+      }
 
       // 1. AUTO PLAY 自动演示模式
       if (this.autoPlay && !note.hit && songTime >= note.time - 0.008) {
         if (note.type === 'HAZARD') {
           // 自动跳到安全轨道躲避齿轮
-          this.runnerLane = 1 - note.lane2;
-          this.runnerJumpTimer = this.runnerLane === 0 ? 0.38 : 0;
+          const safeLane = 1 - note.lane2;
+          this.runnerLane = safeLane;
+          this.runnerJumpTimer = safeLane === 0 ? 0.38 : 0;
+          this.spawnRunnerAfterimage();
           note.hit = true;
           note.dodged = true;
           this.score += 500;
@@ -1529,8 +2489,7 @@ class NeonBeatArcade {
           continue;
         } else {
           const autoLane4 = note.lane4;
-          this.runnerLane = note.lane2;
-          this.runnerJumpTimer = note.lane2 === 0 ? 0.35 : 0;
+          this.triggerRunnerParkourAction(note.lane2, note.type === 'DOUBLE');
           this.receptorBounce[autoLane4] = 1.0;
           if (note.type === 'HOLD') {
             note.hit = true;
@@ -1554,30 +2513,45 @@ class NeonBeatArcade {
               : this.keyDownLanes[2] || this.keyDownLanes[3]
             : this.keyDownLanes[note.lane4]);
 
+        if (isStillHolding && this.gameMode === 'RUN_2L') {
+          this.runnerLane = note.lane2;
+          if (note.lane2 === 0) this.runnerJumpTimer = Math.max(this.runnerJumpTimer, 0.15);
+        }
+
         if (songTime - note.lastTickTime >= 0.12 && isStillHolding) {
           note.lastTickTime = songTime;
           this.score += 220;
           this.combo += 1;
           if (this.combo > this.maxCombo) this.maxCombo = this.combo;
           const pos = this.getNoteReceptorCoords(note);
-          this.spawnParticles(pos.x, pos.y, '#00F5D4', 5);
+          this.spawnParticles(pos.x, pos.y, '#00F5D4', 6);
           this.updateHud();
         }
 
-        if (songTime >= note.endTime) {
+        // 提前松手：长按中断，不发放 +500 完成奖励（末尾 80ms 宽限）
+        if (!isStillHolding && songTime < note.endTime - 0.08) {
+          note.holding = false;
+          note.holdCompleted = true;
+          note.holdBroken = true;
+          const pos = this.getNoteReceptorCoords(note);
+          this.spawnPopup('HOLD BREAK', '#FF2E4C', '长按提前松开…', pos.x, pos.y - 26);
+          continue;
+        }
+
+        if (songTime >= note.endTime - 0.08) {
           note.holding = false;
           note.holdCompleted = true;
           this.score += 500;
+          this.spawnKnockedMonster(note, 'PERFECT');
           this.updateHud();
         }
         continue;
       }
 
       // 3. 尖刺齿轮弹幕 (HAZARD) 到达判定线
-      if (note.type === 'HAZARD' && !note.hit && songTime >= note.time) {
+      if (note.type === 'HAZARD' && !note.hit && judgeTime >= note.time) {
         note.hit = true;
         if (this.gameMode === 'MANIA_4K') {
-          // 4K 模式下齿轮视为自动闪避加分特效
           note.dodged = true;
           this.score += 300;
           continue;
@@ -1592,6 +2566,9 @@ class NeonBeatArcade {
           this.updateHud();
         } else {
           // 撞上尖刺齿轮
+          this.runnerAnimState = 'HURT';
+          this.runnerScaleX = 0.78;
+          this.runnerScaleY = 1.25;
           this.triggerScreenShake(true);
           this.registerJudgment('MISS', 0, note, false);
         }
@@ -1599,14 +2576,18 @@ class NeonBeatArcade {
       }
 
       // 4. 普通音符超时未按 -> MISS
-      if (!note.hit && songTime - note.time > 0.145) {
+      if (!note.hit && judgeTime - note.time > 0.145) {
         note.missed = true;
         this.registerJudgment('MISS', 145, note, false);
       }
     }
 
-    // 曲目播放完毕 -> 弹出街机结算画面
-    if (songTime >= track.durationSec) {
+    // 谱面结束 -> 音乐 2 秒渐弱淡出 -> 弹出街机结算画面
+    if (songTime >= track.durationSec && !this.songEnding) {
+      this.songEnding = true;
+      this.synth.fadeOutMusic(2.0);
+    }
+    if (songTime >= track.durationSec + 2.0) {
       this.finishSongToResult();
     }
   }
@@ -1615,11 +2596,24 @@ class NeonBeatArcade {
     this.synth.stopSong();
     this.state = 'RESULT';
     this.isFever = false;
+    this.songEnding = false;
     document.body.classList.remove('fever-mode-active');
+    this.setLiveControlsLocked(false);
 
-    const track = this.getActiveTrack();
-    const partner = this.getActivePartner();
-    const diff = track.diffs[this.selectedDiffIdx] || track.diffs[0];
+    // 以开局快照为准（防止中途切换难度/模式/搭档导致串档）
+    const session = this.liveSession || {
+      track: this.getActiveTrack(),
+      trackId: this.selectedTrackId,
+      diffIdx: this.selectedDiffIdx,
+      mode: this.gameMode,
+      partnerId: this.selectedPartnerId,
+      isPreview: false,
+      autoUsed: this.autoPlay
+    };
+    const autoUsed = session.autoUsed || this.autoPlay;
+    const track = session.track;
+    const partner = PARTNERS[session.partnerId] || this.getActivePartner();
+    const diff = track.diffs[session.diffIdx] || track.diffs[0];
     const acc = this.getAccuracyPercent();
 
     // 计算街机评级徽章：👑 S+ (ALL PERFECT) / 🌟 S (FULL COMBO 或 ACC >= 95%) / 🔥 A / 🍬 B
@@ -1643,11 +2637,18 @@ class NeonBeatArcade {
       badgeText = '🔥 GREAT RHYTHM!';
     }
 
-    const isNewRecord = this.saveRecord(track.id, this.selectedDiffIdx, this.gameMode, {
+    if (autoUsed) {
+      badgeText = '🤖 AUTO PLAY · 不计入纪录';
+    }
+
+    // AUTO PLAY（本局任意时刻开启过）不写入本地纪录
+    const isNewRecord = autoUsed
+      ? false
+      : this.saveRecord(session.trackId, session.diffIdx, session.mode, {
       trackId: track.id,
       trackTitle: track.title,
       diffName: diff.name,
-      mode: this.gameMode,
+      mode: session.mode,
       partnerName: partner.name,
       score: this.score,
       maxCombo: this.maxCombo,
@@ -1658,11 +2659,14 @@ class NeonBeatArcade {
 
     // 填充结算 DOM
     document.getElementById('resultHeroineCg').src = partner.cutinCg;
-    document.getElementById('resultRankStamp').textContent = rank;
+    document.getElementById('resultRankStamp').textContent = autoUsed ? 'AUTO' : rank;
+    document.getElementById('resultRankStamp').classList.toggle('is-auto', autoUsed);
+    const clearTag = document.getElementById('resultClearTag');
+    if (clearTag) clearTag.textContent = autoUsed ? 'AUTO PLAY DEMO' : 'STAGE CLEAR!!';
     document.getElementById('resultBadgeRibbon').textContent = badgeText;
     document.getElementById('resultSongTitle').textContent = `${track.icon} 《${track.title}》`;
     document.getElementById('resultModeAndDiff').textContent =
-      `${this.gameMode === 'RUN_2L' ? '横版双轨跑酷' : '4K 下落街机'} · ${diff.name} · 搭档：${partner.name}`;
+      `${session.mode === 'RUN_2L' ? '横版双轨跑酷' : '4K 下落街机'} · ${diff.name} · 搭档：${partner.name}`;
 
     document.getElementById('resScoreVal').textContent = this.score.toLocaleString();
     document.getElementById('resNewRecordBadge').hidden = !isNewRecord;
@@ -1682,7 +2686,11 @@ class NeonBeatArcade {
 
     document.getElementById('stageResultOverlay').hidden = false;
     this.synth.playHitSfx('CUTIN');
+    // 试听（预览）局结束后自动关闭 AUTO，避免下一局误开
+    if (session.isPreview) this.setAutoPlay(false);
+    this.liveSession = null;
     this.renderTrackList();
+    this.updateStartOverlayInfo();
   }
 
   /* ------------------------------------------------------------------------
@@ -1695,8 +2703,8 @@ class NeonBeatArcade {
       return { x: hitX, y: laneY };
     } else {
       const laneIdx = note ? note.lane4 : 1;
-      const highwayLeft = 450;
-      const laneWidth = 132;
+      const highwayLeft = MANIA_HIGHWAY.left;
+      const laneWidth = MANIA_HIGHWAY.laneWidth;
       return {
         x: highwayLeft + laneIdx * laneWidth + laneWidth * 0.5,
         y: 472
@@ -1735,7 +2743,8 @@ class NeonBeatArcade {
 
   loop(timestamp) {
     if (!this.lastFrameTs) this.lastFrameTs = timestamp;
-    const dt = Math.min(0.05, (timestamp - this.lastFrameTs) / 1000);
+    // 暂停时冻结所有逻辑/物理/粒子推进（dt = 0），画面停留在暂停瞬间
+    const dt = this.state === 'PAUSED' ? 0 : Math.min(0.05, (timestamp - this.lastFrameTs) / 1000);
     this.lastFrameTs = timestamp;
 
     this.beatPulseValue = Math.max(0, this.beatPulseValue - dt * 3.8);
@@ -1743,6 +2752,7 @@ class NeonBeatArcade {
       this.receptorBounce[i] = Math.max(0, this.receptorBounce[i] - dt * 6.0);
     }
 
+    this.updateParkourPhysics(dt);
     this.updateGameLogic(dt);
     this.renderCanvas(dt);
 
@@ -1755,13 +2765,11 @@ class NeonBeatArcade {
     const H = this.canvas.height;
     ctx.clearRect(0, 0, W, H);
 
-    // 1. 绘制底部リアルタイム WebAudio FFT 频谱律动能量柱
-    this.drawSpectrumBars(ctx, W, H);
-
     // 2. 根据当前音游模式绘制核心舞台
     if (this.gameMode === 'RUN_2L') {
-      this.drawRun2LStage(ctx, W, H);
+      this.drawRun2LStage(ctx, W, H, dt);
     } else {
+      this.drawSpectrumBars(ctx, W, H);
       this.drawMania4KStage(ctx, W, H);
     }
 
@@ -1793,252 +2801,1234 @@ class NeonBeatArcade {
   }
 
   /* ------------------------------------------------------------------------
-     模式一：横版双轨跑酷闪避模式 (Muse Dash 风 · RUN_2L)
+     模式一：横版双轨跑酷闪避模式 (Muse Dash 风 4 层高速视差卷轴 + Q 版跑酷动作 + 刀光击飞)
      ------------------------------------------------------------------------ */
-  drawRun2LStage(ctx, W, H) {
-    const songTime = this.state === 'PLAYING' ? this.synth.getElapsedSec() : 0;
+  drawRun2LStage(ctx, W, H, dt) {
+    const songTime = this.isLiveState() ? this.synth.getElapsedSec() : performance.now() / 1000;
     const hitX = 330;
     const upperY = 195;
     const lowerY = 375;
 
-    // 1. 绘制上下两条高饱和糖果波普跑道
-    const lanes = [
-      { y: upperY, label: 'AIR SKY LANE [F / ↑]', color: '#FF1493', bg: 'rgba(255, 20, 147, 0.16)' },
-      { y: lowerY, label: 'GROUND BEAT LANE [J / ↓]', color: '#00F5D4', bg: 'rgba(0, 245, 212, 0.16)' }
-    ];
+    ctx.save();
+    // 镜头节奏呼吸缩放与前冲震动 (Camera Beat Zoom & Punch)
+    const cx = W * 0.42;
+    const cy = H * 0.54;
+    ctx.translate(cx + this.cameraPunchX, cy + this.cameraPunchY);
+    ctx.scale(this.cameraZoom, this.cameraZoom);
+    ctx.translate(-cx, -cy);
 
-    lanes.forEach((lane, idx) => {
-      ctx.save();
-      ctx.fillStyle = lane.bg;
-      ctx.strokeStyle = '#190A28';
-      ctx.lineWidth = 4;
-      ctx.fillRect(250, lane.y - 54, W - 260, 108);
-      ctx.strokeRect(250, lane.y - 54, W - 260, 108);
+    // 1. 绘制第 1～3 层高速横版视差卷轴世界 (远景低音摩天楼 / 中景霓虹街区 / 近景飞驰跑酷公路与空中滑轨)
+    this.drawParallaxParkourWorld(ctx, W, H, upperY, lowerY, hitX, songTime);
 
-      // 漫画虚线引导轨
-      ctx.strokeStyle = lane.color;
-      ctx.lineWidth = 3;
-      ctx.setLineDash([16, 10]);
-      ctx.beginPath();
-      ctx.moveTo(hitX, lane.y);
-      ctx.lineTo(W - 20, lane.y);
-      ctx.stroke();
-      ctx.setLineDash([]);
+    // 2. 绘制两个打击靶圈 (Receptor Targets) 与角色跟前引导光束
+    this.drawParkourReceptors(ctx, hitX, upperY, lowerY, songTime);
 
-      // 轨道标签
-      ctx.font = '900 13px Impact, "PingFang SC", sans-serif';
-      ctx.fillStyle = lane.color;
-      ctx.fillText(lane.label, W - 210, lane.y - 34);
+    // 3. 绘制脚底踏地星尘与 Q 版角色高速霓虹残影
+    this.drawFootstepDustAndAfterimages(ctx);
 
-      // 判定圈 (Receptor Ring)
-      const bounce = idx === 0
-        ? Math.max(this.receptorBounce[0], this.receptorBounce[1])
-        : Math.max(this.receptorBounce[2], this.receptorBounce[3]);
-      const radius = 34 + bounce * 9 + this.beatPulseValue * 4;
+    // 4. 绘制 Q 版 2.5 头身侧身跑酷看板娘 + 动态挥舞武器
+    this.drawChibiRunnerHeroine(ctx, upperY, lowerY, songTime);
 
-      ctx.beginPath();
-      ctx.arc(hitX, lane.y, radius, 0, Math.PI * 2);
-      ctx.fillStyle = bounce > 0.1 ? lane.color : 'rgba(25, 10, 40, 0.78)';
-      ctx.fill();
-      ctx.lineWidth = 5;
-      ctx.strokeStyle = '#FFE600';
-      ctx.stroke();
+    // 5. 绘制右侧驻场「巨型 Q 版糖果魔王 Boss」及副歌贴脸连打对决 (MASH Clash)
+    this.drawStageBoss(ctx, W, H, hitX, upperY, lowerY, songTime);
 
-      ctx.beginPath();
-      ctx.arc(hitX, lane.y, 12, 0, Math.PI * 2);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fill();
-      ctx.restore();
-    });
+    // 6. 绘制飞来的 Q 版空中俯冲飞翼恶魔、地面大跳音响怪、半途隐身幽灵怪、双押雷电双子怪、彩虹流光龙带与旋转电锯齿轮
+    if (this.isLiveState()) {
+      const basePxPerSec = 560 * this.noteSpeedMult;
 
-    // 2. 绘制左侧搭档看板娘动态奔跑与跃起闪避演出
-    this.drawRunnerHeroine(ctx, upperY, lowerY);
+      for (const note of this.notes) {
+        if (note.missed || note.holdCompleted || note.type === 'MASH') continue;
+        if (note.hit && note.type !== 'HOLD') continue;
 
-    // 3. 绘制飞来的空中糖果音符、地面节拍怪、双押电光柱、彩虹长按糖带与尖刺齿轮
-    if (this.state !== 'PLAYING') return;
+        const timeRemain = note.time - songTime;
+        const x = hitX + timeRemain * basePxPerSec;
+        const endX = hitX + (note.endTime - songTime) * basePxPerSec;
+        if (endX < 180 || x > W + 90) continue;
 
-    const basePxPerSec = 520 * this.noteSpeedMult;
+        const baseY = note.lane2 === 0 ? upperY : lowerY;
 
-    for (const note of this.notes) {
-      if (note.missed || note.holdCompleted) continue;
-      if (note.hit && note.type !== 'HOLD') continue;
-
-      const x = hitX + (note.time - songTime) * basePxPerSec;
-      const endX = hitX + (note.endTime - songTime) * basePxPerSec;
-      if (endX < 220 || x > W + 80) continue;
-
-      const y = note.lane2 === 0 ? upperY : lowerY;
-
-      if (note.type === 'HOLD') {
-        // 彩虹糖带长按音符
-        const headX = note.holding ? hitX : Math.max(hitX, x);
-        const tailW = Math.max(12, endX - headX);
-        const grad = ctx.createLinearGradient(headX, y, headX + tailW, y);
-        grad.addColorStop(0, '#FF1493');
-        grad.addColorStop(0.5, '#FFE600');
-        grad.addColorStop(1, '#00F5D4');
-
-        ctx.save();
-        ctx.fillStyle = grad;
-        ctx.strokeStyle = '#190A28';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.roundRect(headX, y - 20, tailW, 40, 20);
-        ctx.fill();
-        ctx.stroke();
-        ctx.restore();
-
-        this.drawCandyNoteHead(ctx, headX, y, '#FFE600', 'HOLD');
-      } else if (note.type === 'DOUBLE') {
-        // 双押重拍：上下两轨连接闪电柱
-        ctx.save();
-        ctx.strokeStyle = '#FFE600';
-        ctx.lineWidth = 7;
-        ctx.beginPath();
-        ctx.moveTo(x, upperY);
-        ctx.lineTo(x - 10, (upperY + lowerY) * 0.5);
-        ctx.lineTo(x + 10, (upperY + lowerY) * 0.5);
-        ctx.lineTo(x, lowerY);
-        ctx.stroke();
-        ctx.restore();
-
-        this.drawCandyNoteHead(ctx, x, upperY, '#FFE600', 'F+J');
-        this.drawCandyNoteHead(ctx, x, lowerY, '#FFE600', 'F+J');
-      } else if (note.type === 'HAZARD') {
-        // 尖刺齿轮弹幕
-        this.drawSpikedGear(ctx, x, y, songTime);
-      } else {
-        // 空中糖果 / 地面节拍怪
-        const color = note.lane2 === 0 ? '#FF1493' : '#00F5D4';
-        const label = note.lane2 === 0 ? '🍬' : '👾';
-        this.drawCandyNoteHead(ctx, x, y, color, label);
+        if (note.type === 'HOLD') {
+          this.drawRainbowHoldStream(ctx, note, x, endX, hitX, baseY, songTime);
+        } else if (note.type === 'DOUBLE') {
+          // 双押重拍：上下两轨高压雷电连接 + 双子机甲音符怪
+          this.drawDoubleLightningBridge(ctx, x, upperY, lowerY, songTime);
+          this.drawBeatMonsterNote(ctx, x, upperY, 0, true, songTime, note.id, 'SWOOP', 0);
+          this.drawBeatMonsterNote(ctx, x, lowerY, 1, true, songTime, note.id + 99, 'BOUNCE', 0);
+        } else if (note.type === 'HAZARD') {
+          this.drawSpikedGear(ctx, x, baseY, songTime);
+        } else {
+          // 计算喵斯快跑风动态进场曲线轨迹（俯冲弧线 SWOOP / 正弦波浪 WAVE / 跑道大跳 BOUNCE / 幽灵隐身 GHOST）
+          const traj = this.computeMonsterEntryTrajectory(note, timeRemain, baseY, songTime);
+          this.drawBeatMonsterNote(
+            ctx,
+            x,
+            traj.y,
+            note.lane2,
+            false,
+            songTime,
+            note.id,
+            note.entryStyle || 'SWOOP',
+            traj.alpha
+          );
+        }
       }
     }
+
+    // 7. 绘制 A/B/C 三段连招巨型波普刀光挥击特效 & 被击飞旋转飞出屏幕的 Q 版小怪
+    this.drawSlashEffectsAndKnockedMonsters(ctx);
+
+    // 8. 绘制第 4 层极速前景掠影（赛博龙门架灯柱与波普漫画速度线）
+    this.drawForegroundSpeedOverlay(ctx, W, H);
+
+    ctx.restore();
   }
 
-  drawRunnerHeroine(ctx, upperY, lowerY) {
-    const partner = this.getActivePartner();
-    const imgSrc = this.isFever
-      ? partner.spriteFever
-      : this.runnerAttackPoseTimer > 0
-      ? partner.spriteAction
-      : partner.spriteNormal;
-    const img = this.imageCache.get(imgSrc);
+  // 计算喵斯快跑风怪物进场抛物线/大跳曲线/幽灵隐身透明度（在 timeRemain=0 到达判定靶心时精准收敛至 baseY！）
+  computeMonsterEntryTrajectory(note, timeRemain, baseY, songTime) {
+    const t = Math.max(0, timeRemain);
+    const style = note.entryStyle || (note.lane2 === 0 ? 'SWOOP' : 'BOUNCE');
+    let offsetY = 0;
+    let alpha = 1.0;
 
-    const targetY = this.runnerLane === 0 ? upperY : lowerY;
-    const bobOffset = Math.sin(performance.now() / 110) * 6 - this.beatPulseValue * 8;
-    const centerX = 135;
-    const centerY = targetY + bobOffset;
+    if (style === 'SWOOP') {
+      // 从高空画抛物线俯冲切入靶心
+      offsetY = -128 * Math.pow(Math.min(1.4, t), 1.55);
+    } else if (style === 'WAVE') {
+      // 空中波浪形正弦穿行，靠近判定点时收敛为 0
+      offsetY = Math.sin(t * 9.5 + note.id) * 42 * Math.min(1, t * 1.4);
+    } else if (style === 'BOUNCE') {
+      // 地面怪踩着拍点一大跳一大跳地蹦向靶心
+      const track = this.getActiveTrack();
+      const bps = (track ? track.bpm : 130) / 60;
+      offsetY = -Math.abs(Math.sin(t * bps * Math.PI)) * 54 * Math.min(1, t * 1.6);
+    } else if (style === 'GHOST') {
+      // 幽灵怪：中途 (0.16s < t < 0.72s) 隐身至 16% 透明度，接近靶心瞬间重新现形突袭！
+      offsetY = Math.sin(t * 7 + note.id) * 24 * Math.min(1, t);
+      if (t > 0.16 && t < 0.72) {
+        alpha = 0.16 + Math.abs(Math.sin(songTime * 14)) * 0.12;
+      }
+    }
+
+    return { y: baseY + offsetY, alpha };
+  }
+
+  /* ------------------------------------------------------------------------
+     右侧驻场「巨型 Q 版糖果魔王女王 Boss (310×310 跨双轨巨体)」与副歌「MASH!! 贴脸连打对决」演出
+     ------------------------------------------------------------------------ */
+  drawStageBoss(ctx, W, H, hitX, upperY, lowerY, songTime) {
+    const bossNormalImg = this.imageCache.get('assets/neonbeat/monsters/boss_mecha_king.webp');
+    const bossHurtImg = this.imageCache.get('assets/neonbeat/monsters/boss_mecha_hurt.webp');
+    const isMashing = Boolean(this.activeMashNote);
+    const isHurt = this.bossHurtTimer > 0 || this.bossKnockbackTimer > 0;
+    const isBossOverdrive = this.bossSplashTimer > 0 || isMashing;
+
+    // 计算巨型 Boss 位置：常态驻守舞台右侧 (W - 155)，体型高达 310×310 横跨上下双轨！
+    let bossX = W - 155;
+    let bossY = 262 + Math.sin(songTime * 5.2) * 16 - this.beatPulseValue * 12;
+    let bossRot = 0;
+
+    if (isMashing) {
+      const shakeX = (Math.random() - 0.5) * (isHurt ? 22 : 8);
+      const shakeY = (Math.random() - 0.5) * (isHurt ? 18 : 8);
+      bossX = hitX + 135 + shakeX;
+      bossY = 272 + shakeY;
+    } else if (this.bossKnockbackTimer > 0) {
+      // 连打结束被一锤轰飞回右侧的过程
+      const p = 1.0 - this.bossKnockbackTimer / 0.85;
+      bossX = (hitX + 135) + (W - 155 - (hitX + 135)) * p;
+      bossY = 255 - Math.sin(p * Math.PI) * 125;
+      bossRot = p * Math.PI * 4;
+    }
 
     ctx.save();
-    // 漫画斜切立绘底座框
-    ctx.fillStyle = this.isFever ? '#FFE600' : '#FF1493';
-    ctx.strokeStyle = '#190A28';
-    ctx.lineWidth = 5;
+    ctx.translate(bossX, bossY);
+    ctx.rotate(bossRot);
+
+    // 巨型 Boss 身后旋转的恶魔电音魔法阵光环
+    ctx.save();
+    ctx.rotate(-songTime * 1.4);
+    ctx.strokeStyle = isBossOverdrive ? 'rgba(255, 230, 0, 0.55)' : 'rgba(255, 20, 147, 0.35)';
+    ctx.lineWidth = 4;
+    ctx.setLineDash([18, 12]);
     ctx.beginPath();
-    ctx.moveTo(22, centerY - 92);
-    ctx.lineTo(232, centerY - 104);
-    ctx.lineTo(218, centerY + 92);
-    ctx.lineTo(16, centerY + 84);
-    ctx.closePath();
+    ctx.arc(0, -10, isBossOverdrive ? 152 : 134, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+
+    // Boss 脚下巨型霓虹全息悬浮王座底座
+    ctx.fillStyle = isBossOverdrive ? 'rgba(255, 20, 147, 0.48)' : 'rgba(0, 245, 212, 0.30)';
+    ctx.strokeStyle = isBossOverdrive ? '#FFE600' : '#FF1493';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.ellipse(0, 118, 112, 24, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
-    if (img && img.complete && img.naturalWidth > 0) {
+    const activeBossImg = isHurt && bossHurtImg && bossHurtImg.complete && bossHurtImg.naturalWidth > 0
+      ? bossHurtImg
+      : bossNormalImg;
+
+    if (activeBossImg && activeBossImg.complete && activeBossImg.naturalWidth > 0) {
+      ctx.shadowColor = isBossOverdrive ? '#FFE600' : '#FF1493';
+      ctx.shadowBlur = isBossOverdrive ? 28 : 16;
+      const scale = isHurt ? 1.12 : (isBossOverdrive ? 1.10 : 1.0) + this.beatPulseValue * 0.06;
+      ctx.scale(scale, scale);
+      // 346×346 巨型魔王尺寸（横跨上下双轨，PC 端视觉压迫感拉满！）
+      ctx.drawImage(activeBossImg, -173, -184, 346, 346);
+    }
+    ctx.restore();
+
+    // Boss 顶部悬浮血条与副歌「MASH!! 狂按连打」巨幅提示牌
+    ctx.save();
+    const barW = 186;
+    const barX = Math.min(W - barW - 16, Math.max(260, bossX - barW * 0.5));
+    const barY = Math.max(18, bossY - 178);
+
+    ctx.fillStyle = '#190A28';
+    ctx.strokeStyle = '#FFE600';
+    ctx.lineWidth = 3.5;
+    ctx.fillRect(barX, barY, barW, 24);
+    ctx.strokeRect(barX, barY, barW, 24);
+
+    ctx.fillStyle = isBossOverdrive ? '#FFE600' : '#FF1493';
+    ctx.fillRect(barX + 3, barY + 3, ((barW - 6) * this.bossHp) / 100, 18);
+
+    ctx.fillStyle = isBossOverdrive ? '#190A28' : '#FFFFFF';
+    ctx.font = '900 12px Impact, "PingFang SC", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`👑 DEMON QUEEN DJ · HP ${Math.round(this.bossHp)}%`, barX + barW * 0.5, barY + 16);
+
+    // 副歌 MASH 连打阶段：在女主与 Boss 之间拉出高压对决闪电与狂按计数牌
+    if (isMashing && this.activeMashNote) {
+      const hits = this.activeMashNote.mashHits || 0;
+      ctx.font = '900 28px Impact, "Arial Black", "PingFang SC", sans-serif';
+      ctx.lineWidth = 7;
+      ctx.strokeStyle = '#190A28';
+      ctx.fillStyle = '#FFE600';
+      const promptText = `⚡ MASH F/J!! 连打暴揍魔王女王 ×${hits} HIT!! ⚡`;
+      ctx.strokeText(promptText, hitX + 215, 112);
+      ctx.fillText(promptText, hitX + 215, 112);
+    }
+    ctx.restore();
+  }
+
+  /* ------------------------------------------------------------------------
+     4 层高速横版视差跑酷舞台 (Muse Dash 正统粗黑描边波普手绘卷轴舞台 + 双速分离式跑道)
+     ------------------------------------------------------------------------ */
+  drawParallaxParkourWorld(ctx, W, H, upperY, lowerY, hitX, songTime) {
+    const fft = this.synth.sampleSpectrum();
+    const bassEnergy = ((fft[1] || 0) + (fft[2] || 0)) / 510;
+    const pulse = this.beatPulseValue;
+
+    const stageKey = this.isFever
+      ? 'assets/neonbeat/stage/stage_bg_fever.webp'
+      : 'assets/neonbeat/stage/stage_bg_city.webp';
+    const stageImg = this.imageCache.get(stageKey);
+    const hasStageImg = stageImg && stageImg.complete && stageImg.naturalWidth > 0;
+
+    const off1 = this.parallaxOffsets[0];
+    const off2 = this.parallaxOffsets[1];
+    const off3 = this.parallaxOffsets[2];
+
+    const roadTop = lowerY + 34;
+
+    if (hasStageImg) {
+      const imgW = stageImg.naturalWidth;
+      const imgH = stageImg.naturalHeight;
+      // 源图上下分割线：上方 71% 为赛博糖果乐园夜景/摩天轮/猫耳巨型音响塔，下方 29% 为高速波普跑道
+      const srcSplitY = Math.round(imgH * 0.71);
+
+      // --- LAYER 1 & 2: 喵斯快跑风手绘波普舞台远中景无缝横版卷轴 (严格保持 1:1 原始像素宽高比，摩天轮与音响正圆零变形！) ---
       ctx.save();
-      ctx.clip();
-      ctx.drawImage(img, 20, centerY - 102, 210, 225);
+      ctx.globalAlpha = this.cutinActive ? 0.36 : 0.94;
+      const destSkyH = roadTop + 4;
+      const skyScale = destSkyH / srcSplitY;
+      const bgTileW = Math.max(256, Math.round(imgW * skyScale));
+      const bgShift = Math.floor(off2 * 0.75) % bgTileW;
+
+      for (let tx = -bgShift; tx < W + bgTileW; tx += bgTileW) {
+        ctx.drawImage(
+          stageImg,
+          0,
+          0,
+          imgW,
+          srcSplitY,
+          tx,
+          0,
+          bgTileW + 1,
+          destSkyH
+        );
+      }
+
+      // 叠加一层微暗波普滤镜保证前景音符怪 100% 高对比度醒目
+      ctx.fillStyle = this.isFever
+        ? 'rgba(35, 6, 62, 0.22)'
+        : 'rgba(18, 6, 36, 0.26)';
+      ctx.fillRect(0, 0, W, roadTop);
+      ctx.restore();
+
+      // --- 巨型魔王女王 16:9 机甲王座大图背景演出 (严格保持 16:9 原始宽高比，裁剪于跑道上方绝不压扁！) ---
+      if (this.bossSplashTimer > 0 || this.activeMashNote) {
+        const bossCgImg = this.imageCache.get('assets/neonbeat/monsters/boss_queen_cg.webp');
+        if (bossCgImg && bossCgImg.complete && bossCgImg.naturalWidth > 0) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(0, 0, W, roadTop);
+          ctx.clip();
+          const alpha = Math.min(0.86, Math.max(0.48, this.bossSplashTimer * 0.5));
+          ctx.globalAlpha = alpha;
+          const zoom = 1.0 + pulse * 0.025;
+          const cgW = W;
+          const cgH = Math.round(W * (bossCgImg.naturalHeight / bossCgImg.naturalWidth));
+          ctx.translate(W * 0.5, roadTop * 0.5);
+          ctx.scale(zoom, zoom);
+          ctx.drawImage(bossCgImg, -cgW * 0.5, -cgH * 0.45, cgW, cgH);
+          ctx.restore();
+
+          // 顶部魔王降临红黄警戒横幅
+          ctx.save();
+          ctx.fillStyle = '#FF1493';
+          ctx.strokeStyle = '#190A28';
+          ctx.lineWidth = 3;
+          ctx.fillRect(0, 6, W, 28);
+          ctx.strokeRect(0, 6, W, 28);
+          ctx.fillStyle = '#FFE600';
+          ctx.font = '900 14px Impact, "Arial Black", "PingFang SC", sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(
+            '⚠️ WARNING!! DEMON QUEEN DJ · COLOSSAL SUBWOOFER THRONE OVERDRIVE!! ⚠️',
+            W * 0.5,
+            25
+          );
+          ctx.restore();
+        }
+      }
+
+      // --- LAYER 3B: 喵斯快跑风手绘波普跑道甲板极速无缝卷轴 (严格保持 1:1 原始宽高比平铺！) ---
+      ctx.save();
+      const deckH = H - roadTop;
+      const srcDeckH = imgH - srcSplitY;
+      const deckScale = deckH / srcDeckH;
+      const deckTileW = Math.max(256, Math.round(imgW * deckScale));
+      const deckShift = Math.floor(off3) % deckTileW;
+      for (let tx = -deckShift; tx < W + deckTileW; tx += deckTileW) {
+        ctx.drawImage(
+          stageImg,
+          0,
+          srcSplitY,
+          imgW,
+          srcDeckH,
+          tx,
+          roadTop,
+          deckTileW + 1,
+          deckH
+        );
+      }
+
+      // 跑道顶沿粗黑描边分割线 + 动态霓虹流光边条
+      ctx.strokeStyle = '#190A28';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(0, roadTop);
+      ctx.lineTo(W, roadTop);
+      ctx.stroke();
+
+      ctx.strokeStyle = this.isFever ? '#FFE600' : '#FF1493';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(0, roadTop + 3);
+      ctx.lineTo(W, roadTop + 3);
+      ctx.stroke();
+
+      // 底部实时 FFT 频谱能量光柱与手绘跑道融合
+      this.drawSpectrumBars(ctx, W, H);
+      ctx.restore();
+    } else {
+      // 贴图未加载完成时的几何兜底
+      ctx.save();
+      ctx.fillStyle = '#190A28';
+      ctx.fillRect(0, 0, W, H);
+      this.drawSpectrumBars(ctx, W, H);
       ctx.restore();
     }
 
-    // 护盾光环展示（长瀞同学技能）
+    // --- LAYER 3A: 上轨「空中全息星光滑轨 (AIR SKY GRIND RAIL)」(Speed: 1180 px/s) ---
+    ctx.save();
+    const airGrad = ctx.createLinearGradient(0, upperY - 18, 0, upperY + 24);
+    airGrad.addColorStop(0, 'rgba(255, 20, 147, 0.02)');
+    airGrad.addColorStop(0.5, 'rgba(255, 20, 147, 0.22)');
+    airGrad.addColorStop(1, 'rgba(0, 245, 212, 0.06)');
+    ctx.fillStyle = airGrad;
+    ctx.fillRect(0, upperY - 18, W, 42);
+
+    ctx.strokeStyle = '#190A28';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(0, upperY + 24);
+    ctx.lineTo(W, upperY + 24);
+    ctx.stroke();
+
+    ctx.strokeStyle = this.isFever ? '#FFE600' : '#FF1493';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, upperY + 24);
+    ctx.lineTo(W, upperY + 24);
+    ctx.stroke();
+
+    // 空中滑轨上急速向后飞掠的霓虹加速箭头 (<<<)
+    const airTileW = 130;
+    const airShift = off3 % airTileW;
+    ctx.fillStyle = '#FFE600';
+    ctx.strokeStyle = '#190A28';
+    ctx.lineWidth = 2.5;
+    for (let x = -airShift; x < W + airTileW; x += airTileW) {
+      ctx.beginPath();
+      ctx.moveTo(x + 26, upperY + 24);
+      ctx.lineTo(x + 46, upperY + 15);
+      ctx.lineTo(x + 40, upperY + 24);
+      ctx.lineTo(x + 46, upperY + 33);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  drawParkourReceptors(ctx, hitX, upperY, lowerY, songTime) {
+    const lanes = [
+      {
+        y: upperY,
+        tag: 'AIR [F/↑]',
+        color: '#FF1493',
+        sprite: 'assets/neonbeat/vfx/vfx_receptor_air.webp'
+      },
+      {
+        y: lowerY,
+        tag: 'GND [J/↓]',
+        color: '#00F5D4',
+        sprite: 'assets/neonbeat/vfx/vfx_receptor_gnd.webp'
+      }
+    ];
+
+    // 上下判定靶点之间的节奏瞄准虚线
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 230, 0, 0.42)';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([8, 8]);
+    ctx.beginPath();
+    ctx.moveTo(hitX, upperY + 42);
+    ctx.lineTo(hitX, lowerY - 42);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+
+    lanes.forEach((lane, idx) => {
+      const bounce = idx === 0
+        ? Math.max(this.receptorBounce[0], this.receptorBounce[1])
+        : Math.max(this.receptorBounce[2], this.receptorBounce[3]);
+      const ringImg = this.imageCache.get(lane.sprite);
+      const hasRingImg = ringImg && ringImg.complete && ringImg.naturalWidth > 0;
+      const drawSize = 114 + bounce * 28 + this.beatPulseValue * 12;
+
+      ctx.save();
+      ctx.translate(hitX, lane.y);
+
+      if (hasRingImg) {
+        ctx.rotate(songTime * (idx === 0 ? 1.8 : -1.8) + bounce * 0.45);
+        ctx.shadowColor = bounce > 0.1 ? '#FFE600' : lane.color;
+        ctx.shadowBlur = bounce > 0.1 ? 22 : 12;
+        ctx.drawImage(ringImg, -drawSize * 0.5, -drawSize * 0.5, drawSize, drawSize);
+      } else {
+        const radius = 32 + bounce * 11 + this.beatPulseValue * 4;
+        ctx.rotate(songTime * (idx === 0 ? 2.2 : -2.2));
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+        ctx.fillStyle = bounce > 0.1 ? `${lane.color}88` : 'rgba(25, 10, 40, 0.55)';
+        ctx.fill();
+        ctx.lineWidth = 4.5;
+        ctx.strokeStyle = bounce > 0.1 ? '#FFFFFF' : lane.color;
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // 靶圈键位波普角标
+      ctx.save();
+      ctx.font = '900 12px Impact, "Arial Black", sans-serif';
+      ctx.fillStyle = '#FFE600';
+      ctx.strokeStyle = '#190A28';
+      ctx.lineWidth = 4;
+      ctx.textAlign = 'center';
+      ctx.strokeText(lane.tag, hitX, lane.y - drawSize * 0.48 - 4);
+      ctx.fillText(lane.tag, hitX, lane.y - drawSize * 0.48 - 4);
+      ctx.restore();
+    });
+  }
+
+  drawFootstepDustAndAfterimages(ctx) {
+    // 1. 脚底向后喷射的糖果踏地烟尘
+    for (const d of this.footstepDust) {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, d.life * 0.85);
+      ctx.fillStyle = d.color;
+      ctx.strokeStyle = '#190A28';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.size * d.life, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 2. Q 版角色高速霓虹残影 (Afterimage Ghosts)
+    const partner = this.getActivePartner();
+    const runSheetImg = partner.chibiRunSheet ? this.imageCache.get(partner.chibiRunSheet) : null;
+    const hasRunSheet = runSheetImg && runSheetImg.complete && runSheetImg.naturalWidth >= 1024;
+
+    for (const g of this.runnerAfterimages) {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, g.life * 0.42);
+      ctx.translate(g.x, g.y);
+      ctx.rotate(g.tilt);
+      ctx.scale(g.scaleX, g.scaleY);
+
+      if (hasRunSheet && g.state === 'RUN') {
+        const frameCount = Math.max(1, Math.round(runSheetImg.naturalWidth / 256));
+        const normPhase = (((g.stepPhase / (Math.PI * 2)) % 1) + 1) % 1;
+        const frameIdx = Math.floor(normPhase * frameCount) % frameCount;
+        ctx.shadowColor = g.color;
+        ctx.shadowBlur = 16;
+        ctx.drawImage(runSheetImg, frameIdx * 256, 0, 256, 256, -120, -168, 240, 240);
+      } else {
+        const ghostSrc =
+          g.state === 'AIR_SLASH'
+            ? partner.chibiAir
+            : g.state === 'GROUND_SMASH' || g.state === 'DOUBLE_BURST'
+            ? partner.chibiSmash
+            : partner.chibiRun1;
+        const ghostImg = ghostSrc ? this.imageCache.get(ghostSrc) : null;
+
+        if (ghostImg && ghostImg.complete && ghostImg.naturalWidth > 0) {
+          ctx.shadowColor = g.color;
+          ctx.shadowBlur = 16;
+          ctx.drawImage(ghostImg, -112, -160, 224, 224);
+        } else {
+          this.drawProceduralChibiBody(ctx, partner, g.stepPhase, g.state, g.color);
+        }
+      }
+      ctx.restore();
+    }
+  }
+
+  /* ------------------------------------------------------------------------
+     Q 版 2.5 头身侧身跑酷看板娘渲染器 (优先使用 I2V 视频抽帧抠图 12 帧真跑步/跳跃精灵表)
+     ------------------------------------------------------------------------ */
+  drawChibiRunnerHeroine(ctx, upperY, lowerY, songTime) {
+    const partner = this.getActivePartner();
+    const runSheetImg = partner.chibiRunSheet ? this.imageCache.get(partner.chibiRunSheet) : null;
+    const actionSheetImg = partner.chibiActionSheet ? this.imageCache.get(partner.chibiActionSheet) : null;
+    const hasRunSheet = runSheetImg && runSheetImg.complete && runSheetImg.naturalWidth >= 1024;
+    const hasActionSheet = actionSheetImg && actionSheetImg.complete && actionSheetImg.naturalWidth >= 1024;
+
+    const x = this.runnerBaseX + this.runnerLungeX;
+    const isAir = this.runnerY < lowerY - 28;
+    // I2V 视频序列帧自身已带真实迈腿与身体起伏，仅叠加轻微节拍踏地反馈，消除机械抖动感
+    const runBob = hasRunSheet
+      ? isAir
+        ? Math.sin(songTime * 10) * 3
+        : -Math.abs(Math.sin(this.runnerStepPhase)) * 3.5
+      : isAir
+      ? Math.sin(songTime * 12) * 4
+      : -Math.abs(Math.sin(this.runnerStepPhase)) * 13;
+    const y = this.runnerY + runBob;
+
+    // 1. 地面动态投影（角色跃起到空中时，地面影子缩小变淡）
+    const heightRatio = Math.max(0, Math.min(1, (lowerY - this.runnerY) / (lowerY - upperY)));
+    const shadowW = 54 * (1 - heightRatio * 0.48);
+    const shadowH = 13 * (1 - heightRatio * 0.48);
+    ctx.save();
+    ctx.fillStyle = 'rgba(15, 4, 28, 0.68)';
+    ctx.strokeStyle = this.isFever ? '#FFE600' : '#00F5D4';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(x, lowerY + 42, shadowW, shadowH, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    // 2. 绘制 Q 版跑酷女主本体
+    ctx.save();
+    ctx.translate(x, y);
+    const dynamicRunLean = hasRunSheet ? 0 : isAir ? 0 : Math.sin(this.runnerStepPhase * 2) * 0.055;
+    ctx.rotate(this.runnerTilt * (hasRunSheet ? 0.45 : 1.0) + dynamicRunLean);
+    ctx.scale(this.runnerScaleX, this.runnerScaleY);
+
+    if ((isAir || this.runnerAttackPoseTimer > 0) && hasActionSheet) {
+      // 播放跳跃/挥击连续动作精灵表 (8 帧 × 256×256 · PC 端放大至 240×240 清晰醒目)
+      const frameCount = Math.max(1, Math.round(actionSheetImg.naturalWidth / 256));
+      const progress = this.runnerAttackPoseTimer > 0
+        ? 1.0 - Math.min(1, this.runnerAttackPoseTimer / 0.25)
+        : ((songTime * 12) % 1);
+      const frameIdx = Math.min(frameCount - 1, Math.floor(progress * frameCount));
+      ctx.save();
+      ctx.shadowColor = this.isFever ? '#FFE600' : partner.accent;
+      ctx.shadowBlur = 18;
+      ctx.drawImage(actionSheetImg, frameIdx * 256, 0, 256, 256, -120, -168, 240, 240);
+      ctx.restore();
+    } else if (hasRunSheet && !isAir && this.runnerAttackPoseTimer <= 0) {
+      // 播放 12 帧完整交替迈腿奔跑循环精灵表 (12 帧 × 256×256 · PC 端放大至 240×240 清晰醒目)
+      const frameCount = Math.max(1, Math.round(runSheetImg.naturalWidth / 256));
+      const normPhase = (((this.runnerStepPhase / (Math.PI * 2)) % 1) + 1) % 1;
+      const frameIdx = Math.floor(normPhase * frameCount) % frameCount;
+      ctx.save();
+      ctx.shadowColor = this.isFever ? '#FFE600' : partner.accent;
+      ctx.shadowBlur = 12;
+      ctx.drawImage(runSheetImg, frameIdx * 256, 0, 256, 256, -120, -168, 240, 240);
+      ctx.restore();
+    } else {
+      // 空中跃起/重击单帧或骨骼兜底
+      const stepFrame = Math.floor(this.runnerStepPhase / Math.PI) % 2 === 0 ? partner.chibiRun1 : partner.chibiRun2;
+      const targetChibiSrc =
+        this.runnerAnimState === 'AIR_SLASH' || isAir
+          ? partner.chibiAir
+          : this.runnerAttackPoseTimer > 0
+          ? partner.chibiSmash
+          : stepFrame;
+      const chibiImg = targetChibiSrc ? this.imageCache.get(targetChibiSrc) : null;
+
+      if (chibiImg && chibiImg.complete && chibiImg.naturalWidth > 0) {
+        ctx.save();
+        ctx.shadowColor = this.isFever ? '#FFE600' : partner.accent;
+        ctx.shadowBlur = this.runnerAttackPoseTimer > 0 ? 18 : 10;
+        ctx.drawImage(chibiImg, -112, -160, 224, 224);
+        ctx.restore();
+      } else {
+        this.drawProceduralChibiBody(ctx, partner, this.runnerStepPhase, this.runnerAnimState, null);
+      }
+    }
+
+    // 3. 长瀞同学护盾光环
     if (this.shieldCount > 0) {
       ctx.strokeStyle = '#00F5D4';
-      ctx.lineWidth = 4;
-      ctx.setLineDash([8, 6]);
+      ctx.lineWidth = 3.5;
+      ctx.setLineDash([10, 6]);
       ctx.beginPath();
-      ctx.arc(centerX, centerY, 96, 0, Math.PI * 2);
+      ctx.arc(0, -16, 68, 0, Math.PI * 2);
       ctx.stroke();
       ctx.setLineDash([]);
     }
+    ctx.restore();
 
-    // 当前姿态标签
+    // 4. 脚下悬浮波普漫画铭牌
+    ctx.save();
+    const tagY = lowerY + 62;
     ctx.fillStyle = '#190A28';
-    ctx.fillRect(28, centerY + 60, 182, 26);
-    ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(28, centerY + 60, 182, 26);
+    ctx.strokeStyle = this.isFever ? '#FFE600' : partner.accent;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.roundRect(x - 78, tagY, 156, 22, 6);
+    ctx.fill();
+    ctx.stroke();
     ctx.fillStyle = '#FFE600';
-    ctx.font = '900 12px Impact, "PingFang SC", sans-serif';
+    ctx.font = '900 11px Impact, "PingFang SC", sans-serif';
+    ctx.textAlign = 'center';
     ctx.fillText(
-      this.runnerLane === 0 ? `⚡ ${partner.name} · 空中闪避/连击` : `🏃‍♀️ ${partner.name} · 地面律动奔跑`,
-      36,
-      centerY + 78
+      isAir ? `⚡ ${partner.name} · 空中连击` : `🏃‍♀️ ${partner.name} · 极速跑酷`,
+      x,
+      tagY + 15
     );
     ctx.restore();
   }
 
-  drawCandyNoteHead(ctx, x, y, fillColor, labelText) {
-    ctx.save();
-    ctx.translate(x, y);
+  // 2.5 头身 Q 版糖果波普跑酷骨骼角色绘制（四肢迈步、发辫物理、巨型武器挥击、头像贴图融合）
+  drawProceduralChibiBody(ctx, partner, stepPhase, animState, silhouetteColor = null) {
+    const isAttacking = this.runnerAttackPoseTimer > 0 || animState === 'AIR_SLASH' || animState === 'GROUND_SMASH' || animState === 'DOUBLE_BURST';
+    const legAngle = Math.sin(stepPhase) * 0.72;
+    const armAngle = isAttacking ? -1.45 : -Math.sin(stepPhase) * 0.65;
+    const hairWave = Math.sin(stepPhase - 0.8) * 9;
 
-    // 外圈深紫墨水描边糖果球
+    const ink = '#190A28';
+    const primary = silhouetteColor || partner.outfitPrimary || '#FF1493';
+    const secondary = silhouetteColor || partner.outfitSecondary || '#2A334B';
+    const hair = silhouetteColor || partner.hairColor || '#5C3327';
+    const accent = silhouetteColor || partner.accent || '#FFE600';
+    const weaponCol = silhouetteColor || partner.weaponColor || '#FFE600';
+
+    // 1. 身后飘动的动态双马尾/长发披风与波普围巾
+    ctx.save();
+    ctx.fillStyle = hair;
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.arc(0, 0, 27, 0, Math.PI * 2);
-    ctx.fillStyle = fillColor;
+    ctx.moveTo(-14, -36);
+    ctx.quadraticCurveTo(-52, -44 + hairWave, -74, -22 + hairWave * 1.2);
+    ctx.quadraticCurveTo(-48, -10 + hairWave, -12, -20);
+    ctx.closePath();
     ctx.fill();
-    ctx.lineWidth = 4.5;
-    ctx.strokeStyle = '#190A28';
     ctx.stroke();
 
-    // 高光弧与文字
+    // 霓虹糖果飘带围巾
+    ctx.fillStyle = accent;
     ctx.beginPath();
-    ctx.arc(-7, -7, 8, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+    ctx.moveTo(-8, -18);
+    ctx.quadraticCurveTo(-46, -14 - hairWave * 0.7, -68, -2 - hairWave);
+    ctx.lineTo(-60, 10 - hairWave);
+    ctx.quadraticCurveTo(-36, -2, -6, -10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    // 2. 后腿 (Back Leg) 高速迈步
+    ctx.save();
+    ctx.translate(-4, 14);
+    ctx.rotate(-legAngle);
+    ctx.fillStyle = '#FFE4D6';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.roundRect(-7, 0, 14, 24, 7);
+    ctx.fill();
+    ctx.stroke();
+    // Q版厚底跑酷运动鞋
+    ctx.fillStyle = accent;
+    ctx.beginPath();
+    ctx.roundRect(-8, 17, 22, 13, 6);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    // 3. 前腿 (Front Leg) 高速迈步
+    ctx.save();
+    ctx.translate(6, 14);
+    ctx.rotate(legAngle);
+    ctx.fillStyle = '#FFE4D6';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.roundRect(-7, 0, 14, 24, 7);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.roundRect(-8, 17, 22, 13, 6);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    // 4. Q 版小巧躯干与百褶短裙 (Torso & Pleated Skirt)
+    ctx.save();
+    ctx.rotate(0.12); // 奔跑前倾角
+    ctx.fillStyle = primary;
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(-15, -22);
+    ctx.lineTo(15, -22);
+    ctx.lineTo(20, 8);
+    ctx.lineTo(-19, 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 百褶裙边
+    ctx.fillStyle = secondary;
+    ctx.beginPath();
+    ctx.moveTo(-19, 4);
+    ctx.lineTo(21, 4);
+    ctx.lineTo(26, 19);
+    ctx.lineTo(-24, 19);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 胸前波普蝴蝶结
+    ctx.fillStyle = '#FF1493';
+    ctx.beginPath();
+    ctx.arc(6, -12, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    // 5. Q 版大头 (2.5头身比例：大圆脸 + 看板娘专属特征发饰)
+    ctx.save();
+    ctx.translate(4, -46);
+    // 后脑头发外轮廓
+    ctx.fillStyle = hair;
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 4.5;
+    ctx.beginPath();
+    ctx.arc(-2, -2, 30, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Q版肉感脸颊 (朝右奔跑侧脸)
+    ctx.fillStyle = silhouetteColor || '#FFE7D8';
+    ctx.beginPath();
+    ctx.arc(3, 1, 25, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    if (!silhouetteColor) {
+      // 动感大眼睛（攻击时变成自信星芒眼，受伤时变成 >_<）
+      if (animState === 'HURT') {
+        ctx.strokeStyle = ink;
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.moveTo(6, -4);
+        ctx.lineTo(16, 1);
+        ctx.lineTo(6, 6);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = partner.eyeColor || '#FF1493';
+        ctx.strokeStyle = ink;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.ellipse(13, 1, 6, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        // 眼神高光
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.arc(15, -2, 2.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 腮红与元气虎牙笑嘴
+      ctx.fillStyle = 'rgba(255, 46, 126, 0.55)';
+      ctx.beginPath();
+      ctx.ellipse(15, 10, 5, 2.8, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#FF2E7E';
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(9, 12, isAttacking ? 5.5 : 3.8, 0, Math.PI);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // 额前刘海与角色专属头饰（长瀞发卡 / 辉夜红发带 / 黑猫猫耳 / 海梦挑染 / 高木呆毛）
+    ctx.fillStyle = hair;
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(0, -7, 26, Math.PI * 1.05, Math.PI * 1.98);
+    ctx.lineTo(18, 0);
+    ctx.lineTo(8, -8);
+    ctx.lineTo(-2, 1);
+    ctx.lineTo(-12, -8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 专属萌点配饰
+    if (partner.id === 'kuroneko') {
+      // 黑猫哥特猫耳头饰
+      ctx.fillStyle = silhouetteColor || '#190A28';
+      ctx.beginPath();
+      ctx.moveTo(-8, -28);
+      ctx.lineTo(0, -46);
+      ctx.lineTo(10, -28);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    } else if (partner.id === 'kaguya') {
+      // 辉夜红色蝴蝶结发带
+      ctx.fillStyle = silhouetteColor || '#FF1448';
+      ctx.beginPath();
+      ctx.moveTo(-12, -26);
+      ctx.lineTo(-24, -38);
+      ctx.lineTo(-6, -34);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    } else if (partner.id === 'nagatoro') {
+      // 长瀞标志性双白发卡
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(6, -18, 12, 4);
+      ctx.fillRect(4, -12, 12, 4);
+    } else {
+      // 星芒发饰与元气呆毛
+      ctx.fillStyle = accent;
+      ctx.beginPath();
+      ctx.arc(-8, -28, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // 6. 前置手臂与专属巨型糖果武器挥击 (Oversized Pop Weapon Swing)
+    ctx.save();
+    ctx.translate(10, -12);
+    const swingRot = isAttacking
+      ? (this.slashParity ? -1.15 : 0.75) + (0.25 - this.runnerAttackPoseTimer) * 5.2
+      : armAngle;
+    ctx.rotate(swingRot);
+
+    // 武器的握柄与锤头/吉他琴身
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 4;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, -4, 42, 8);
+    ctx.strokeRect(0, -4, 42, 8);
+
+    // 巨型糖果重锤 / 电吉他头部
+    ctx.fillStyle = weaponCol;
+    ctx.beginPath();
+    ctx.roundRect(32, -24, 30, 48, 10);
+    ctx.fill();
+    ctx.stroke();
+
+    // 武器上的波普星星徽记
+    ctx.fillStyle = '#FF1493';
+    ctx.beginPath();
+    ctx.arc(47, 0, 8, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = '#190A28';
-    ctx.font = '900 13px Impact, "PingFang SC", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(labelText, 0, 1);
+    // Q版小圆手握柄
+    ctx.fillStyle = silhouetteColor || '#FFE4D6';
+    ctx.beginPath();
+    ctx.arc(8, 0, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  /* ------------------------------------------------------------------------
+     Q 版节拍小怪（支持 AI 透明 Q 版恶魔/音响鲨/幽灵怪贴图 + 动态俯冲/弹跳/隐身）
+     ------------------------------------------------------------------------ */
+  drawBeatMonsterNote(ctx, x, y, lane2, isDouble, songTime, seedId = 1, entryStyle = 'SWOOP', alpha = 1.0) {
+    const track = this.getActiveTrack();
+    const beatPhase = songTime * ((track ? track.bpm : 130) / 60) * Math.PI * 2 + seedId;
+
+    const spritePath =
+      entryStyle === 'GHOST'
+        ? 'assets/neonbeat/monsters/monster_ghost.webp'
+        : lane2 === 0
+        ? 'assets/neonbeat/monsters/monster_air_bat.webp'
+        : 'assets/neonbeat/monsters/monster_gnd_slime.webp';
+    const monImg = this.imageCache.get(spritePath);
+
+    ctx.save();
+    ctx.globalAlpha = Math.max(0.12, alpha);
+
+    // 幽灵怪隐身阶段的虚线残影预警圈
+    if (entryStyle === 'GHOST' && alpha < 0.5) {
+      ctx.save();
+      ctx.globalAlpha = 0.72;
+      ctx.strokeStyle = '#00F5D4';
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      ctx.arc(x, y, 32, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font = '900 11px Impact, sans-serif';
+      ctx.fillStyle = '#FFE600';
+      ctx.textAlign = 'center';
+      ctx.fillText('👻 GHOST!', x, y - 38);
+      ctx.restore();
+    }
+
+    if (monImg && monImg.complete && monImg.naturalWidth > 0) {
+      const hop = Math.abs(Math.sin(beatPhase * 0.5));
+      const tilt = lane2 === 0 ? Math.sin(songTime * 10 + seedId) * 0.10 : (hop - 0.5) * 0.12;
+      const uniformScale = 1.0 + Math.sin(beatPhase) * 0.04;
+
+      ctx.translate(x, y);
+      ctx.rotate(tilt);
+      ctx.scale(uniformScale, uniformScale);
+
+      // 双押重拍金光描边 / 普通怪霓虹光晕 (PC 端放大至 122×122 轻松看清)
+      ctx.shadowColor = isDouble ? '#FFE600' : lane2 === 0 ? '#FF1493' : '#00F5D4';
+      ctx.shadowBlur = isDouble ? 20 : 12;
+      ctx.drawImage(monImg, -61, -61, 122, 122);
+      ctx.restore();
+      return;
+    }
+
+    if (lane2 === 0) {
+      // 上轨兜底：Q版飞天小恶魔糖果怪
+      const hoverY = Math.sin(beatPhase) * 8;
+      const wingFlap = Math.sin(songTime * 22 + seedId) * 0.55;
+      ctx.translate(x, y + hoverY);
+
+      [-1, 1].forEach((side) => {
+        ctx.save();
+        ctx.scale(side, 1);
+        ctx.rotate(wingFlap);
+        ctx.fillStyle = isDouble ? '#FFE600' : '#00F5D4';
+        ctx.strokeStyle = '#190A28';
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.moveTo(16, -6);
+        ctx.lineTo(44, -22);
+        ctx.lineTo(38, 4);
+        ctx.lineTo(22, 8);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      });
+
+      ctx.fillStyle = isDouble ? '#FFE600' : '#FF1493';
+      ctx.strokeStyle = '#190A28';
+      ctx.lineWidth = 4.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, 26, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    } else {
+      // 下轨兜底：Q版蹦跳低音炮史莱姆机甲怪
+      const hop = Math.abs(Math.sin(beatPhase * 0.5));
+      ctx.translate(x, y - hop * 18);
+      ctx.fillStyle = isDouble ? '#FFE600' : '#00F5D4';
+      ctx.strokeStyle = '#190A28';
+      ctx.lineWidth = 4.5;
+      ctx.beginPath();
+      ctx.roundRect(-27, -25, 54, 50, 16);
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  drawDoubleLightningBridge(ctx, x, upperY, lowerY, songTime) {
+    ctx.save();
+    const jitter = Math.sin(songTime * 45) * 9;
+    ctx.strokeStyle = '#190A28';
+    ctx.lineWidth = 11;
+    ctx.beginPath();
+    ctx.moveTo(x, upperY);
+    ctx.lineTo(x - 14 + jitter, (upperY + lowerY) * 0.38);
+    ctx.lineTo(x + 14 - jitter, (upperY + lowerY) * 0.62);
+    ctx.lineTo(x, lowerY);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#FFE600';
+    ctx.lineWidth = 5.5;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  drawRainbowHoldStream(ctx, note, x, endX, hitX, y, songTime) {
+    const headX = note.holding ? hitX : Math.max(hitX, x);
+    const tailW = Math.max(14, endX - headX);
+    const wave = Math.sin(songTime * 16) * 6;
+
+    ctx.save();
+    const grad = ctx.createLinearGradient(headX, y, headX + tailW, y);
+    grad.addColorStop(0, '#FF1493');
+    grad.addColorStop(0.5, '#FFE600');
+    grad.addColorStop(1, '#00F5D4');
+
+    ctx.fillStyle = grad;
+    ctx.strokeStyle = '#190A28';
+    ctx.lineWidth = 4.5;
+    ctx.beginPath();
+    ctx.roundRect(headX, y - 20 + wave * 0.25, tailW, 40, 20);
+    ctx.fill();
+    ctx.stroke();
+
+    // 糖带内部闪光音符节点
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+    for (let sx = headX + 36; sx < headX + tailW - 20; sx += 48) {
+      ctx.beginPath();
+      ctx.arc(sx, y, 6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // 龙头音符怪
+    this.drawBeatMonsterNote(ctx, headX, y, note.lane2, true, songTime, note.id, 'WAVE', 1.0);
+  }
+
+  /* ------------------------------------------------------------------------
+     A/B/C 三段连招巨型波普刀光挥击 (Slash Arcs) & Q 版怪物受击旋转击飞演出 (Ragdoll Knockback)
+     ------------------------------------------------------------------------ */
+  drawSlashEffectsAndKnockedMonsters(ctx) {
+    const slashImg = this.imageCache.get('assets/neonbeat/vfx/vfx_slash_arc.webp');
+    const hasSlashImg = slashImg && slashImg.complete && slashImg.naturalWidth > 0;
+
+    // 1. A/B/C 三段连招波普漫画刀光（0=上挑流星斩, 1=重锤破地砸, 2=360度旋风回旋斩）
+    for (const s of this.slashEffects) {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, s.life);
+      ctx.translate(s.x - 10, s.y);
+      ctx.rotate(s.angleOffset + (1 - s.life) * 0.55 * s.dir);
+
+      const r = s.radius * (1.22 - s.life * 0.18);
+
+      if (hasSlashImg) {
+        const size = r * 2.35;
+        ctx.save();
+        if (s.dir < 0) ctx.scale(1, -1);
+        ctx.shadowColor = s.color;
+        ctx.shadowBlur = 18;
+        ctx.drawImage(slashImg, -size * 0.48, -size * 0.5, size, size);
+        if (s.comboStage === 2) {
+          // C 段旋风回旋斩：叠加反向第二道月牙形成 360° 雙刃风暴
+          ctx.rotate(Math.PI);
+          ctx.drawImage(slashImg, -size * 0.45, -size * 0.45, size * 0.9, size * 0.9);
+        }
+        ctx.restore();
+      } else if (s.comboStage === 2) {
+        // C 段连招兜底
+        ctx.strokeStyle = '#190A28';
+        ctx.lineWidth = 11;
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 0.92, 0, Math.PI * 1.65);
+        ctx.stroke();
+
+        ctx.strokeStyle = s.color;
+        ctx.lineWidth = 6.5;
+        ctx.stroke();
+      } else {
+        // A 段 / B 段连招兜底
+        ctx.beginPath();
+        ctx.arc(0, 0, r, -Math.PI * 0.48, Math.PI * 0.48);
+        ctx.arc(-16, 0, r * 0.74, Math.PI * 0.42, -Math.PI * 0.42, true);
+        ctx.closePath();
+        ctx.fillStyle = s.color;
+        ctx.fill();
+        ctx.lineWidth = 4.5;
+        ctx.strokeStyle = '#190A28';
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // 2. 被一锤子打飞旋转飞出屏幕的 Q 版节拍怪 (Ragdoll Knockback)
+    for (const m of this.knockedMonsters) {
+      ctx.save();
+      ctx.translate(m.x, m.y);
+
+      // 飞出轨迹上的漫画拟声词 (POW!! / SMASH!! / BAM!!)
+      ctx.save();
+      ctx.font = '900 18px Impact, "Arial Black", sans-serif';
+      ctx.fillStyle = '#FFE600';
+      ctx.strokeStyle = '#190A28';
+      ctx.lineWidth = 4;
+      ctx.strokeText(m.comicWord, -28, -42);
+      ctx.fillText(m.comicWord, -28, -42);
+      ctx.restore();
+
+      ctx.rotate(m.rot);
+      ctx.scale(m.scale, m.scale);
+
+      const spritePath =
+        m.entryStyle === 'GHOST'
+          ? 'assets/neonbeat/monsters/monster_ghost.webp'
+          : m.lane2 === 0
+          ? 'assets/neonbeat/monsters/monster_air_bat.webp'
+          : 'assets/neonbeat/monsters/monster_gnd_slime.webp';
+      const monImg = this.imageCache.get(spritePath);
+
+      if (monImg && monImg.complete && monImg.naturalWidth > 0 && m.flashTimer <= 0) {
+        ctx.drawImage(monImg, -58, -58, 116, 116);
+      } else {
+        // 受击瞬间纯白闪光帧 (Hit Flash) 或几何兜底
+        ctx.fillStyle = m.flashTimer > 0 ? '#FFFFFF' : m.color;
+        ctx.strokeStyle = '#190A28';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        if (m.lane2 === 0) {
+          ctx.arc(0, 0, 24, 0, Math.PI * 2);
+        } else {
+          ctx.roundRect(-24, -22, 48, 44, 14);
+        }
+        ctx.fill();
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+
+  drawForegroundSpeedOverlay(ctx, W, H) {
+    // 第 4 层前景：极速掠过的赛博街机立柱黑影与 FEVER 漫画速度线 (Speed: 1960 px/s)
+    const off4 = this.parallaxOffsets[3];
+    const pillarSpan = 920;
+    const pillarX = W - (off4 % pillarSpan);
+
+    ctx.save();
+    if (pillarX > -120 && pillarX < W + 120) {
+      ctx.fillStyle = 'rgba(12, 3, 24, 0.42)';
+      ctx.fillRect(pillarX, 0, 28, H);
+      ctx.fillStyle = 'rgba(0, 245, 212, 0.28)';
+      ctx.fillRect(pillarX + 28, 0, 4, H);
+    }
+
+    // 高连击或 FEVER 时屏幕上下边缘飙出波普速度线
+    if (this.isFever || this.combo >= 15) {
+      ctx.strokeStyle = this.isFever ? 'rgba(255, 230, 0, 0.45)' : 'rgba(0, 245, 212, 0.26)';
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 6; i++) {
+        const lx = ((W - ((off4 * 1.4 + i * 210) % W)));
+        const ly = i % 2 === 0 ? 18 + i * 7 : H - 18 - i * 7;
+        ctx.beginPath();
+        ctx.moveTo(lx, ly);
+        ctx.lineTo(lx + 115, ly);
+        ctx.stroke();
+      }
+    }
     ctx.restore();
   }
 
   drawSpikedGear(ctx, x, y, songTime) {
+    // 闪避激光预警线
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 46, 76, 0.58)';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([10, 8]);
+    ctx.beginPath();
+    ctx.moveTo(330, y);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+
+    const sawImg = this.imageCache.get('assets/neonbeat/vfx/vfx_hazard_saw.webp');
+    const hasSawImg = sawImg && sawImg.complete && sawImg.naturalWidth > 0;
+
     ctx.save();
     ctx.translate(x, y);
-    ctx.rotate(songTime * 8);
+    ctx.rotate(-songTime * 11.5);
 
-    const spikes = 10;
-    const outerR = 32;
-    const innerR = 20;
-    ctx.beginPath();
-    for (let i = 0; i < spikes * 2; i++) {
-      const r = i % 2 === 0 ? outerR : innerR;
-      const a = (i * Math.PI) / spikes;
-      if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
-      else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    if (hasSawImg) {
+      ctx.shadowColor = '#FF1493';
+      ctx.shadowBlur = 16;
+      ctx.drawImage(sawImg, -61, -61, 122, 122);
+    } else {
+      const spikes = 10;
+      const outerR = 34;
+      const innerR = 21;
+      ctx.beginPath();
+      for (let i = 0; i < spikes * 2; i++) {
+        const r = i % 2 === 0 ? outerR : innerR;
+        const a = (i * Math.PI) / spikes;
+        if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+        else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+      }
+      ctx.closePath();
+      ctx.fillStyle = '#FF2E4C';
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#FFE600';
+      ctx.stroke();
     }
-    ctx.closePath();
-    ctx.fillStyle = '#FF2E4C';
-    ctx.fill();
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = '#FFE600';
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.arc(0, 0, 9, 0, Math.PI * 2);
-    ctx.fillStyle = '#190A28';
-    ctx.fill();
     ctx.restore();
 
     // 闪避提示标语
     ctx.save();
     ctx.fillStyle = '#FFE600';
-    ctx.font = '900 11px Impact, "PingFang SC", sans-serif';
+    ctx.strokeStyle = '#190A28';
+    ctx.lineWidth = 3.5;
+    ctx.font = '900 12px Impact, "PingFang SC", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('⚠️ DODGE!', x, y - 38);
+    ctx.strokeText('⚠️ DODGE!', x, y - 48);
+    ctx.fillText('⚠️ DODGE!', x, y - 48);
     ctx.restore();
   }
 
@@ -2046,9 +4036,9 @@ class NeonBeatArcade {
      模式二：经典 4 键下落式街机模式 (4K Mania 风 · MANIA_4K)
      ------------------------------------------------------------------------ */
   drawMania4KStage(ctx, W, H) {
-    const songTime = this.state === 'PLAYING' ? this.synth.getElapsedSec() : 0;
-    const highwayLeft = 450;
-    const laneWidth = 132;
+    const songTime = this.isLiveState() ? this.synth.getElapsedSec() : 0;
+    const highwayLeft = MANIA_HIGHWAY.left;
+    const laneWidth = MANIA_HIGHWAY.laneWidth;
     const highwayWidth = laneWidth * 4;
     const receptorY = 472;
     const laneColors = ['#FF1493', '#00F5D4', '#FFE600', '#FF1493'];
@@ -2104,7 +4094,7 @@ class NeonBeatArcade {
     ctx.restore();
 
     // 3. 绘制下落的 4K 音符
-    if (this.state !== 'PLAYING') return;
+    if (!this.isLiveState()) return;
     const fallSpeedPx = 540 * this.noteSpeedMult;
 
     for (const note of this.notes) {
@@ -2253,7 +4243,29 @@ class NeonBeatArcade {
       ctx.globalAlpha = Math.min(1, pop.life * 1.4);
       ctx.translate(pop.x, pop.y);
       ctx.scale(pop.scale, pop.scale);
-      ctx.rotate(-0.05);
+      ctx.rotate(-0.06);
+
+      // 喵斯快跑风：判定字底衬波普漫画爆炸星芒贴纸 (Comic Burst Sticker Backing)
+      const spikes = 12;
+      const outerRx = Math.max(68, pop.text.length * 10.5);
+      const outerRy = 26;
+      ctx.beginPath();
+      for (let s = 0; s < spikes * 2; s++) {
+        const isTip = s % 2 === 0;
+        const rx = isTip ? outerRx : outerRx * 0.76;
+        const ry = isTip ? outerRy : outerRy * 0.68;
+        const ang = (s * Math.PI) / spikes;
+        const px = Math.cos(ang) * rx;
+        const py = Math.sin(ang) * ry - 10;
+        if (s === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fillStyle = '#190A28';
+      ctx.fill();
+      ctx.lineWidth = 3.5;
+      ctx.strokeStyle = pop.color;
+      ctx.stroke();
 
       ctx.font = '900 32px Impact, "Arial Black", "PingFang SC", sans-serif';
       ctx.textAlign = 'center';
@@ -2267,9 +4279,9 @@ class NeonBeatArcade {
         ctx.font = '900 14px "PingFang SC", monospace';
         ctx.lineWidth = 4;
         ctx.strokeStyle = '#190A28';
-        ctx.strokeText(pop.subText, 0, 22);
+        ctx.strokeText(pop.subText, 0, 26);
         ctx.fillStyle = '#FFFFFF';
-        ctx.fillText(pop.subText, 0, 22);
+        ctx.fillText(pop.subText, 0, 26);
       }
       ctx.restore();
     }
@@ -2292,13 +4304,13 @@ class NeonBeatArcade {
         (r, i) => `
         <tr>
           <td>#${i + 1}</td>
-          <td><strong>《${r.trackTitle}》</strong></td>
-          <td>${r.mode === 'RUN_2L' ? '🏃‍♀️ 横版双轨' : '🎹 4K 街机'} · ${r.diffName}</td>
-          <td>${r.partnerName}</td>
-          <td><strong>${r.rank}</strong> (${r.badgeText})</td>
-          <td>${r.score.toLocaleString()}</td>
-          <td>${r.maxCombo}</td>
-          <td>${r.acc}%</td>
+          <td><strong>《${escapeHtml(r.trackTitle)}》</strong></td>
+          <td>${r.mode === 'RUN_2L' ? '🏃‍♀️ 横版双轨' : '🎹 4K 街机'} · ${escapeHtml(r.diffName)}</td>
+          <td>${escapeHtml(r.partnerName)}</td>
+          <td><strong>${escapeHtml(r.rank)}</strong> (${escapeHtml(r.badgeText)})</td>
+          <td>${escapeHtml(Number(r.score).toLocaleString())}</td>
+          <td>${escapeHtml(r.maxCombo)}</td>
+          <td>${escapeHtml(r.acc)}%</td>
         </tr>
       `
       )
@@ -2355,6 +4367,7 @@ class NeonBeatArcade {
         ]
       };
 
+      if (this.areLiveControlsLocked()) this.stopLiveToIdle();
       this.tracks.unshift(customTrack);
       this.selectTrack(customId);
       this.startLive();
@@ -2370,6 +4383,7 @@ class NeonBeatArcade {
     // 1. 双模式切换按钮
     document.querySelectorAll('.mode-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
+        if (this.areLiveControlsLocked()) return;
         document.querySelectorAll('.mode-btn').forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
         this.gameMode = btn.getAttribute('data-mode');
@@ -2381,6 +4395,7 @@ class NeonBeatArcade {
     // 2. 难度切换按钮
     document.querySelectorAll('.diff-pill').forEach((btn) => {
       btn.addEventListener('click', () => {
+        if (this.areLiveControlsLocked()) return;
         document.querySelectorAll('.diff-pill').forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
         this.selectedDiffIdx = Number(btn.getAttribute('data-diff')) || 0;
@@ -2397,15 +4412,33 @@ class NeonBeatArcade {
     // 4. AUTO PLAY 切换
     const btnAuto = document.getElementById('btnToggleAutoPlay');
     btnAuto.addEventListener('click', () => {
-      this.autoPlay = !this.autoPlay;
-      btnAuto.classList.toggle('active', this.autoPlay);
-      btnAuto.textContent = this.autoPlay ? '🤖 AUTO: ON' : '🤖 AUTO: OFF';
+      this.setAutoPlay(!this.autoPlay);
     });
 
-    // 5. 立即预览看板娘 SKILL CUT-IN
+    // 判定校准滑杆 (-200 ~ +200 ms，保存到 localStorage)
+    const calibRange = document.getElementById('judgeOffsetRange');
+    if (calibRange) {
+      calibRange.addEventListener('input', (e) => this.setCalibrationMs(e.target.value));
+    }
+    const calibReset = document.getElementById('btnJudgeOffsetReset');
+    if (calibReset) {
+      calibReset.addEventListener('click', () => this.setCalibrationMs(0));
+    }
+    this.setCalibrationMs(this.calibrationMs);
+
+    // 5. 立即预览看板娘 SKILL CUT-IN & 巨型魔王女王 16:9 机甲巨图阶段
     document.getElementById('btnTriggerCutInTest').addEventListener('click', () => {
       this.triggerMangaCutIn('⚡ SKILL CUT-IN PREVIEW!!');
     });
+    const btnBossPhase = document.getElementById('btnTriggerBossPhaseTest');
+    if (btnBossPhase) {
+      btnBossPhase.addEventListener('click', () => {
+        this.bossSplashTimer = 5.0;
+        this.synth.playHitSfx('BOSS_KO');
+        this.triggerScreenShake(true);
+        this.spawnPopup('👑 DEMON QUEEN OVERDRIVE!!', '#FFE600', '巨型电音魔王女王 16:9 机甲王座降临！', 540, 145);
+      });
+    }
 
     // 6. 开始打歌 / 试听 / 重开 / 返回选曲
     document.getElementById('btnStartSong').addEventListener('click', () => this.startLive());
@@ -2414,17 +4447,31 @@ class NeonBeatArcade {
     document.getElementById('btnStopLive').addEventListener('click', () => this.stopLiveToIdle());
 
     document.getElementById('btnPreviewSynth').addEventListener('click', () => {
-      this.autoPlay = true;
-      btnAuto.classList.add('active');
-      btnAuto.textContent = '🤖 AUTO: ON';
-      this.startLive();
+      this.setAutoPlay(true);
+      this.startLive({ preview: true });
     });
 
     document.getElementById('btnPauseResume').addEventListener('click', () => {
-      if (this.state === 'PLAYING') {
-        this.stopLiveToIdle();
+      if (this.state === 'PLAYING' || this.state === 'PAUSED') {
+        this.togglePause();
       } else if (this.state === 'IDLE') {
         this.startLive();
+      }
+    });
+
+    // 暂停面板：继续 / 重来 / 退出
+    document.getElementById('btnPauseContinue').addEventListener('click', () => this.resumeLive());
+    document.getElementById('btnPauseRestart').addEventListener('click', () => {
+      const preview = !!(this.liveSession && this.liveSession.isPreview);
+      this.startLive({ preview });
+    });
+    document.getElementById('btnPauseExit').addEventListener('click', () => this.stopLiveToIdle());
+
+    // 切到后台标签页时自动暂停
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        if (this.state === 'PLAYING') this.pauseLive();
+        else if (this.state === 'PAUSED') this.cancelResumeCountdown();
       }
     });
 
@@ -2442,6 +4489,13 @@ class NeonBeatArcade {
 
     window.addEventListener('keydown', (e) => {
       if (e.repeat) return;
+      if (e.code === 'Escape' || e.code === 'KeyP') {
+        if (this.state === 'PLAYING' || this.state === 'PAUSED') {
+          e.preventDefault();
+          this.togglePause();
+        }
+        return;
+      }
       if (e.code in keyMap) {
         e.preventDefault();
         this.handleLaneInput(keyMap[e.code], true);
@@ -2460,30 +4514,57 @@ class NeonBeatArcade {
     // 8. 底部街机打击垫鼠标/触屏事件
     document.querySelectorAll('.arcade-pad-btn').forEach((btn) => {
       const laneIdx = Number(btn.getAttribute('data-lane'));
+      const release = () => {
+        if (this.keyDownLanes[laneIdx]) this.handleLaneInput(laneIdx, false);
+      };
       btn.addEventListener('pointerdown', (e) => {
         e.preventDefault();
+        try {
+          btn.setPointerCapture(e.pointerId);
+        } catch (_) {}
         this.handleLaneInput(laneIdx, true);
       });
-      btn.addEventListener('pointerup', () => this.handleLaneInput(laneIdx, false));
-      btn.addEventListener('pointerleave', () => this.handleLaneInput(laneIdx, false));
+      btn.addEventListener('pointerup', release);
+      btn.addEventListener('pointercancel', release);
+      btn.addEventListener('lostpointercapture', release);
+      btn.addEventListener('contextmenu', (e) => e.preventDefault());
     });
 
     // 9. 点击 Canvas 舞台直接交互（跑酷模式点上半屏=空中轨，下半屏=地面轨；4K模式按X坐标分轨）
-    this.canvas.addEventListener('pointerdown', (e) => {
+    // 指针 → Canvas 坐标（1120×560），按实际绘制的轨道几何命中；4K 轨道外的点击忽略
+    const laneFromPointer = (e) => {
       const rect = this.canvas.getBoundingClientRect();
-      const relX = (e.clientX - rect.left) / rect.width;
-      const relY = (e.clientY - rect.top) / rect.height;
-
+      if (!rect.width || !rect.height) return -1;
+      const cx = ((e.clientX - rect.left) / rect.width) * this.canvas.width;
+      const cy = ((e.clientY - rect.top) / rect.height) * this.canvas.height;
       if (this.gameMode === 'RUN_2L') {
-        const lane = relY < 0.5 ? 1 : 2;
-        this.handleLaneInput(lane, true);
-        setTimeout(() => this.handleLaneInput(lane, false), 110);
-      } else {
-        const lane = Math.min(3, Math.max(0, Math.floor(relX * 4)));
-        this.handleLaneInput(lane, true);
-        setTimeout(() => this.handleLaneInput(lane, false), 110);
+        return cy < this.canvas.height / 2 ? 1 : 2;
       }
+      const rel = cx - MANIA_HIGHWAY.left;
+      const total = MANIA_HIGHWAY.laneWidth * MANIA_HIGHWAY.lanes;
+      if (rel < 0 || rel >= total) return -1;
+      return Math.floor(rel / MANIA_HIGHWAY.laneWidth);
+    };
+    const releaseCanvasPointer = (e) => {
+      if (!this.canvasPointerLanes.has(e.pointerId)) return;
+      const lane = this.canvasPointerLanes.get(e.pointerId);
+      this.canvasPointerLanes.delete(e.pointerId);
+      const stillHeld = [...this.canvasPointerLanes.values()].includes(lane);
+      if (!stillHeld) this.handleLaneInput(lane, false);
+    };
+    this.canvas.addEventListener('pointerdown', (e) => {
+      const lane = laneFromPointer(e);
+      if (lane < 0) return;
+      e.preventDefault();
+      try {
+        this.canvas.setPointerCapture(e.pointerId);
+      } catch (_) {}
+      this.canvasPointerLanes.set(e.pointerId, lane);
+      this.handleLaneInput(lane, true);
     });
+    this.canvas.addEventListener('pointerup', releaseCanvasPointer);
+    this.canvas.addEventListener('pointercancel', releaseCanvasPointer);
+    this.canvas.addEventListener('lostpointercapture', releaseCanvasPointer);
 
     // 10. 本地音乐文件选择与拖拽自生成谱面
     const dropzone = document.getElementById('audioDropzone');

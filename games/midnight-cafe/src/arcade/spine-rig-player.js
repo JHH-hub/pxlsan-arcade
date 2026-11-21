@@ -34,32 +34,36 @@
 
     async loadRig(rigJsonUrl) {
       if (this.currentRigUrl === rigJsonUrl && this.loaded) return true;
+      // 加载令牌：快速连续切换角色时，只采用最后一次 loadRig 的结果；过期加载返回 null 由调用方忽略
+      const token = (this._loadToken = (this._loadToken || 0) + 1);
+      const isStale = () => token !== this._loadToken;
       this.currentRigUrl = rigJsonUrl;
       this.loaded = false;
       this.fullImage = null;
       try {
-        const res = await fetch(`${rigJsonUrl}?v=${Date.now()}`);
+        const res = await fetch(rigJsonUrl);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        this.rigData = data;
+        if (isStale()) return null;
 
         const baseDir = rigJsonUrl.substring(0, rigJsonUrl.lastIndexOf('/') + 1);
         const fullFile = data.fullSprite || 'full_halfbody.webp';
-        const imgUrl = fullFile.startsWith('assets/') ? fullFile : `${baseDir}${fullFile}?v=${Date.now()}`;
+        const imgUrl = fullFile.startsWith('assets/') ? fullFile : `${baseDir}${fullFile}`;
 
-        await new Promise((resolve, reject) => {
-          const img = new Image();
-          img.onload = () => {
-            this.fullImage = img;
-            resolve();
-          };
-          img.onerror = (e) => reject(e);
-          img.src = imgUrl;
+        const img = await new Promise((resolve, reject) => {
+          const el = new Image();
+          el.onload = () => resolve(el);
+          el.onerror = (e) => reject(e);
+          el.src = imgUrl;
         });
+        if (isStale()) return null;
 
+        this.rigData = data;
+        this.fullImage = img;
         this.loaded = true;
         return true;
       } catch (err) {
+        if (isStale()) return null;
         console.warn('[SpineRigPlayer] Fallback to img sprite:', rigJsonUrl, err);
         this.loaded = false;
         return false;

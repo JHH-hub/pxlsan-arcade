@@ -1310,16 +1310,27 @@ body {
   padding-top: 6px;
 }
 
-.suit-row-cards {
+.suit-row-cards,
+.deck-mini-cards {
   display: grid;
   grid-template-columns: repeat(13, minmax(0, 1fr));
   gap: 4px;
 }
 
 @media (max-width: 520px) {
-  .suit-row-cards {
+  .suit-row-cards,
+  .deck-mini-cards {
     grid-template-columns: repeat(7, 1fr);
   }
+}
+
+.deck-suit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12.5px;
+  font-weight: 800;
+  margin-bottom: 4px;
 }
 
 .mini-deck-card {
@@ -1333,9 +1344,14 @@ body {
   line-height: 1.1;
 }
 
-.mini-deck-card.red { color: var(--suit-red); }
-.mini-deck-card.black { color: var(--ink-black); }
-.mini-deck-card.drawn {
+.mini-deck-card.red,
+.mini-deck-card.suit-heart { color: var(--suit-red); }
+.mini-deck-card.suit-diamond { color: var(--suit-diamond); }
+.mini-deck-card.black,
+.mini-deck-card.suit-spade,
+.mini-deck-card.suit-club { color: var(--ink-black); }
+.mini-deck-card.drawn,
+.mini-deck-card.is-drawn {
   opacity: 0.25;
   filter: grayscale(1);
 }
@@ -2457,3 +2473,169 @@ body {
 }
 
 
+
+/* ================= 10. 💡提示按钮 + 点按弹出说明卡片 + 窄屏 (≤720px) 适配 ================= */
+.poker-main-btn.hint {
+  background: rgba(245, 158, 11, 0.22);
+  border-color: rgba(245, 158, 11, 0.6);
+  color: #fde68a;
+}
+
+.poker-main-btn.hint:hover:not(:disabled) {
+  background: rgba(245, 158, 11, 0.34);
+  transform: translateY(-2px);
+}
+
+/* 手牌溢出时：safe center 保证最左侧的牌也能滚动到；不支持 safe 的浏览器用首尾 auto 外边距兜底居中 */
+.poker-hand-fan {
+  justify-content: flex-start;
+  justify-content: safe center;
+}
+
+.poker-hand-fan > .classic-playing-card:first-child {
+  margin-left: auto;
+}
+
+.poker-hand-fan > .classic-playing-card:last-child {
+  margin-right: auto;
+}
+
+/* 触屏/窄屏点按切换的说明卡片（桌面端仍为鼠标悬浮） */
+.joker-chip-card.icon-only-slot.pop-open .joker-hover-pop {
+  display: block;
+}
+
+.combatant-box.show-passive .combatant-hover-card {
+  display: block;
+}
+
+@media (max-width: 720px) {
+  /* 顶部状态栏：不再裁切右侧按钮，改为可横向滑动 */
+  .alchemist-topbar {
+    justify-content: flex-start !important;
+    gap: 6px;
+    padding: 0 8px !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .alchemist-topbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .top-left-group,
+  .top-stage-pill,
+  .top-right-group {
+    flex-shrink: 0;
+    gap: 5px !important;
+  }
+
+  .icon-hud-btn,
+  .top-coin-pill,
+  .act-badge,
+  .boss-tag {
+    padding: 4px 8px !important;
+    font-size: 11.5px !important;
+  }
+
+  .top-stage-pill {
+    padding: 4px 10px;
+  }
+
+  .top-hearts-bar .heart-gem {
+    font-size: 14px;
+  }
+
+  /* 手牌区铺满屏宽，便于横向滑动 */
+  .classic-poker-hand-section {
+    left: 0;
+    right: 0;
+    transform: none;
+    width: 100%;
+    max-width: 100vw;
+    bottom: 8px;
+  }
+
+  .poker-hand-fan {
+    width: 100%;
+    padding: 16px 8px 4px;
+  }
+
+  .classic-playing-card {
+    width: 62px;
+    height: 92px;
+    border-width: 2px;
+    border-radius: 7px;
+  }
+
+  .classic-playing-card + .classic-playing-card {
+    margin-left: -12px;
+  }
+
+  .classic-playing-card:hover {
+    transform: translateY(-5px);
+  }
+
+  .classic-playing-card.selected {
+    transform: translateY(-14px);
+  }
+
+  .poker-corner-tl {
+    top: 5px;
+    left: 6px;
+  }
+
+  .poker-rank-num {
+    font-size: 16px;
+  }
+
+  .poker-suit-small {
+    font-size: 12px;
+    margin-top: 0;
+  }
+
+  .poker-big-pip {
+    right: 6px;
+    bottom: 5px;
+    font-size: 32px;
+  }
+
+  .poker-face-portrait {
+    left: 18px;
+    top: 6px;
+    width: calc(100% - 24px);
+    height: calc(100% - 12px);
+  }
+
+  .poker-chip-tag {
+    font-size: 9px;
+  }
+
+  .facedown-seal-badge {
+    font-size: 8.5px;
+    padding: 1px 4px;
+    bottom: 5px;
+  }
+
+  .bottom-center-actions {
+    gap: 8px;
+  }
+
+  .poker-main-btn,
+  .poker-main-btn.play {
+    padding: 9px 14px;
+    font-size: 13px;
+  }
+
+  .joker-chip-card.icon-only-slot {
+    width: 48px !important;
+    height: 48px !important;
+    min-height: 48px !important;
+  }
+
+  .joker-slots-row {
+    gap: 8px;
+  }
+}

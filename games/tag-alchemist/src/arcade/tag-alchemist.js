@@ -19,6 +19,67 @@
     constructor() {
       this.ctx = null;
       this.enabled = true;
+      this.bgmMap = {
+        table: 'assets/alchemist/bgm/alchemist_table.mp3',
+        boss: 'assets/alchemist/bgm/alchemist_boss.mp3',
+        shop: 'assets/alchemist/bgm/alchemist_shop.mp3',
+      };
+      this.bgmEl = null;
+      this.bgmMode = null;
+      this.pendingBgmMode = null;
+      this.jackpotEl = null;
+      if (typeof document !== 'undefined') {
+        const unlock = () => {
+          if (this.pendingBgmMode && this.enabled) {
+            const m = this.pendingBgmMode;
+            this.pendingBgmMode = null;
+            this.playBgm(m);
+          }
+        };
+        document.addEventListener('click', unlock, { once: true, capture: true, passive: true });
+        document.addEventListener('touchstart', unlock, { once: true, capture: true, passive: true });
+      }
+    }
+
+    playBgm(mode = 'table') {
+      const url = this.bgmMap[mode] || this.bgmMap.table;
+      this.bgmMode = mode;
+      if (!this.enabled) {
+        this.pendingBgmMode = mode;
+        this.stopBgm();
+        return;
+      }
+      if (this.bgmEl && this.bgmEl._mode === mode && !this.bgmEl.paused) return;
+      this.stopBgm();
+      try {
+        const el = new Audio(url);
+        el.loop = true;
+        el.volume = mode === 'boss' ? 0.36 : 0.32;
+        el._mode = mode;
+        this.bgmEl = el;
+        el.play().catch(() => {
+          this.pendingBgmMode = mode;
+        });
+      } catch (_) {}
+    }
+
+    stopBgm() {
+      if (this.bgmEl) {
+        try {
+          this.bgmEl.pause();
+          this.bgmEl.currentTime = 0;
+        } catch (_) {}
+        this.bgmEl = null;
+      }
+    }
+
+    syncEnabled(isEnabled) {
+      this.enabled = Boolean(isEnabled);
+      if (!this.enabled) {
+        this.stopBgm();
+      } else if (this.bgmMode || this.pendingBgmMode) {
+        this.playBgm(this.bgmMode || this.pendingBgmMode);
+      }
     }
 
     init() {
@@ -76,6 +137,25 @@
     }
 
     playSsrChord() {
+      if (!this.enabled) return;
+      try {
+        if (this.jackpotEl) {
+          this.jackpotEl.pause();
+          this.jackpotEl.currentTime = 0;
+        }
+        const el = new Audio('assets/alchemist/bgm/alchemist_jackpot.mp3');
+        el.volume = 0.65;
+        this.jackpotEl = el;
+        el.play().catch(() => {
+          const notes = [523.25, 659.25, 783.99, 1046.5, 1318.5];
+          notes.forEach((n, idx) => {
+            setTimeout(() => {
+              this.tone(n, 0.36, 'triangle', 0.14, n * 1.03);
+            }, idx * 55);
+          });
+        });
+        return;
+      } catch (_) {}
       const notes = [523.25, 659.25, 783.99, 1046.5, 1318.5];
       notes.forEach((n, idx) => {
         setTimeout(() => {
@@ -97,7 +177,7 @@
   const sfx = new CyberSynthAudio();
 
   // =========================================================================
-  // 2. 出战看板娘先锋立绘库 (单局选定1位女主出战，配备专属【被动天赋】+【主动必杀技】+ 4状态全身立绘)
+  // 2. 出战看板娘先锋立绘库 (单局选定1位女主出战，配备专属【被动天赋】+ 4状态全身立绘；activeSkill* 字段为旧版遗留数据，当前不对玩家开放)
   // =========================================================================
   const HERO_VANGUARDS = [
     {
@@ -524,7 +604,7 @@
   ];
 
   const RANK_CONFIGS = [
-    { rank: 14, label: 'A', chips: 11, isFace: false },
+    { rank: 14, label: 'A', chips: 11, isFace: true }, // A 计入人头牌 (与宝物/主角/魔物说明中的 J/Q/K/A 一致)
     { rank: 13, label: 'K', chips: 10, isFace: true },
     { rank: 12, label: 'Q', chips: 10, isFace: true },
     { rank: 11, label: 'J', chips: 10, isFace: true },
@@ -878,7 +958,7 @@
       bossAttackSprite: 'assets/alchemist/monsters/boss_09_attack.webp',
       bossHitSprite: 'assets/alchemist/monsters/boss_09_hit.webp',
       bossCriticalSprite: 'assets/alchemist/monsters/boss_09_critical.webp',
-      ruleDesc: '👑 魔王技能【掠夺契约项圈】：单牌散牌倍率被彻底压制！唯有依靠主角必杀技、圣遗物与高阶牌型斩断契约击败魔王！',
+      ruleDesc: '👑 魔王技能【掠夺契约项圈】：单牌散牌倍率被彻底压制！打出高牌时最终倍率固定为 1！唯有依靠主角被动天赋、圣遗物与高阶牌型斩断契约击败魔王！',
       targetScore: 6200,
       rewardGold: 20,
       bossRule: 'final_boss_audit'
@@ -991,6 +1071,7 @@
     dom.holoHandRow = document.getElementById('holoHandRow');
     dom.btnDiscard = document.getElementById('btnDiscard');
     dom.btnPlayHand = document.getElementById('btnPlayHand');
+    dom.btnSuggestBest = document.getElementById('btnSuggestBest');
 
     dom.monitorRarityBadge = document.getElementById('monitorRarityBadge');
     dom.crtScreenFrame = document.getElementById('crtScreenFrame');
@@ -1264,22 +1345,30 @@
     return { pixels: pix, mult, xMult, wasPurified: false };
   }
 
-  function calculatePreviewScore(selectedCards) {
+  // 统一出牌结算引擎：预览与实际出牌共用同一套计算，保证「预计伤害 == 实际伤害」
+  // 返回最终 pixels/mult/total 以及逐步结算记录 steps（供出牌动画逐条播放）
+  const round1 = (v) => Math.round(v * 10) / 10;
+
+  function computeHandScore(selectedCards) {
     const syn = evaluatePromptSynergy(selectedCards);
     if (!syn) {
-      return { pixels: 0, mult: 0, total: 0, synergy: null };
+      return { pixels: 0, mult: 0, total: 0, synergy: null, steps: [] };
     }
 
+    const steps = [];
     let pixels = syn.computedPixels;
     let mult = syn.computedMult;
+    const pushStep = (step) => steps.push({ ...step, pixels, mult });
 
+    // 1. 逐张扑克牌点数结算
     selectedCards.forEach((card) => {
       const c = computeCardContribution(card);
       pixels += c.pixels;
       mult += c.mult;
       if (c.xMult && c.xMult !== 1) {
-        mult = Math.round(mult * c.xMult * 10) / 10;
+        mult = round1(mult * c.xMult);
       }
+      pushStep({ kind: 'card', card, addPixels: c.pixels, addMult: c.mult });
     });
 
     const pokerSuitCounts = { spade: 0, heart: 0, club: 0, diamond: 0 };
@@ -1288,114 +1377,166 @@
       if (c.pokerSuit) pokerSuitCounts[c.pokerSuit] = (pokerSuitCounts[c.pokerSuit] || 0) + 1;
       if (c.isFace) faceCount += 1;
     });
+    const blackCnt = pokerSuitCounts.spade + pokerSuitCounts.club;
 
     const isPairOrBetter = syn.id !== 'high_card';
     const isFiveCardCombo = ['straight_flush', 'full_house', 'flush_five', 'straight_five'].includes(syn.id);
     const hero = HERO_VANGUARDS[state.heroIndex] || HERO_VANGUARDS[0];
 
-    // 主角主动战技本回合临时增幅 (如长瀞【恶魔重拳】)
-    if (state.nextHandBonusPixels) pixels += state.nextHandBonusPixels;
-    if (state.nextHandBonusMult) mult += state.nextHandBonusMult;
+    // 2. 本回合临时增幅（旧版主动战技遗留字段，目前恒为 0）
+    if (state.nextHandBonusPixels || state.nextHandBonusMult) {
+      pixels += state.nextHandBonusPixels || 0;
+      mult += state.nextHandBonusMult || 0;
+      pushStep({ kind: 'bonus', text: `+${state.nextHandBonusPixels || 0}伤 +${state.nextHandBonusMult || 0}倍`, isX: false });
+    }
 
-    // 主角专属被动天赋结算
+    // 3. 主角专属被动天赋结算
+    let heroText = null;
+    let heroIsX = false;
     if (hero.key === 'takagi' && ['one_pair', 'two_pair', 'three_kind', 'full_house'].includes(syn.id)) {
       mult += 2;
+      heroText = '+2 倍率';
     } else if (hero.key === 'marin' && ['flush_five', 'straight_flush'].includes(syn.id)) {
       mult += 4;
+      heroText = '+4 倍率';
     } else if (hero.key === 'kaguya' && faceCount > 0) {
       pixels += faceCount * 15;
       mult += faceCount * 1;
+      heroText = `+${faceCount * 15}伤 +${faceCount}倍`;
     } else if (hero.key === 'kuroneko' && ['four_bomb', 'full_house'].includes(syn.id)) {
-      mult = Math.round(mult * 1.35 * 10) / 10;
+      mult = round1(mult * 1.35);
+      heroText = '×1.35 倍率!';
+      heroIsX = true;
     } else if (hero.key === 'aili' && ['straight_five', 'straight_flush', 'two_pair'].includes(syn.id)) {
       pixels += 35;
       mult += 3;
+      heroText = '+35伤 +3倍';
     } else if (hero.key === 'qianhe' && state.rerollsLeft > 0) {
       pixels += state.rerollsLeft * 25;
-    } else if (hero.key === 'mai') {
-      const blackCnt = pokerSuitCounts.spade + pokerSuitCounts.club;
+      heroText = `+${state.rerollsLeft * 25} 伤害`;
+    } else if (hero.key === 'mai' && blackCnt > 0) {
       pixels += blackCnt * 12;
       mult += blackCnt * 1;
+      heroText = `+${blackCnt * 12}伤 +${blackCnt}倍`;
     } else if (hero.key === 'yukino' && ['three_kind', 'four_bomb', 'straight_flush'].includes(syn.id)) {
       pixels += 45;
       mult += 3;
+      heroText = '+45伤 +3倍';
+    }
+    if (heroText) {
+      pushStep({ kind: 'hero', text: `🌟 ${hero.shortName}天赋 ${heroText}`, isX: heroIsX });
     }
 
-    state.modules.forEach((mod) => {
-      if (mod.effectType === 'per_suit_mult') {
-        mult += (pokerSuitCounts[mod.targetPokerSuit] || 0) * mod.val;
-      } else if (mod.effectType === 'per_suit_pixels') {
-        pixels += (pokerSuitCounts[mod.targetPokerSuit] || 0) * mod.val;
+    // 4. 依次触发道具栏宝物
+    state.modules.forEach((mod, modIndex) => {
+      let text = null;
+      let isX = false;
+      if (mod.effectType === 'per_suit_mult' && pokerSuitCounts[mod.targetPokerSuit] > 0) {
+        const addM = pokerSuitCounts[mod.targetPokerSuit] * mod.val;
+        mult += addM;
+        text = `+${addM} 倍率`;
+      } else if (mod.effectType === 'per_suit_pixels' && pokerSuitCounts[mod.targetPokerSuit] > 0) {
+        const addP = pokerSuitCounts[mod.targetPokerSuit] * mod.val;
+        pixels += addP;
+        text = `+${addP} 伤害`;
       } else if (mod.effectType === 'face_card_boost' && faceCount > 0) {
-        pixels += faceCount * mod.valPixels;
-        mult += faceCount * mod.valMult;
-      } else if (mod.effectType === 'per_black_suit_hybrid') {
-        const blackCnt = pokerSuitCounts.spade + pokerSuitCounts.club;
-        pixels += blackCnt * mod.valPixels;
-        mult += blackCnt * mod.valMult;
+        const addP = faceCount * mod.valPixels;
+        const addM = faceCount * mod.valMult;
+        pixels += addP;
+        mult += addM;
+        text = `+${addP}伤 +${addM}倍`;
+      } else if (mod.effectType === 'per_black_suit_hybrid' && blackCnt > 0) {
+        const addP = blackCnt * mod.valPixels;
+        const addM = blackCnt * mod.valMult;
+        pixels += addP;
+        mult += addM;
+        text = `+${addP}伤 +${addM}倍`;
       } else if (mod.effectType === 'starter_abacus_boost') {
         pixels += mod.valPixels;
         if (isPairOrBetter) {
-          mult = Math.round(mult * mod.val * 10) / 10;
+          mult = round1(mult * mod.val);
+          text = `+${mod.valPixels}伤 ×${mod.val}倍`;
+          isX = true;
+        } else {
+          text = `+${mod.valPixels} 伤害`;
         }
       } else if (mod.effectType === 'flat_mult') {
         mult += mod.val;
+        text = `+${mod.val} 倍率`;
       } else if (mod.effectType === 'flat_pixels') {
         pixels += mod.val;
-      } else if (mod.effectType === 'reroll_scaling_mult') {
-        mult += state.rerollsLeft * mod.val;
+        text = `+${mod.val} 伤害`;
+      } else if (mod.effectType === 'reroll_scaling_mult' && state.rerollsLeft > 0) {
+        const addM = state.rerollsLeft * mod.val;
+        mult += addM;
+        text = `+${addM} 倍率`;
       } else if (mod.effectType === 'economy_mult') {
         mult += mod.val;
+        text = `+${mod.val} 倍率`;
       } else if (mod.effectType === 'global_xmult') {
-        mult = Math.round(mult * mod.val * 10) / 10;
+        mult = round1(mult * mod.val);
+        text = `×${mod.val} 倍率!`;
+        isX = true;
       } else if (
         mod.effectType === 'five_cards_xmult' &&
         (selectedCards.length >= getMaxPlayableCards() || isFiveCardCombo)
       ) {
-        mult = Math.round(mult * mod.val * 10) / 10;
+        mult = round1(mult * mod.val);
+        text = `×${mod.val} 倍率!`;
+        isX = true;
       } else if (mod.effectType === 'multi_char_xmult' && isPairOrBetter) {
-        mult = Math.round(mult * mod.val * 10) / 10;
+        mult = round1(mult * mod.val);
+        text = `×${mod.val} 倍率!`;
+        isX = true;
+      }
+      if (text) {
+        pushStep({ kind: 'module', modIndex, text, isX });
       }
     });
 
+    // 5. 濒死战损觉醒加成 (倍率 ×1.25，长瀞被动提升至 ×1.65)
     if (isHeroInCriticalState()) {
       const critMult = hero.key === 'nagatoro' ? 1.65 : 1.25;
-      mult = Math.round(mult * critMult * 10) / 10;
+      mult = round1(mult * critMult);
+      pushStep({ kind: 'critical', text: `💔 爆衣觉醒 ×${critMult}!`, isX: true });
+    }
+
+    // 6. 最终魔王【掠夺契约项圈】：单牌散牌（高牌）的倍率被彻底压制为 ×1
+    const cfg = getStageConfig();
+    if (cfg.bossRule === 'final_boss_audit' && syn.id === 'high_card' && mult !== 1) {
+      mult = 1;
+      pushStep({ kind: 'boss', text: '👑 契约项圈：散牌倍率被压制为 1!', isX: true });
     }
 
     const total = Math.round(pixels * mult);
     return {
       pixels: Math.round(pixels),
-      mult: Math.round(mult * 10) / 10,
+      mult: round1(mult),
       total,
-      synergy: syn
+      synergy: syn,
+      steps
     };
   }
 
-  // 💡 智能选牌提示：穷举当前手牌中所有 1~maxPlay 张组合，找出总伤害最高的一手（无操作 2.4 秒后自动触发提示）
-  let autoHintTimer = null;
+  function calculatePreviewScore(selectedCards) {
+    return computeHandScore(selectedCards);
+  }
 
-  function clearAutoHintTimer() {
-    if (autoHintTimer) {
-      clearTimeout(autoHintTimer);
-      autoHintTimer = null;
+  // 💡 智能选牌提示：仅在玩家按下「💡 提示」按钮时触发；
+  //    穷举手牌中所有正面朝上的 1~maxPlay 张组合，找出总伤害最高的一手（盖住的盲牌视为未知，不参与搜索）
+  function getHintableCards() {
+    return state.hand.filter((c) => !c.isFaceDown);
+  }
+
+  function suggestBestHand() {
+    if (state.isAnimating) return;
+    const pool = getHintableCards();
+    if (pool.length === 0) {
+      sfx.playGlitchBuzz();
+      return;
     }
-  }
-
-  function scheduleAutoHint() {
-    clearAutoHintTimer();
-    if (state.isAnimating || state.hand.length === 0 || state.selectedInstanceIds.size > 0) return;
-    autoHintTimer = setTimeout(() => {
-      if (!state.isAnimating && state.selectedInstanceIds.size === 0 && state.hand.length > 0) {
-        suggestBestHand(true);
-      }
-    }, 2400);
-  }
-
-  function suggestBestHand(isAuto = false) {
-    if (state.isAnimating || state.hand.length === 0) return;
     const maxPlay = getMaxPlayableCards();
-    const n = state.hand.length;
+    const n = pool.length;
     let bestCombo = [];
     let bestScore = -1;
 
@@ -1409,7 +1550,7 @@
       }
       if (currentCombo.length === maxPlay) return;
       for (let i = startIdx; i < n; i++) {
-        currentCombo.push(state.hand[i]);
+        currentCombo.push(pool[i]);
         dfs(i + 1, currentCombo);
         currentCombo.pop();
       }
@@ -1420,18 +1561,19 @@
     if (bestCombo.length > 0) {
       state.selectedInstanceIds.clear();
       bestCombo.forEach((c) => state.selectedInstanceIds.add(c.instanceId));
-      if (!isAuto) sfx.playClick(true);
+      sfx.playClick(true);
       renderAll();
     }
   }
 
   // =========================================================================
-  // 11. 人头牌 (J/Q/K) 经典上下对称双头扑克牌面映射 + 4状态立绘与双特写插屏
+  // 11. 人头牌 (J/Q/K/A) 牌面映射：J/Q/K 使用经典上下对称双头宫廷插画，A 仅用皇家底图 + 大花色 + 4状态立绘与双特写插屏
   // =========================================================================
   function getFaceCardPortrait(card) {
     if (card.rank === 13) return 'assets/alchemist/cards/poker_court_K.webp';
     if (card.rank === 12) return 'assets/alchemist/cards/poker_court_Q.webp';
-    return 'assets/alchemist/cards/poker_court_J.webp';
+    if (card.rank === 11) return 'assets/alchemist/cards/poker_court_J.webp';
+    return null; // A 没有宫廷插画，避免误显示 J 的立绘
   }
 
   let forceCriticalPreview = false;
@@ -1865,9 +2007,17 @@
     const selected = getSelectedCardsInOrder();
     const maxPlay = getMaxPlayableCards();
 
-    const preview = calculatePreviewScore(selected);
+    // 选中牌里含盖住的盲牌时，预览不能按其真实点数泄露牌型与伤害
+    const hasFaceDownSelected = selected.some((c) => c.isFaceDown);
+    const preview = hasFaceDownSelected ? null : calculatePreviewScore(selected);
     if (!state.isAnimating) {
-      if (preview.synergy) {
+      if (hasFaceDownSelected) {
+        dom.synergyTierBadge.textContent = '盲牌';
+        dom.synergyNameDisplay.textContent = '??? (含盲牌)';
+        dom.basePixelsDisplay.textContent = '?';
+        dom.aestheticMultDisplay.textContent = '?';
+        dom.previewTotalNumber.textContent = '???';
+      } else if (preview.synergy) {
         dom.synergyTierBadge.textContent = preview.synergy.tier;
         dom.synergyNameDisplay.textContent = preview.synergy.name;
         dom.basePixelsDisplay.textContent = String(preview.pixels);
@@ -1886,11 +2036,21 @@
     sortHandByRankDesc();
     renderHandCards();
 
-    // 若玩家当前未选牌，无操作 2.4 秒后自动提示最佳牌型
-    scheduleAutoHint();
-
     dom.btnPlayHand.disabled = state.isAnimating || selected.length === 0 || state.rendersLeft <= 0;
     dom.btnDiscard.disabled = state.isAnimating || selected.length === 0 || state.rerollsLeft <= 0;
+    if (dom.btnSuggestBest) {
+      dom.btnSuggestBest.disabled = state.isAnimating || getHintableCards().length === 0;
+    }
+  }
+
+  // 触屏设备或窄屏 (≤720px) 下，悬浮说明卡片改为点按切换
+  function isTapPopoverMode() {
+    return !!(window.matchMedia && window.matchMedia('(hover: none), (max-width: 720px)').matches);
+  }
+
+  function closeTapPopovers() {
+    document.querySelectorAll('.joker-chip-card.pop-open').forEach((el) => el.classList.remove('pop-open'));
+    if (dom.heroCombatantBox) dom.heroCombatantBox.classList.remove('show-passive');
   }
 
   // 手牌正上方道具栏：展示白/蓝/紫/红品质光晕与纯图标，鼠标悬浮时弹出名称、品质、介绍与出售按钮
@@ -1928,6 +2088,16 @@
       }
       dom.jokerSlotsRow.appendChild(cell);
     }
+
+    // 触屏/窄屏无法悬浮：点击宝物图标切换显示说明与出售按钮
+    dom.jokerSlotsRow.querySelectorAll('.joker-chip-card[data-mod-index]').forEach((cell) => {
+      cell.addEventListener('click', (e) => {
+        if (!isTapPopoverMode() || e.target.closest('[data-sell-idx]')) return;
+        const willOpen = !cell.classList.contains('pop-open');
+        closeTapPopovers();
+        cell.classList.toggle('pop-open', willOpen);
+      });
+    });
 
     dom.jokerSlotsRow.querySelectorAll('[data-sell-idx]').forEach((btn) => {
       btn.addEventListener('click', (e) => {
@@ -1968,13 +2138,14 @@
       cardEl.dataset.instanceId = card.instanceId;
 
       if (isFaceDown) {
-        cardEl.title = '被魔将技能【魅惑盖牌】翻转背面朝上！可盲猜打出翻开、弃牌重抽，或释放【✨主角战技】一键解封！';
+        cardEl.title = '被魔将技能【魅惑盖牌】翻转背面朝上！可盲猜打出翻开，或弃牌重抽。';
         cardEl.innerHTML = `
           <span class="facedown-seal-badge">🔮 魅惑盲牌</span>
         `;
       } else {
-        const centerGraphicHtml = card.isFace
-          ? `<img src="${getFaceCardPortrait(card)}?v=11" alt="${card.zhName}" class="poker-face-portrait" loading="lazy" />`
+        const portrait = card.isFace ? getFaceCardPortrait(card) : null;
+        const centerGraphicHtml = portrait
+          ? `<img src="${portrait}?v=11" alt="${card.zhName}" class="poker-face-portrait" loading="lazy" />`
           : `<div class="poker-big-pip">${card.suitSymbol}</div>`;
 
         cardEl.innerHTML = `
@@ -1989,7 +2160,6 @@
 
       cardEl.addEventListener('click', () => {
         if (state.isAnimating) return;
-        clearAutoHintTimer();
         const maxPlay = getMaxPlayableCards();
         if (state.selectedInstanceIds.has(card.instanceId)) {
           state.selectedInstanceIds.delete(card.instanceId);
@@ -2096,6 +2266,9 @@
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
+  // 可解锁 CG 的牌型（对应图鉴提示「打出顺子、同花顺或四条炸弹击败魔物即可点亮」）
+  const CG_UNLOCK_HAND_IDS = ['straight_five', 'straight_flush', 'four_bomb'];
+
   function selectMatchingCg(selectedCards, handScore, synergy) {
     const charCard = selectedCards.find((c) => c.charKey);
     const preferredChar = charCard ? charCard.charKey : null;
@@ -2138,7 +2311,9 @@
       renderHandCards();
     }
 
-    const syn = evaluatePromptSynergy(selected);
+    // 与预览共用同一套结算引擎（computeHandScore），动画只负责逐步播放结算记录
+    const score = computeHandScore(selected);
+    const syn = score.synergy;
     // 记录本局该牌型出牌次数 (用于参考图2的「次数」列)
     state.handPlayCounts[syn.id] = (state.handPlayCounts[syn.id] || 0) + 1;
 
@@ -2168,162 +2343,77 @@
 
     let chainStep = 0;
 
-    // 1. 依次结算选中的每张扑克牌点数 (+2 ~ +11)
-    for (let i = 0; i < selected.length; i++) {
-      const card = selected[i];
-      const contrib = computeCardContribution(card);
-      const cardEl = dom.holoHandRow.querySelector(`[data-instance-id="${card.instanceId}"]`);
-
-      if (cardEl) {
-        cardEl.classList.add('scoring-pulse');
-      }
-
-      await sleep(125);
-
-      runningPixels += contrib.pixels;
-      dom.basePixelsDisplay.textContent = String(Math.round(runningPixels));
-      bumpWell(dom.pixelsWell);
-      sfx.playChainDing(chainStep++, false);
-      spawnFloatingPopup(`${card.suitSymbol}${card.rankLabel} +${contrib.pixels}`, 'type-pixels', cardEl);
-
-      arenaVfx.fireAttack(card.suit, syn.id === 'four_bomb' || syn.id === 'straight_flush');
-      const hitCfg = getStageConfig();
-      if (dom.arenaBossSprite && hitCfg.bossHitSprite) {
-        dom.arenaBossSprite.src = hitCfg.bossHitSprite;
-      }
-      if (dom.bossCombatantBox) {
-        dom.bossCombatantBox.classList.remove('boss-damaged');
-        void dom.bossCombatantBox.offsetWidth;
-        dom.bossCombatantBox.classList.add('boss-damaged');
-      }
-
-      triggerStageShake(false);
-      await sleep(110);
-
-      if (contrib.mult !== 0) {
-        runningMult += contrib.mult;
-        dom.aestheticMultDisplay.textContent = String(Math.round(runningMult * 10) / 10);
-        bumpWell(dom.multWell);
-        sfx.playChainDing(chainStep++, false);
-        spawnFloatingPopup(`+${contrib.mult} 倍率`, 'type-mult', cardEl);
-        await sleep(105);
-      }
-
-      if (cardEl) {
-        cardEl.classList.remove('scoring-pulse');
-      }
-    }
-
-    // 2. 依次触发顶部小丑牌槽 (Jokers)
-    const pokerSuitCounts = { spade: 0, heart: 0, club: 0, diamond: 0 };
-    let faceCount = 0;
-    selected.forEach((c) => {
-      if (c.pokerSuit) pokerSuitCounts[c.pokerSuit] = (pokerSuitCounts[c.pokerSuit] || 0) + 1;
-      if (c.isFace) faceCount += 1;
-    });
-
-    const isPairOrBetter = syn.id !== 'high_card';
-    const isFiveCardCombo = ['straight_flush', 'full_house', 'flush_five', 'straight_five'].includes(syn.id);
-
-    for (let mIdx = 0; mIdx < state.modules.length; mIdx++) {
-      const mod = state.modules[mIdx];
-      const modEl = dom.jokerSlotsRow.querySelector(`[data-mod-index="${mIdx}"]`);
-      let triggeredText = null;
-      let isX = false;
-
-      if (mod.effectType === 'per_suit_mult' && pokerSuitCounts[mod.targetPokerSuit] > 0) {
-        const addM = pokerSuitCounts[mod.targetPokerSuit] * mod.val;
-        runningMult += addM;
-        triggeredText = `+${addM} 倍率`;
-      } else if (mod.effectType === 'per_suit_pixels' && pokerSuitCounts[mod.targetPokerSuit] > 0) {
-        const addP = pokerSuitCounts[mod.targetPokerSuit] * mod.val;
-        runningPixels += addP;
-        triggeredText = `+${addP} 伤害`;
-      } else if (mod.effectType === 'face_card_boost' && faceCount > 0) {
-        const addP = faceCount * mod.valPixels;
-        const addM = faceCount * mod.valMult;
-        runningPixels += addP;
-        runningMult += addM;
-        triggeredText = `+${addP}伤 +${addM}倍`;
-      } else if (mod.effectType === 'per_black_suit_hybrid') {
-        const blackCnt = pokerSuitCounts.spade + pokerSuitCounts.club;
-        if (blackCnt > 0) {
-          const addP = blackCnt * mod.valPixels;
-          const addM = blackCnt * mod.valMult;
-          runningPixels += addP;
-          runningMult += addM;
-          triggeredText = `+${addP}伤 +${addM}倍`;
+    for (const step of score.steps) {
+      if (step.kind === 'card') {
+        // 1. 依次结算选中的每张扑克牌点数 (+2 ~ +11)
+        const card = step.card;
+        const cardEl = dom.holoHandRow.querySelector(`[data-instance-id="${card.instanceId}"]`);
+        if (cardEl) {
+          cardEl.classList.add('scoring-pulse');
         }
-      } else if (mod.effectType === 'starter_abacus_boost') {
-        runningPixels += mod.valPixels;
-        if (isPairOrBetter) {
-          runningMult = Math.round(runningMult * mod.val * 10) / 10;
-          triggeredText = `+${mod.valPixels}伤 ×${mod.val}倍`;
-          isX = true;
-        } else {
-          triggeredText = `+${mod.valPixels} 伤害`;
-        }
-      } else if (mod.effectType === 'flat_mult') {
-        runningMult += mod.val;
-        triggeredText = `+${mod.val} 倍率`;
-      } else if (mod.effectType === 'flat_pixels') {
-        runningPixels += mod.val;
-        triggeredText = `+${mod.val} 伤害`;
-      } else if (mod.effectType === 'reroll_scaling_mult' && state.rerollsLeft > 0) {
-        const addM = state.rerollsLeft * mod.val;
-        runningMult += addM;
-        triggeredText = `+${addM} 倍率`;
-      } else if (mod.effectType === 'economy_mult') {
-        runningMult += mod.val;
-        triggeredText = `+${mod.val} 倍率`;
-      } else if (mod.effectType === 'global_xmult') {
-        runningMult = Math.round(runningMult * mod.val * 10) / 10;
-        triggeredText = `×${mod.val} 倍率!`;
-        isX = true;
-      } else if (
-        mod.effectType === 'five_cards_xmult' &&
-        (selected.length >= getMaxPlayableCards() || isFiveCardCombo)
-      ) {
-        runningMult = Math.round(runningMult * mod.val * 10) / 10;
-        triggeredText = `×${mod.val} 倍率!`;
-        isX = true;
-      } else if (mod.effectType === 'multi_char_xmult' && isPairOrBetter) {
-        runningMult = Math.round(runningMult * mod.val * 10) / 10;
-        triggeredText = `×${mod.val} 倍率!`;
-        isX = true;
-      }
 
-      if (triggeredText) {
-        if (modEl) modEl.classList.add('triggered');
+        await sleep(125);
+
+        runningPixels += step.addPixels;
         dom.basePixelsDisplay.textContent = String(Math.round(runningPixels));
-        dom.aestheticMultDisplay.textContent = String(Math.round(runningMult * 10) / 10);
-        bumpWell(isX ? dom.multWell : dom.pixelsWell);
-        sfx.playChainDing(chainStep++, isX);
-        spawnFloatingPopup(triggeredText, isX ? 'type-xmult' : 'type-mult', null);
-        triggerStageShake(isX);
-        await sleep(150);
-        if (modEl) modEl.classList.remove('triggered');
+        bumpWell(dom.pixelsWell);
+        sfx.playChainDing(chainStep++, false);
+        spawnFloatingPopup(`${card.suitSymbol}${card.rankLabel} +${step.addPixels}`, 'type-pixels', cardEl);
+
+        arenaVfx.fireAttack(card.suit, syn.id === 'four_bomb' || syn.id === 'straight_flush');
+        const hitCfg = getStageConfig();
+        if (dom.arenaBossSprite && hitCfg.bossHitSprite) {
+          dom.arenaBossSprite.src = hitCfg.bossHitSprite;
+        }
+        if (dom.bossCombatantBox) {
+          dom.bossCombatantBox.classList.remove('boss-damaged');
+          void dom.bossCombatantBox.offsetWidth;
+          dom.bossCombatantBox.classList.add('boss-damaged');
+        }
+
+        triggerStageShake(false);
+        await sleep(110);
+
+        if (step.addMult !== 0) {
+          dom.aestheticMultDisplay.textContent = String(round1(step.mult));
+          bumpWell(dom.multWell);
+          sfx.playChainDing(chainStep++, false);
+          spawnFloatingPopup(`+${step.addMult} 倍率`, 'type-mult', cardEl);
+          await sleep(105);
+        }
+        runningPixels = step.pixels;
+        runningMult = step.mult;
+
+        if (cardEl) {
+          cardEl.classList.remove('scoring-pulse');
+        }
+        continue;
       }
+
+      // 2. 主角被动天赋 / 道具栏宝物 / 濒死觉醒 / 魔王规则 依次触发
+      const modEl =
+        step.kind === 'module' ? dom.jokerSlotsRow.querySelector(`[data-mod-index="${step.modIndex}"]`) : null;
+      const anchorEl = step.kind === 'hero' ? dom.heroCombatantBox : step.kind === 'boss' ? dom.bossCombatantBox : null;
+      runningPixels = step.pixels;
+      runningMult = step.mult;
+      if (modEl) modEl.classList.add('triggered');
+      dom.basePixelsDisplay.textContent = String(Math.round(runningPixels));
+      dom.aestheticMultDisplay.textContent = String(round1(runningMult));
+      bumpWell(step.isX ? dom.multWell : dom.pixelsWell);
+      sfx.playChainDing(chainStep++, step.isX);
+      spawnFloatingPopup(step.text, step.isX ? 'type-xmult' : 'type-mult', anchorEl);
+      if (step.kind === 'module') triggerStageShake(step.isX);
+      await sleep(step.kind === 'module' ? 150 : 140);
+      if (modEl) modEl.classList.remove('triggered');
     }
 
-    // 濒死战损觉醒加成 (当处于濒死爆衣状态时，倍率额外 ×1.25，长瀞被动提升至 ×1.65)
-    if (isHeroInCriticalState()) {
-      const critMult = hero.key === 'nagatoro' ? 1.65 : 1.25;
-      runningMult = Math.round(runningMult * critMult * 10) / 10;
-      dom.aestheticMultDisplay.textContent = String(runningMult);
-      bumpWell(dom.multWell);
-      sfx.playChainDing(chainStep++, true);
-      spawnFloatingPopup(`💔 爆衣觉醒 ×${critMult}!`, 'type-xmult', null);
-      await sleep(140);
-    }
-
-    // 消耗本回合主动技临时加成
+    // 消耗本回合临时加成
     state.nextHandBonusPixels = 0;
     state.nextHandBonusMult = 0;
 
-    // 3. 汇总本手最终伤害并扣减 BOSS 生命值
+    // 3. 汇总本手最终伤害并扣减 BOSS 生命值（与预览完全一致）
     const wasBossInCritical = isBossInCriticalState();
-    const handTotal = Math.round(runningPixels * runningMult);
+    const handTotal = score.total;
     dom.previewTotalNumber.textContent = handTotal.toLocaleString();
     state.currentScore += handTotal;
     state.runBestHand = Math.max(state.runBestHand, handTotal);
@@ -2358,14 +2448,16 @@
       await sleep(520);
     }
 
-    const revealedCg = selectMatchingCg(selected, handTotal, syn);
-    state.currentCg = revealedCg;
-    if (!archive.unlockedCgs.includes(revealedCg.id)) {
-      archive.unlockedCgs.push(revealedCg.id);
+    // CG 解锁条件与图鉴文字一致：只有打出顺子、同花顺或四条炸弹时才揭晓并点亮一张 CG
+    if (CG_UNLOCK_HAND_IDS.includes(syn.id)) {
+      const revealedCg = selectMatchingCg(selected, handTotal, syn);
+      state.currentCg = revealedCg;
+      if (!archive.unlockedCgs.includes(revealedCg.id)) {
+        archive.unlockedCgs.push(revealedCg.id);
+      }
+      if (dom.monitorCgImage) dom.monitorCgImage.src = revealedCg.path;
     }
     saveArchive();
-
-    if (dom.monitorCgImage) dom.monitorCgImage.src = revealedCg.path;
 
     dom.ssrFlashBurst.classList.remove('active');
     void dom.ssrFlashBurst.offsetWidth;
@@ -2500,6 +2592,10 @@
         const inHandIds = new Set(state.hand.map((c) => c.instanceId));
         const refill = state.deck.filter((c) => !inHandIds.has(c.instanceId));
         if (refill.length === 0) break;
+        // 洗回牌堆的牌一律恢复正面，避免盲牌状态残留
+        refill.forEach((c) => {
+          c.isFaceDown = false;
+        });
         state.drawPile = shuffleArray(refill);
       }
       const nextCard = state.drawPile.pop();
@@ -2516,6 +2612,10 @@
     state.rerollsLeft -= 1;
     sfx.playClick(false);
 
+    // 被弃掉的盲牌恢复正面，之后重新洗回牌堆时不会仍是背面
+    selected.forEach((c) => {
+      c.isFaceDown = false;
+    });
     state.hand = state.hand.filter((c) => !state.selectedInstanceIds.has(c.instanceId));
     state.selectedInstanceIds.clear();
     drawUpToHandSize();
@@ -2654,6 +2754,7 @@
     if (btnLabel) btnLabel.textContent = '⚔️ 迎战下一关';
     renderShopModalContents();
     dom.shopModal.classList.remove('hidden');
+    sfx.playBgm('shop');
     setShopkeeperLine(
       '「欢迎光临。这里全是我花了一千年收集来的珍贵魔法宝物哦，鼠标移到宝物上我来给你介绍吧。」',
       'assets/alchemist/voices/shopkeeper_welcome.wav?v=18'
@@ -2671,6 +2772,7 @@
     if (btnLabel) btnLabel.textContent = '⚔️ 返回战斗';
     renderShopModalContents();
     dom.shopModal.classList.remove('hidden');
+    sfx.playBgm('shop');
     setShopkeeperLine(
       '「欢迎光临。想挑件趁手的魔导器吗？把鼠标移到宝物图片上，我来为你介绍。」',
       'assets/alchemist/voices/shopkeeper_welcome.wav?v=18'
@@ -2808,6 +2910,7 @@
   function startBlindStage(stageIndex) {
     state.stageIndex = stageIndex;
     const cfg = getStageConfig();
+    sfx.playBgm(cfg.isBoss ? 'boss' : 'table');
 
     state.currentScore = 0;
     state.targetScore = cfg.targetScore;
@@ -2818,6 +2921,10 @@
     state.nextHandBonusMult = 0;
     state.selectedInstanceIds.clear();
 
+    // 新关卡开始：清除整副牌上一关残留的盲牌（背面朝上）状态
+    state.deck.forEach((c) => {
+      c.isFaceDown = false;
+    });
     state.drawPile = shuffleArray(state.deck);
     state.hand = [];
     drawUpToHandSize();
@@ -2926,6 +3033,14 @@
         </div>
       `;
       card.addEventListener('click', () => {
+        // 出牌动画进行中禁止切换主角，否则未结束的结算会写入新开局
+        if (state.isAnimating) {
+          sfx.playGlitchBuzz();
+          return;
+        }
+        if (isRunInProgress() && !window.confirm(`更换主角为「${h.name}」将放弃当前进度并重新开局，确定吗？`)) {
+          return;
+        }
         state.heroIndex = idx;
         archive.heroIndex = idx;
         saveArchive();
@@ -2936,6 +3051,19 @@
       });
       grid.appendChild(card);
     });
+  }
+
+  // 当前是否有进行中的对局（已出牌/弃牌/过关/购物等），用于重新开局前的确认
+  function isRunInProgress() {
+    if (dom.runEndModal && !dom.runEndModal.classList.contains('hidden')) return false;
+    return (
+      state.stageIndex > 1 ||
+      state.currentScore > 0 ||
+      state.rendersLeft < MAX_HEARTS ||
+      state.rerollsLeft < 3 ||
+      state.credits > 0 ||
+      state.modules.length !== 1
+    );
   }
 
   function startNewRun() {
@@ -3155,12 +3283,7 @@
       });
     }
 
-    const btnHeroActiveSkill = document.getElementById('btnHeroActiveSkill');
-    if (btnHeroActiveSkill) {
-      btnHeroActiveSkill.addEventListener('click', () => {
-        useHeroActiveSkill();
-      });
-    }
+    // 注：本作主角仅有被动天赋，旧版主动战技 useHeroActiveSkill() 不再绑定任何按钮（保留代码但不可触发）
 
     const btnOpenHeroSelect = document.getElementById('btnOpenHeroSelect');
     if (btnOpenHeroSelect) {
@@ -3192,7 +3315,7 @@
     const btnToggleSound = document.getElementById('btnToggleSound');
     if (btnToggleSound) {
       const applySoundState = () => {
-        sfx.enabled = archive.soundEnabled;
+        sfx.syncEnabled(archive.soundEnabled);
         btnToggleSound.classList.toggle('active', archive.soundEnabled);
         btnToggleSound.textContent = archive.soundEnabled ? '🔊' : '🔇';
       };
@@ -3237,6 +3360,7 @@
     if (btnNewRun) {
       btnNewRun.addEventListener('click', () => {
         if (state.isAnimating) return;
+        if (isRunInProgress() && !window.confirm('重新开局将放弃当前进度，确定吗？')) return;
         startNewRun();
       });
     }
@@ -3302,12 +3426,24 @@
     bindEvents();
     if (dom.heroCombatantBox) {
       dom.heroCombatantBox.addEventListener('click', () => {
+        // 触屏/窄屏无法悬浮：点击主角切换显示被动天赋卡片
+        if (isTapPopoverMode()) {
+          const willOpen = !dom.heroCombatantBox.classList.contains('show-passive');
+          closeTapPopovers();
+          dom.heroCombatantBox.classList.toggle('show-passive', willOpen);
+        }
         if (state.isAnimating) return;
         const hero = HERO_VANGUARDS[state.heroIndex] || HERO_VANGUARDS[0];
-        triggerArenaCutin(hero, '必杀待命 · 点击💡提示选牌出击！');
+        triggerArenaCutin(hero, '整装待命 · 点击💡提示选牌出击！');
         sfx.playClick(true);
       });
     }
+    // 点击空白处收起所有点按弹出的说明卡片
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.joker-chip-card, .combatant-box')) {
+        closeTapPopovers();
+      }
+    });
     if (dom.bossCombatantBox) {
       dom.bossCombatantBox.addEventListener('click', () => {
         if (state.isAnimating) return;

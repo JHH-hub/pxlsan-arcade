@@ -1246,10 +1246,14 @@
       this.sfxEnabled = true;
       this.trackIndex = 0;
       this.loopTimer = null;
+      this.bgmAudio = null;
+      this.synthActive = false;
+      this.pausedForHidden = false;
       this.chordStep = 0;
       this.tracks = [
         {
           name: '🎵 雨夜街角咖啡屋',
+          url: 'assets/cafe/bgm/cafe_rain_night.mp3',
           tempoMs: 2100,
           // Dm9 -> G13 -> Cmaj9 -> A7alt 暖调 Lo-Fi 爵士和弦
           chords: [
@@ -1261,6 +1265,7 @@
         },
         {
           name: '🎵 放学后的黄昏拿铁',
+          url: 'assets/cafe/bgm/cafe_sunset.mp3',
           tempoMs: 1950,
           // Fmaj7 -> Em7 -> Dm7 -> Cmaj9
           chords: [
@@ -1272,6 +1277,7 @@
         },
         {
           name: '🎵 打烊前的微醺慢板',
+          url: 'assets/cafe/bgm/cafe_midnight.mp3',
           tempoMs: 2400,
           // Bbmaj7 -> Am7 -> Gm9 -> C9
           chords: [
@@ -1318,11 +1324,44 @@
     }
 
     startMusicLoop() {
+      this.stopMusicLoop();
+      const track = this.tracks[this.trackIndex];
+      if (track && track.url) {
+        try {
+          const el = new Audio(track.url);
+          el.loop = true;
+          el.volume = 0.46;
+          this.bgmAudio = el;
+          const fallback = (err) => {
+            // 切后台时 pause() 会让未完成的 play() 以 AbortError 拒绝，这不是加载失败
+            if (err && err.name === 'AbortError') return;
+            if (this.musicEnabled && this.bgmAudio === el) {
+              this.bgmAudio = null;
+              try {
+                el.pause();
+              } catch (_) {}
+              this.startSynthFallbackLoop();
+            }
+          };
+          el.addEventListener('error', () => fallback(), { once: true });
+          // 404 / 解码失败：play() 拒绝或 audio 元素触发 error，均降级到合成器
+          el.play().catch(fallback);
+          return;
+        } catch (_) {}
+      }
+      this.startSynthFallbackLoop();
+    }
+
+    startSynthFallbackLoop() {
       const ctx = this.ensureContext();
       if (!ctx) return;
-      this.stopMusicLoop();
+      if (this.loopTimer) {
+        clearTimeout(this.loopTimer);
+        this.loopTimer = null;
+      }
+      this.synthActive = true;
       const playStep = () => {
-        if (!this.musicEnabled) return;
+        if (!this.musicEnabled || this.pausedForHidden) return;
         const track = this.tracks[this.trackIndex];
         const chord = track.chords[this.chordStep % track.chords.length];
         this.playRhodesChord(chord, track.tempoMs / 1000);
@@ -1332,7 +1371,44 @@
       playStep();
     }
 
+    // 页面切到后台时暂停 BGM（mp3 与合成器），回到前台且 BGM 仍开启时恢复
+    handleVisibilityChange(hidden) {
+      if (hidden) {
+        if (!this.musicEnabled || this.pausedForHidden) return;
+        this.pausedForHidden = true;
+        if (this.bgmAudio) {
+          try {
+            this.bgmAudio.pause();
+          } catch (_) {}
+        }
+        if (this.loopTimer) {
+          clearTimeout(this.loopTimer);
+          this.loopTimer = null;
+        }
+        if (this.ctx && this.ctx.state === 'running') this.ctx.suspend().catch(() => {});
+      } else {
+        if (!this.pausedForHidden) return;
+        this.pausedForHidden = false;
+        if (!this.musicEnabled) return;
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+        if (this.bgmAudio) {
+          this.bgmAudio.play().catch(() => {});
+        } else if (this.synthActive) {
+          this.startSynthFallbackLoop();
+        }
+      }
+    }
+
     stopMusicLoop() {
+      this.synthActive = false;
+      this.pausedForHidden = false;
+      if (this.bgmAudio) {
+        try {
+          this.bgmAudio.pause();
+          this.bgmAudio.currentTime = 0;
+        } catch (_) {}
+        this.bgmAudio = null;
+      }
       if (this.loopTimer) {
         clearTimeout(this.loopTimer);
         this.loopTimer = null;
@@ -1615,18 +1691,27 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
       const parsed = JSON.parse(raw);
-      if (typeof parsed.night === 'number') state.night = parsed.night;
-      if (typeof parsed.coins === 'number') state.coins = parsed.coins;
-      if (typeof parsed.servedCount === 'number') state.servedCount = parsed.servedCount;
+      if (!parsed || typeof parsed !== 'object') return;
+      const isNum = (v) => typeof v === 'number' && Number.isFinite(v);
+      if (isNum(parsed.night) && parsed.night >= 1) state.night = Math.floor(parsed.night);
+      if (isNum(parsed.coins) && parsed.coins >= 0) state.coins = Math.floor(parsed.coins);
+      if (isNum(parsed.servedCount) && parsed.servedCount >= 0) state.servedCount = Math.floor(parsed.servedCount);
       if (typeof parsed.unlockAllProps === 'boolean') state.unlockAllProps = parsed.unlockAllProps;
       if (Array.isArray(parsed.unlockedRecipes)) {
-        state.unlockedRecipes = Array.from(new Set(['rec_kaguya', 'rec_takagi', ...parsed.unlockedRecipes]));
+        const validIds = new Set(RECIPES.map((r) => r.id));
+        state.unlockedRecipes = Array.from(
+          new Set(['rec_kaguya', 'rec_takagi', ...parsed.unlockedRecipes])
+        ).filter((id) => typeof id === 'string' && validIds.has(id));
       }
       if (parsed.heroineStats && typeof parsed.heroineStats === 'object') {
         Object.keys(parsed.heroineStats).forEach((k) => {
-          if (state.heroineStats[k]) {
-            state.heroineStats[k] = { ...state.heroineStats[k], ...parsed.heroineStats[k] };
-          }
+          const saved = parsed.heroineStats[k];
+          if (!state.heroineStats[k] || !saved || typeof saved !== 'object') return;
+          const cur = state.heroineStats[k];
+          if (isNum(saved.visits) && saved.visits >= 0) cur.visits = Math.floor(saved.visits);
+          if (isNum(saved.affection)) cur.affection = Math.max(0, Math.min(100, saved.affection));
+          if (typeof saved.unlockedPostcard === 'boolean') cur.unlockedPostcard = saved.unlockedPostcard;
+          if (isNum(saved.outfitIdx) && saved.outfitIdx >= 0) cur.outfitIdx = Math.floor(saved.outfitIdx);
         });
       }
       if (parsed.currentHeroineId && HEROINES.some((h) => h.id === parsed.currentHeroineId)) {
@@ -2557,6 +2642,8 @@
 
   function startPointerGrabProp(e, grabInfo) {
     if (e.button !== undefined && e.button !== 0) return;
+    // 已经拿着一个道具（多指触摸等）时忽略第二次按下，避免监听器泄漏与状态错乱
+    if (activeGrab) return;
     e.preventDefault();
 
     const follower = document.getElementById('hand-held-prop-follower');
@@ -2607,6 +2694,7 @@
 
     const onPointerMove = (ev) => {
       if (!activeGrab) return;
+      if (ev.pointerId !== undefined && e.pointerId !== undefined && ev.pointerId !== e.pointerId) return;
       const cx = ev.clientX;
       const cy = ev.clientY;
       const dx = cx - activeGrab.lastX;
@@ -2659,7 +2747,11 @@
       }
     };
 
-    const onPointerUp = () => {
+    const pointerId = e.pointerId;
+    const onPointerUp = (ev) => {
+      // 多指触摸时只响应拿起道具的那根手指
+      if (ev && pointerId !== undefined && ev.pointerId !== undefined && ev.pointerId !== pointerId) return;
+      const cancelled = !!ev && ev.type === 'pointercancel';
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
       window.removeEventListener('pointercancel', onPointerUp);
@@ -2680,6 +2772,8 @@
         c.classList.remove('awaiting-serve-drop', 'hover-serve-drop');
       });
 
+      // pointercancel（系统手势/滚动抢占触摸）：只清理拖拽状态，不执行任何动作
+      if (cancelled) return;
       // 如果悬停时已经倒进去了则不重复触发；如果是松手投放在目标上或原地轻点 (<14px) 则执行动作
       if (!g.pouredWhileHovering) {
         if (g.overTarget) {
@@ -3100,20 +3194,29 @@
       targetSeatIdx !== null && state.activeSeats[targetSeatIdx]
         ? targetSeatIdx
         : state.focusedSeatIdx;
-    state.focusedSeatIdx = sIdx;
     const seat = state.activeSeats[sIdx];
+    // 庆祝中（1.5秒换客动画）的席位不能再次奉茶
+    if (seat && seat.status !== 'waiting') return;
+    state.focusedSeatIdx = sIdx;
     if (seat) state.currentHeroineId = seat.heroineId;
     serveDrinkToHeroine(sIdx);
   }
 
   function serveDrinkToHeroine(seatIdxOverride = null) {
-    audio.playServeBellSound();
-
     const sIdx =
       seatIdxOverride !== null && state.activeSeats[seatIdxOverride]
         ? seatIdxOverride
         : state.focusedSeatIdx;
     const seat = state.activeSeats[sIdx];
+    // 防重复结算：只有正在候餐的客人才能被奉茶（庆祝动画期间忽略按钮与拖杯）
+    if (seat && seat.status !== 'waiting') return;
+    // 空杯（没加任何配料）不允许出餐
+    if (!state.cup.addons || state.cup.addons.length === 0) {
+      showToast('☕ 杯子还是空的～先挑几样配料加进杯里再奉茶吧！');
+      return;
+    }
+    audio.playServeBellSound();
+
     const heroine = seat
       ? HEROINES.find((h) => h.id === seat.heroineId) || getCurrentHeroine()
       : getCurrentHeroine();
@@ -3223,7 +3326,8 @@
     if (tierKey === 'perfect' || tierKey === 'good') {
       state.combo += 1;
     } else {
-      state.combo = 1;
+      // 1星出餐与客人离开一致：连击清零
+      state.combo = 0;
     }
     const comboBonus = state.combo > 1 ? (state.combo - 1) * 25 : 0;
     const totalEarned = coinReward + comboBonus;
@@ -3292,8 +3396,10 @@
     document.getElementById('dialogue-text').textContent = reaction.quote;
     renderNightTalkChoices(heroine, order);
 
-    // 立即清空重置中央杯子，准备做下一位客人的单！
+    // 立即清空重置中央杯子，准备做下一位客人的单！（温度与基底一并复位，避免下一杯直接继承得分）
     state.cup.addons = [];
+    state.cup.temp = 'hot';
+    state.cup.base = (getUnlockedBases()[0] || BASES[0]).id;
     state.cup.extractBonus = 0;
     state.cup.extractPos = 8;
     state.cup.extractGrade = '待冲泡';
@@ -3578,14 +3684,17 @@
       btn.addEventListener('click', () => {
         const newShift = btn.dataset.shift;
         if (!SHIFTS[newShift]) return;
+        // 已处于该时段：什么也不做（避免重复累加营业夜数）
+        if (newShift === state.shift) return;
+        const prevShift = state.shift;
         state.shift = newShift;
-        if (newShift === 'dusk') state.night += 1;
+        // 仅在「晚上雨夜档 → 白天晴朗档」（打烊后迎来新的一天）时营业夜数 +1
+        if (prevShift === 'late' && newShift === 'dusk') state.night += 1;
         renderShiftEnvironment();
         renderTopStats();
-        // 自动迎接符合该时段的熟客
-        const pool = HEROINES.filter((h) => h.preferredShifts.includes(newShift));
-        const nextGuest = pool[Math.floor(Math.random() * pool.length)] || HEROINES[0];
-        inviteHeroineToCounter(nextGuest.id);
+        saveState();
+        // 不替换正在候餐的客人（避免借切换时段躲过倒计时）；之后新入座的客人会按新时段的熟客池挑选
+        showToast(`🕰️ 已切换到${SHIFTS[newShift].name}，之后入座的客人会是这个时段的熟客～`);
       });
     });
 
@@ -3601,10 +3710,14 @@
         const on = audio.toggleMusic();
         vinylDisc.classList.toggle('spinning', on);
         const curTrack = audio.tracks[audio.trackIndex];
-        trackNameEl.textContent = on ? curTrack.name : '🔇 Lo-Fi 已静音';
-        showToast(on ? `🎶 开始播放：${curTrack.name}` : '🔇 已暂停背景 Lo-Fi 电钢琴');
+        trackNameEl.textContent = on ? curTrack.name : '🔇 BGM 已静音';
+        showToast(on ? `🎶 开始播放：${curTrack.name}` : '🔇 已暂停背景音乐');
       });
     }
+    // 切到后台标签页时暂停 BGM（mp3 / 合成器），回来后若 BGM 仍开启则继续播放
+    document.addEventListener('visibilitychange', () => {
+      audio.handleVisibilityChange(document.hidden);
+    });
     if (lofiNextBtn) {
       lofiNextBtn.addEventListener('click', () => {
         const next = audio.nextTrack();
@@ -3632,6 +3745,15 @@
         if (m) m.classList.remove('hidden');
       });
     }
+    // 首次访问自动弹出一次玩法教程（localStorage 不可用时静默跳过）
+    try {
+      const TUTORIAL_SEEN_KEY = 'pxlsan-game:arcade:cafe:tutorialSeen';
+      if (!localStorage.getItem(TUTORIAL_SEEN_KEY)) {
+        const m = document.getElementById('modal-how-to-play');
+        if (m) m.classList.remove('hidden');
+        localStorage.setItem(TUTORIAL_SEEN_KEY, '1');
+      }
+    } catch (_) {}
 
     const rushToggleBtn = document.getElementById('btn-toggle-rush-mode');
     if (rushToggleBtn) {
@@ -4001,6 +4123,7 @@
     const heroine = getCurrentHeroine();
     const box = document.getElementById('heroine-stage-box');
     cafeSpineRig.loadRig(`assets/spine/${heroine.id}/rig.json`).then((ok) => {
+      if (ok === null) return; // 已被更新的加载请求取代
       if (box) box.classList.toggle('spine-active', !!ok);
       if (ok) cafeSpineRig.playState('talk', 1.2);
     });
@@ -4012,7 +4135,12 @@
       cafeSpineRig = new window.SpineRigInstance(spineCanvas, { flipX: false, showBones: showCafeBones });
       syncCafeSpineHeroine();
 
+      // 画布处于隐藏兼容节点中（offsetParent 为 null）或页面切到后台时，跳过渲染与眼神追踪
+      const isSpineCanvasVisible = () => !document.hidden && spineCanvas.offsetParent !== null;
+      let spineVisibleCache = isSpineCanvasVisible();
+
       window.addEventListener('pointermove', (e) => {
+        if (!spineVisibleCache) return;
         if (cafeSpineRig) cafeSpineRig.setLookAtClientPos(e.clientX, e.clientY);
       });
 
@@ -4034,6 +4162,15 @@
 
       let lastT = performance.now();
       const loop = (now) => {
+        spineVisibleCache = isSpineCanvasVisible();
+        if (!spineVisibleCache) {
+          // 不可见时不跑逐帧 rAF，每 500ms 低频检查一次是否重新显示
+          setTimeout(() => {
+            lastT = performance.now();
+            requestAnimationFrame(loop);
+          }, 500);
+          return;
+        }
         const dt = Math.min(0.05, Math.max(0.005, (now - lastT) / 1000));
         lastT = now;
         if (cafeSpineRig && cafeSpineRig.loaded) {
