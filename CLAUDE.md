@@ -8,6 +8,20 @@
 
 ---
 
+## 〇、 当前结构与上线流程（2026-11-21 更新，以本节为准）
+
+- **代码位置**：三款游戏各自自包含在 `games/<game>/`（`index.html` + `src/arcade/*.js|css` + `assets/`）：
+  - `games/tag-alchemist/` 次元小丑牌：魔王讨伐战
+  - `games/midnight-cafe/` 放学以后的深夜咖啡馆
+  - `games/neon-beat/` 次元节拍：糖果风暴
+  - 下文第一节里的 `tag-alchemist.html`、根目录 `src/arcade/...` 路径是旧结构，已失效。
+- **正式上线位置**：主站 `pxlsan-main` 的 `games/` 目录 → https://pxlsan.cn/game （国内镜像 pxlsan.tctec.com）。本仓库只是开发源，**不单独部署**（GitHub Pages 已关闭）。
+- **上线步骤**：
+  1. 在本仓库改好、本地测试（`python -m http.server` 打开 `games/<game>/index.html`），提交推送。
+  2. 在 `pxlsan-main` 目录运行 `node scripts/sync-arcade-games.mjs`：整体替换 `games/<game>/`，把返回链接改成 `../../game.html`，并给 JS/CSS 生成内容哈希文件名（主站 CDN 会忽略 `?v=`）。
+  3. 在 `pxlsan-main` 提交推送 `main`：Cloudflare 自动部署 pxlsan.cn，`Sync to Tencent COS` 工作流同步国内镜像（约 15–40 分钟）。
+- **本仓库内的缓存**：改了 JS/CSS 记得同时调高 `index.html` 里的 `?v=`（本地/测试用；主站用哈希文件名）。
+
 ## 一、 项目定位与解耦现状（100% 独立于 `pxlsan-game`）
 
 1. **独立仓库路径**：`C:\Users\Administrator\Documents\GitHub\pxlsan-arcade`
