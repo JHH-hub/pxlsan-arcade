@@ -2258,6 +2258,28 @@
     };
   }
 
+  // 席位实际订单：新手引导期间可为该席位强制一份简单订单（热饮 + 1 茶底 + 1 配料）
+  function getSeatOrder(seat, heroine) {
+    const order = buildAdaptedOrder(heroine, seat ? seat.orderIdx : 0);
+    const f = seat && seat.forcedOrder;
+    if (!f) return order;
+    const b = BASES.find((x) => x.id === f.base);
+    const a = ADDONS.find((x) => x.id === f.addon);
+    return {
+      ...order,
+      temp: f.temp,
+      idealBases: [f.base],
+      idealAddons: [f.addon],
+      requiredAddonCount: 1,
+      dislikedAddons: [],
+      clues: [
+        `🌡️ 温度：${f.temp === 'hot' ? '🔥 热饮陶瓷杯' : '🧊 冰饮玻璃杯'}`,
+        `🫖 基底：${b ? b.name : ''}`,
+        `🌿 配料 (1项)：${a ? a.name : ''}`
+      ]
+    };
+  }
+
   function getTargetSeatCount() {
     const lv = getBaristaLevel();
     return lv === 1 ? 2 : 3; // 开局 2 位客人同台排队，Lv.2 起 3 位客人同台冲刺！
@@ -2317,7 +2339,7 @@
   function getCurrentOrder() {
     const seat = getFocusedSeat();
     const heroine = getCurrentHeroine();
-    return buildAdaptedOrder(heroine, seat ? seat.orderIdx : 0);
+    return getSeatOrder(seat, heroine);
   }
 
   function renderBaristaLevelHUD() {
@@ -2385,7 +2407,7 @@
       .map((seat, idx) => {
         const heroine = HEROINES.find((h) => h.id === seat.heroineId) || HEROINES[0];
         const hStat = state.heroineStats[heroine.id] || { visits: 1, affection: 35, outfitIdx: 0 };
-        const order = buildAdaptedOrder(heroine, seat.orderIdx);
+        const order = getSeatOrder(seat, heroine);
         const isFocused = idx === state.focusedSeatIdx;
 
         const portraitSrc =
@@ -2564,6 +2586,11 @@
 
   // ==================== 实时手把手发光指引引擎 (告诉玩家下一步该拿哪个壶/咖啡机怎么用) ====================
   function updateLiveStepGuide() {
+    renderLiveStepGuide();
+    onboardingCheck();
+  }
+
+  function renderLiveStepGuide() {
     const guideTextEl = document.getElementById('live-step-guide-text');
     const order = getCurrentOrder();
     const heroine = getCurrentHeroine();
@@ -3327,7 +3354,7 @@
     const heroine = seat
       ? HEROINES.find((h) => h.id === seat.heroineId) || getCurrentHeroine()
       : getCurrentHeroine();
-    const order = seat ? buildAdaptedOrder(heroine, seat.orderIdx) : getCurrentOrder();
+    const order = seat ? getSeatOrder(seat, heroine) : getCurrentOrder();
     const drinkInfo = computeCurrentDrinkTitle();
 
     // 评分算法：温度(20) + 基底(30) + 辅料匹配(25) + 萃取加成(up to 25) + 拉花美观加分(up to 15)
@@ -3713,6 +3740,7 @@
   // 任意弹窗（教程、手账、名册、拉花、品鉴、结算）打开或页面切到后台时，所有计时都暂停
   function isGamePaused() {
     if (document.hidden) return true;
+    if (onboarding.active) return true; // 新手引导期间冻结营业时钟与客人耐心
     return Array.from(document.querySelectorAll('.cafe-modal-backdrop')).some(
       (m) => !m.classList.contains('hidden')
     );
@@ -3951,8 +3979,8 @@
     startRound(true);
   }
 
-  function restoreRoundSnapshot() {
-    const snap = state.roundSnapshot;
+  function restoreRoundSnapshot(snapOverride = null) {
+    const snap = snapOverride || state.roundSnapshot;
     if (!snap) return;
     state.night = snap.night;
     state.shift = snap.shift;
@@ -4055,6 +4083,508 @@
     }, 3100);
   }
 
+  // ==================== 新手引导「带你做第一杯」：聚光灯 + 手势动画 + 真实操作推进 ====================
+  // 只在玩家真的完成操作（倒入茶底 / 加入配料 / 奉茶 …）后才推进；引导期间营业时钟与客人耐心冻结
+  const ONBOARDING_KEY = 'pxlsan-game:arcade:cafe:onboardingDone';
+  const ONB_CALLOUT_MS = 2600;
+  const onboarding = {
+    active: false,
+    steps: [],
+    idx: -1,
+    seatUid: null,
+    snapshot: null,
+    servedAtStart: 0,
+    mode: 'tap',
+    els: null,
+    raf: 0,
+    autoTimer: 0,
+    lastLayout: '',
+    resizeTimer: 0
+  };
+
+  function isOnboardingDone() {
+    try {
+      return localStorage.getItem(ONBOARDING_KEY) === '1';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function markOnboardingDone() {
+    try {
+      localStorage.setItem(ONBOARDING_KEY, '1');
+    } catch (_) {}
+  }
+
+  function onbSeatIdx() {
+    return state.activeSeats.findIndex((s) => s.seatUid === onboarding.seatUid);
+  }
+
+  function onbSeatCard() {
+    const idx = onbSeatIdx();
+    return idx === -1 ? null : document.querySelector(`.customer-seat-card[data-seat-idx="${idx}"]`);
+  }
+
+  function onbSeat() {
+    const idx = onbSeatIdx();
+    return idx === -1 ? null : state.activeSeats[idx];
+  }
+
+  function buildOnboardingSteps(order) {
+    const base = BASES.find((b) => b.id === order.idealBases[0]) || BASES[0];
+    const addon = ADDONS.find((a) => a.id === order.idealAddons[0]) || ADDONS[0];
+    const cup = () => document.getElementById('center-draggable-cup');
+    // 手势终点指向中央杯子本身（实际可投放区域是更大的整块杯垫）
+    const dropzone = () => document.getElementById('center-draggable-cup');
+    const iced = order.temp === 'iced';
+    return [
+      {
+        id: 'ticket',
+        kind: 'callout',
+        text: '先看她点了什么',
+        el: () => {
+          const card = onbSeatCard();
+          return (card && card.querySelector('.seat-visual-formula')) || card;
+        }
+      },
+      {
+        id: 'temp',
+        kind: 'action',
+        text: iced ? '按住冰桶，拖进杯子' : '点一下热饮杯',
+        tapText: iced ? '点一下冰桶加冰' : '点一下热饮杯',
+        el: () => document.getElementById(iced ? 'btn-ice-bucket-scoop' : 'btn-temp-hot'),
+        dest: iced ? dropzone : null,
+        done: () => state.cup.temp === order.temp
+      },
+      {
+        id: 'base',
+        kind: 'action',
+        text: `按住${base.name}，拖进杯子`,
+        tapText: `点一下${base.name}`,
+        el: () => document.querySelector(`[data-base-id="${base.id}"]`),
+        dest: dropzone,
+        done: () => state.cup.base === base.id
+      },
+      {
+        id: 'addon',
+        kind: 'action',
+        text: `再把${addon.name}拖进去`,
+        tapText: `点一下${addon.name}`,
+        el: () => document.querySelector(`[data-addon-id="${addon.id}"]`),
+        dest: dropzone,
+        done: () => state.cup.addons.includes(addon.id)
+      },
+      {
+        id: 'serve',
+        kind: 'action',
+        text: '把杯子拖给她',
+        tapText: '点「奉茶」递给她',
+        el: cup,
+        tapEl: () => {
+          const card = onbSeatCard();
+          return card && card.querySelector('[data-quick-serve]');
+        },
+        dest: () => onbSeatCard(),
+        destInteractive: true,
+        done: () => !!state.round && state.round.served > onboarding.servedAtStart
+      },
+      {
+        id: 'chat',
+        kind: 'callout',
+        interactive: true,
+        text: '选个话题，多拿小费',
+        el: () => onbSeatCard(),
+        done: () => {
+          const seat = onbSeat();
+          return !seat || (seat.talk && seat.talk.answered);
+        }
+      },
+      {
+        id: 'clock',
+        kind: 'callout',
+        text: '3分钟内赚够🎯目标',
+        el: () => document.getElementById('shift-round-hud')
+      },
+      {
+        id: 'rep',
+        kind: 'callout',
+        text: '久等或差评会扣❤',
+        el: () => document.getElementById('round-rep')
+      }
+    ];
+  }
+
+  function ensureOnboardingDom() {
+    if (onboarding.els) return onboarding.els;
+    const root = document.createElement('div');
+    root.className = 'onb-root';
+    root.innerHTML = `
+      <svg class="onb-shade" aria-hidden="true">
+        <path class="onb-shade-path" fill-rule="evenodd"></path>
+        <line class="onb-drag-line" x1="0" y1="0" x2="0" y2="0"></line>
+      </svg>
+      <div class="onb-blockers"></div>
+      <div class="onb-ring"></div>
+      <div class="onb-hand" aria-hidden="true">👆</div>
+      <div class="onb-bubble" role="status" aria-live="polite"><span class="onb-bubble-text"></span></div>
+      <button type="button" class="onb-skip">跳过教程</button>
+    `;
+    document.body.appendChild(root);
+    const els = {
+      root,
+      svg: root.querySelector('.onb-shade'),
+      path: root.querySelector('.onb-shade-path'),
+      line: root.querySelector('.onb-drag-line'),
+      blockers: root.querySelector('.onb-blockers'),
+      ring: root.querySelector('.onb-ring'),
+      hand: root.querySelector('.onb-hand'),
+      bubble: root.querySelector('.onb-bubble'),
+      bubbleText: root.querySelector('.onb-bubble-text'),
+      skip: root.querySelector('.onb-skip')
+    };
+    // 暗幕（含不可点的展示洞）拦截点击：提示步可点任意处跳过，操作步轻晃气泡提醒
+    const onShadeClick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const step = onboarding.steps[onboarding.idx];
+      if (!step) return;
+      if (step.kind === 'callout') {
+        advanceOnboarding();
+      } else {
+        els.bubble.classList.remove('onb-nudge');
+        void els.bubble.offsetWidth;
+        els.bubble.classList.add('onb-nudge');
+      }
+    };
+    els.path.addEventListener('click', onShadeClick);
+    els.blockers.addEventListener('click', onShadeClick);
+    els.bubble.addEventListener('click', onShadeClick);
+    els.skip.addEventListener('click', (e) => {
+      e.stopPropagation();
+      finishOnboarding(false);
+    });
+    onboarding.els = els;
+    return els;
+  }
+
+  function pickOnboardingOrder(seat, heroine) {
+    const order = buildAdaptedOrder(heroine, seat.orderIdx);
+    const cupBase = state.cup.base;
+    const bases = getUnlockedBases().filter((b) => b.id !== 'espresso' && b.id !== cupBase);
+    const base =
+      bases.find((b) => order.idealBases.includes(b.id)) || bases[0] || getUnlockedBases()[0] || BASES[0];
+    const addons = getUnlockedAddons().filter((a) => !(order.dislikedAddons || []).includes(a.id));
+    const addon =
+      addons.find((a) => order.idealAddons.includes(a.id)) || addons[0] || getUnlockedAddons()[0] || ADDONS[0];
+    return { temp: 'hot', base: base.id, addon: addon.id };
+  }
+
+  function startOnboarding() {
+    if (onboarding.active || !state.round || activeGrab) return;
+    ensureCustomerSeats();
+    state.focusedSeatIdx = 0;
+    const seat = state.activeSeats[0];
+    if (!seat) return;
+    state.currentHeroineId = seat.heroineId;
+    const heroine = HEROINES.find((h) => h.id === seat.heroineId) || HEROINES[0];
+    resetCupForNewRound();
+    seat.forcedOrder = pickOnboardingOrder(seat, heroine);
+    seat.timeLeft = seat.maxTime;
+
+    onboarding.active = true;
+    onboarding.seatUid = seat.seatUid;
+    onboarding.snapshot = takeRoundSnapshot();
+    onboarding.servedAtStart = state.round.served;
+    onboarding.steps = buildOnboardingSteps(getSeatOrder(seat, heroine));
+    onboarding.idx = -1;
+    onboarding.lastLayout = '';
+    ensureOnboardingDom();
+    onboarding.els.root.classList.remove('hidden');
+    document.body.classList.add('cafe-onboarding-on');
+
+    renderStep1Ingredients();
+    updateLiveChalkboardPreview();
+    updateExtractionUI();
+    goToOnboardingStep(0);
+    const loop = () => {
+      if (!onboarding.active) return;
+      layoutOnboarding();
+      onboarding.raf = requestAnimationFrame(loop);
+    };
+    onboarding.raf = requestAnimationFrame(loop);
+    window.addEventListener('resize', onOnboardingResize);
+  }
+
+  function onOnboardingResize() {
+    clearTimeout(onboarding.resizeTimer);
+    onboarding.resizeTimer = setTimeout(() => {
+      if (onboarding.active) prepareOnboardingStep(onboarding.steps[onboarding.idx]);
+    }, 180);
+  }
+
+  // 第一个未完成的操作步（倒错/撤回配料时会自动回退到对应步骤）
+  function firstPendingActionIdx() {
+    // 已奉茶：杯子会自动清空，前面的操作步不再回退
+    const serve = onboarding.steps.find((s) => s.id === 'serve');
+    if (serve && serve.done()) return -1;
+    return onboarding.steps.findIndex((s) => s.kind === 'action' && !s.done());
+  }
+
+  function goToOnboardingStep(i) {
+    clearTimeout(onboarding.autoTimer);
+    onboarding.idx = i;
+    const step = onboarding.steps[i];
+    if (!step) {
+      finishOnboarding(true);
+      return;
+    }
+    if (step.kind === 'action' && step.done()) {
+      goToOnboardingStep(i + 1);
+      return;
+    }
+    onboarding.lastLayout = '';
+    prepareOnboardingStep(step);
+    if (step.kind === 'callout') {
+      onboarding.autoTimer = setTimeout(() => advanceOnboarding(), ONB_CALLOUT_MS);
+    }
+  }
+
+  function advanceOnboarding() {
+    if (!onboarding.active) return;
+    goToOnboardingStep(onboarding.idx + 1);
+  }
+
+  // 决定「拖拽」还是「点击」演示：起点与杯子能同屏时演示拖拽，否则（窄屏）演示点击
+  function prepareOnboardingStep(step) {
+    if (!step) return;
+    const el = step.el && step.el();
+    const dest = step.dest && step.dest();
+    const vh = window.innerHeight;
+    onboarding.mode = 'tap';
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    let top = r.top;
+    let bottom = r.bottom;
+    if (dest) {
+      const d = dest.getBoundingClientRect();
+      const uTop = Math.min(r.top, d.top);
+      const uBottom = Math.max(r.bottom, d.bottom);
+      if (uBottom - uTop <= vh - 150) {
+        onboarding.mode = 'drag';
+        top = uTop;
+        bottom = uBottom;
+      }
+    }
+    let focusEl = el;
+    if (onboarding.mode === 'tap' && step.tapEl) {
+      const t = step.tapEl();
+      if (t) {
+        focusEl = t;
+        const tr = t.getBoundingClientRect();
+        top = tr.top;
+        bottom = tr.bottom;
+      }
+    }
+    // 只滚动可滚动的页面（窄屏布局）；桌面端 body 为 overflow:hidden，不做程序化滚动
+    const scroller = document.scrollingElement;
+    const canScroll =
+      scroller && scroller.scrollHeight > vh + 4 && getComputedStyle(document.body).overflowY !== 'hidden';
+    if (canScroll && (top < 70 || bottom > vh - 90)) {
+      window.scrollBy(0, Math.round((top + bottom) / 2 - vh / 2));
+    }
+  }
+
+  // 真实游戏状态变化时调用（挂在 updateLiveStepGuide 上）：完成当前操作即推进
+  function onboardingCheck() {
+    if (!onboarding.active) return;
+    const step = onboarding.steps[onboarding.idx];
+    if (!step) return;
+    if (step.kind === 'action') {
+      const pending = firstPendingActionIdx();
+      if (pending === -1) {
+        goToOnboardingStep(onboarding.steps.findIndex((s) => s.id === 'serve') + 1);
+      } else if (pending !== onboarding.idx) {
+        goToOnboardingStep(pending);
+      }
+    } else if (step.done && step.done()) {
+      clearTimeout(onboarding.autoTimer);
+      onboarding.autoTimer = setTimeout(() => advanceOnboarding(), 1200);
+    }
+  }
+
+  function onbRect(el, pad) {
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 && r.height === 0) return null;
+    return {
+      x: Math.round(r.left - pad),
+      y: Math.round(r.top - pad),
+      w: Math.round(r.width + pad * 2),
+      h: Math.round(r.height + pad * 2)
+    };
+  }
+
+  function onbRectPath(r, rad) {
+    const k = Math.min(rad, r.w / 2, r.h / 2);
+    return (
+      `M${r.x + k} ${r.y}H${r.x + r.w - k}Q${r.x + r.w} ${r.y} ${r.x + r.w} ${r.y + k}` +
+      `V${r.y + r.h - k}Q${r.x + r.w} ${r.y + r.h} ${r.x + r.w - k} ${r.y + r.h}` +
+      `H${r.x + k}Q${r.x} ${r.y + r.h} ${r.x} ${r.y + r.h - k}V${r.y + k}Q${r.x} ${r.y} ${r.x + k} ${r.y}Z`
+    );
+  }
+
+  function layoutOnboarding() {
+    const els = onboarding.els;
+    const step = onboarding.steps[onboarding.idx];
+    if (!els || !step) return;
+    // 任何弹窗（拉花放大镜等）打开时让出画面
+    const modalOpen = Array.from(document.querySelectorAll('.cafe-modal-backdrop')).some(
+      (m) => !m.classList.contains('hidden')
+    );
+    els.root.classList.toggle('onb-yield', modalOpen);
+    els.root.classList.toggle('onb-dragging', !!activeGrab);
+    if (modalOpen) return;
+
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const isTap = onboarding.mode === 'tap';
+    let primaryEl = step.el && step.el();
+    if (isTap && step.tapEl) primaryEl = step.tapEl() || primaryEl;
+    const destEl = !isTap && step.dest ? step.dest() : null;
+    const pr = primaryEl ? onbRect(primaryEl, 6) : null;
+    const dr = destEl ? onbRect(destEl, 4) : null;
+    const text = isTap && step.tapText ? step.tapText : step.text;
+
+    // 目标还在屏幕外（窄屏图片加载导致布局变化 / 平滑滚动被打断）：节流地再滚一次
+    if (pr && !activeGrab && (pr.y < 0 || pr.y + pr.h > vh)) {
+      const now = Date.now();
+      if (now - (onboarding.lastScrollAt || 0) > 900) {
+        onboarding.lastScrollAt = now;
+        prepareOnboardingStep(step);
+      }
+    }
+
+    const key = JSON.stringify([vw, vh, pr, dr, text, step.id, isTap]);
+    if (key === onboarding.lastLayout) return;
+    onboarding.lastLayout = key;
+
+    els.svg.setAttribute('viewBox', `0 0 ${vw} ${vh}`);
+    els.svg.setAttribute('width', vw);
+    els.svg.setAttribute('height', vh);
+    let d = `M0 0H${vw}V${vh}H0Z`;
+    if (pr) d += onbRectPath(pr, 14);
+    if (dr) d += onbRectPath(dr, 14);
+    els.path.setAttribute('d', d);
+
+    // 展示用但不可点的洞（如杯垫）盖一层透明挡板
+    els.blockers.innerHTML = '';
+    const block = (r) => {
+      const b = document.createElement('div');
+      b.className = 'onb-blocker';
+      b.style.cssText = `left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;`;
+      els.blockers.appendChild(b);
+    };
+    if (pr && step.kind === 'callout' && !step.interactive) block(pr);
+    if (dr && !step.destInteractive) block(dr);
+
+    if (pr) {
+      els.ring.style.cssText = `left:${pr.x}px;top:${pr.y}px;width:${pr.w}px;height:${pr.h}px;`;
+      els.ring.classList.remove('hidden');
+    } else {
+      els.ring.classList.add('hidden');
+    }
+
+    // 手势：拖拽路径（起点 → 杯子 / 客人）或原地点按
+    const showHand = pr && step.kind === 'action';
+    els.hand.classList.toggle('hidden', !showHand);
+    els.line.classList.toggle('hidden', !(showHand && dr));
+    if (showHand) {
+      const sx = pr.x + pr.w / 2;
+      const sy = pr.y + pr.h / 2;
+      els.hand.style.left = `${sx}px`;
+      els.hand.style.top = `${sy}px`;
+      if (dr) {
+        const tx = dr.x + dr.w / 2;
+        const ty = dr.y + dr.h / 2;
+        els.hand.style.setProperty('--dx', `${tx - sx}px`);
+        els.hand.style.setProperty('--dy', `${ty - sy}px`);
+        els.hand.classList.add('onb-hand-drag');
+        els.hand.classList.remove('onb-hand-tap');
+        els.line.setAttribute('x1', sx);
+        els.line.setAttribute('y1', sy);
+        els.line.setAttribute('x2', tx);
+        els.line.setAttribute('y2', ty);
+      } else {
+        els.hand.classList.add('onb-hand-tap');
+        els.hand.classList.remove('onb-hand-drag');
+      }
+    }
+
+    // 气泡：一句话，优先放在目标上方，放不下就放下方；拖拽时避开路径方向
+    els.bubbleText.textContent = text;
+    els.bubble.classList.toggle('is-callout', step.kind === 'callout');
+    const bw = els.bubble.offsetWidth;
+    const bh = els.bubble.offsetHeight;
+    let bx = vw / 2 - bw / 2;
+    let by = vh / 2 - bh / 2;
+    let below = false;
+    if (pr) {
+      bx = pr.x + pr.w / 2 - bw / 2;
+      const preferBelow = dr ? dr.y + dr.h / 2 < pr.y : false;
+      const fitsAbove = pr.y - bh - 14 >= 8;
+      const fitsBelow = pr.y + pr.h + bh + 14 <= vh - 8;
+      below = (preferBelow && fitsBelow) || !fitsAbove;
+      if (below && !fitsBelow) {
+        // 上下都放不下（目标很高）：贴在目标内部顶端
+        below = true;
+        by = Math.max(8, Math.min(vh - bh - 8, pr.y + 10));
+      } else {
+        by = below ? pr.y + pr.h + 14 : pr.y - bh - 14;
+      }
+    }
+    bx = Math.max(8, Math.min(vw - bw - 8, bx));
+    els.bubble.style.left = `${Math.round(bx)}px`;
+    els.bubble.style.top = `${Math.round(by)}px`;
+    els.bubble.classList.toggle('arrow-up', below);
+    if (pr) {
+      const ax = Math.max(14, Math.min(bw - 14, pr.x + pr.w / 2 - bx));
+      els.bubble.style.setProperty('--arrow-x', `${Math.round(ax)}px`);
+    }
+  }
+
+  function finishOnboarding(completed) {
+    if (!onboarding.active) return;
+    onboarding.active = false;
+    clearTimeout(onboarding.autoTimer);
+    clearTimeout(onboarding.resizeTimer);
+    cancelAnimationFrame(onboarding.raf);
+    window.removeEventListener('resize', onOnboardingResize);
+    if (onboarding.els) onboarding.els.root.classList.add('hidden');
+    document.body.classList.remove('cafe-onboarding-on');
+    markOnboardingDone();
+    // 练习杯不计入存档：还原到引导开始前，再正式开门营业
+    if (onboarding.snapshot) restoreRoundSnapshot(onboarding.snapshot);
+    onboarding.snapshot = null;
+    onboarding.seatUid = null;
+    const m = document.getElementById('modal-tasting-result');
+    if (m) m.classList.add('hidden');
+    startRound(true);
+    if (completed) showToast('🎉 学会啦！练习杯不计营业额，正式开门！');
+  }
+
+  // 「玩法说明」里的重新看引导：重开本时段，再带一遍
+  function replayOnboarding() {
+    ['modal-how-to-play', 'modal-shift-summary'].forEach((id) => {
+      const m = document.getElementById(id);
+      if (m) m.classList.add('hidden');
+    });
+    if (onboarding.active) return;
+    if (state.brewingActive) stopExtractionMeter();
+    restoreRoundSnapshot();
+    startRound(false);
+    window.scrollTo(0, 0);
+    startOnboarding();
+  }
+
   // ==================== 13. 事件绑定与初始化入口 ====================
   function bindGlobalEvents() {
     // 1. 营业时段切换
@@ -4136,15 +4666,9 @@
         if (m) m.classList.remove('hidden');
       });
     }
-    // 首次访问自动弹出一次玩法教程（localStorage 不可用时静默跳过）
-    try {
-      const TUTORIAL_SEEN_KEY = 'pxlsan-game:arcade:cafe:tutorialSeen';
-      if (!localStorage.getItem(TUTORIAL_SEEN_KEY)) {
-        const m = document.getElementById('modal-how-to-play');
-        if (m) m.classList.remove('hidden');
-        localStorage.setItem(TUTORIAL_SEEN_KEY, '1');
-      }
-    } catch (_) {}
+    // 玩法说明里的「重新看新手引导」（首次进入的引导在 bootstrap 里自动开始，不再弹文字教程）
+    const replayOnbBtn = document.getElementById('btn-replay-onboarding');
+    if (replayOnbBtn) replayOnbBtn.addEventListener('click', () => replayOnboarding());
 
     const rushToggleBtn = document.getElementById('btn-toggle-rush-mode');
     if (rushToggleBtn) {
@@ -4454,9 +4978,11 @@
     updateLiveChalkboardPreview();
     updateExtractionUI();
     bindGlobalEvents();
-    startRound(true);
+    const needOnboarding = !isOnboardingDone() && window.location.hash !== '#recipes';
+    startRound(!needOnboarding);
     startRushPatienceTicker();
     startCafeLiveCharacterAnimation();
+    if (needOnboarding) startOnboarding();
     if (window.location.hash === '#recipes') {
       renderRecipeBookModal();
       document.getElementById('modal-recipe-book').classList.remove('hidden');

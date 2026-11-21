@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>次元小丑牌：魔王讨伐战</title>
   <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
-  <link rel="stylesheet" href="src/arcade/tag-alchemist.css?v=31" />
+  <link rel="stylesheet" href="src/arcade/tag-alchemist.css?v=34" />
 </head>
 <body>
   <!-- 顶部正式游戏状态栏（单行不换行：左侧返回/音效/5颗红心，中间关数，右侧铜钱/牌型/主角/CG/重开） -->
@@ -27,6 +27,7 @@
         <span class="orb-icon">🪙</span>
         <strong id="creditsDisplay">0</strong>
       </div>
+      <button type="button" class="icon-hud-btn" id="btnOpenHowto" title="玩法说明">📖 玩法</button>
       <button type="button" class="icon-hud-btn top-synergy-btn" id="btnOpenSynergy" title="查看牌型伤害表与剩余扑克牌 (52张)">
         🃏 牌型 <strong id="deckCountDisplay">44/52</strong>
       </button>
@@ -247,6 +248,34 @@
     </div>
   </div>
 
+  <!-- ================= 弹窗 1b：「玩法说明」速查（要点式，不自动弹出；可重看新手引导） ================= -->
+  <div class="cyber-modal-backdrop hidden" id="howtoModal">
+    <div class="cyber-modal howto-modal-card">
+      <div class="modal-header">
+        <h2>📖 玩法说明</h2>
+        <button type="button" class="modal-close-btn" data-close-modal="howtoModal">✕ 关闭</button>
+      </div>
+      <ul class="howto-list">
+        <li>选 1~5 张牌凑成牌型，点<b>出牌</b>攻击魔物</li>
+        <li>只有组成牌型的牌计分，多选的牌显示「不计分」</li>
+        <li>伤害 = <b>伤害值 × 倍率</b>，牌型越大越高</li>
+        <li>每关 <b>5 颗❤️</b>：每出一手消耗 1 颗，耗尽即失败</li>
+        <li>每关 <b>3 次弃牌</b>：换掉没用的牌</li>
+        <li>魔物反击会把几张手牌翻成背面（盲牌）</li>
+        <li><b>💡 提示</b>：自动选出伤害最高的一手</li>
+        <li>每个魔王有特殊规则，写在血条下方</li>
+        <li>过关得铜钱，剩余❤️额外奖励；商店买宝物、升牌型</li>
+        <li>主角只有被动天赋，悬停 / 点立绘查看</li>
+        <li>打出顺子、四条、同花顺解锁 CG</li>
+      </ul>
+      <div class="howto-footer">
+        <button type="button" class="poker-main-btn hint" id="btnReplayTutorial">
+          <span>🎓 重新看新手引导</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= 弹窗 2：全屏虚化店铺背景 + 框外巨幅老板娘芙莉莲 + 黄金宝箱货架 ================= -->
   <div class="cyber-modal-backdrop fullscreen-shop-scene hidden" id="shopModal">
     <!-- 全屏店铺背景（加景深虚化） -->
@@ -376,6 +405,6 @@
     </div>
   </div>
 
-  <script src="src/arcade/tag-alchemist.js?v=32"></script>
+  <script src="src/arcade/tag-alchemist.js?v=35"></script>
 </body>
 </html>

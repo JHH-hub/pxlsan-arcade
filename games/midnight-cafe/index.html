@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>放学以后的深夜咖啡馆 · 第一人称咖啡师料理台 (Pxlsan Midnight Cafe)</title>
   <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
-  <link rel="stylesheet" href="src/arcade/midnight-cafe.css?v=12" />
+  <link rel="stylesheet" href="src/arcade/midnight-cafe.css?v=13" />
 </head>
 <body class="pov-cafe-body">
   <!-- 暖钨丝灯环境光晕与暗角层 -->
@@ -103,8 +103,8 @@
       </div>
 
       <div class="beam-action-group">
-        <button class="wood-action-btn highlight-tut-btn" id="btn-open-tutorial" title="查看30秒图文上手教程与咖啡机萃取用法">
-          <span>❓ 玩法教程</span>
+        <button class="wood-action-btn highlight-tut-btn" id="btn-open-tutorial" title="玩法说明速查，也可以重新看新手引导">
+          <span>❓ 玩法说明</span>
         </button>
         <button class="wood-action-btn" id="btn-open-recipes" title="查看18款秘密特调手账">
           <span>📖 特调手账</span>
@@ -660,67 +660,54 @@
     </div>
   </div>
 
-  <!-- ================= 模态弹窗 4：30秒图文上手教程 & 咖啡机萃取用法说明 ================= -->
+  <!-- ================= 模态弹窗 4：玩法说明（精简速查，不自动弹出） ================= -->
   <div class="cafe-modal-backdrop hidden" id="modal-how-to-play" role="dialog" aria-modal="true">
-    <div class="cafe-modal-card wide-modal tutorial-modal-card">
+    <div class="cafe-modal-card tutorial-modal-card howto-card">
       <div class="modal-top-bar">
         <div>
-          <span class="modal-kicker">BARISTA QUICK TUTORIAL · 30秒上手说明书</span>
-          <h2>❓ 第一人称咖啡师操作台 &amp; 咖啡机黄金加压教程</h2>
+          <span class="modal-kicker">HOW TO PLAY</span>
+          <h2>❓ 玩法说明</h2>
         </div>
         <button class="modal-close-btn" data-close-modal="modal-how-to-play">✕</button>
       </div>
 
-      <div class="tutorial-steps-grid">
-        <div class="tut-step-card tut-rules-card highlight">
-          <div class="tut-step-num">营业规则 · 每个时段都是一局 3 分钟的挑战</div>
-          <div class="tut-step-body">
-            <strong>⏳ 时段目标 · ❤️ 口碑 · 💬 吧台夜谈</strong>
-            <p>
-              ☀️ 白天 → 🌇 下午 → 🌧️ 晚上，每个时段营业 <strong>3 分钟</strong>（顶栏 <code>⏳</code> 时钟），营业额要达到 <code>🎯 目标</code>（随夜数与吧台等级上涨）。<br/>
-              ❤️ 口碑共 3 颗：客人<strong>等太久生气离开</strong>或 <strong>1 星出餐</strong>各扣 1 颗，扣光本时段立即失败。<br/>
-              💬 出餐 2~3 星后客人会留在吧台和你聊两句：点一个话题可得 <strong>♥ 好感 + ¥30 小费</strong>（计入营业额），不选也会自动道别，不耽误其他客人。<br/>
-              🧾 时段结束弹出结算：达成就进入下一时段（晚上之后迎来新的一夜），还能花营业款<strong>升级吧台</strong>解锁新器具；没达成可以重来这个时段或回到白天。打开任何弹窗或切到后台时，所有计时都会暂停。
-            </p>
-          </div>
-        </div>
-
-        <div class="tut-step-card">
-          <div class="tut-step-num">STEP 1 · 看头顶配方单与倒计时</div>
-          <div class="tut-step-body">
-            <strong>👀 1~3 位客人同台排队点单</strong>
-            <p>每位客人身旁都有一张<strong>【图标配方小票】</strong>（例如 <code>🔥热杯 + 🫖大吉岭红茶 + 🌿清凉薄荷</code>）以及<strong>⏱️ 彩色耐心倒计时条</strong>。点击任意客人可切换当前指引目标！</p>
-          </div>
-        </div>
-
-        <div class="tut-step-card">
-          <div class="tut-step-num">STEP 2 · 按住鼠标左键拿壶倒茶</div>
-          <div class="tut-step-body">
-            <strong>🖐️ 跟着金色闪烁【👆 下一步】拿器具</strong>
-            <p>桌面上需要用到的茶壶、糖浆瓶或冰桶会<strong>自动闪烁金光并标出 <code>👆 下一步</code></strong>！<strong>按住鼠标左键</strong>把它拿在手里，移到正中央的杯口上方，茶壶就会自动倾斜 42° 倒入杯中！</p>
-          </div>
-        </div>
-
-        <div class="tut-step-card highlight">
-          <div class="tut-step-num">STEP 3 · 左侧咖啡机「萃取 / 蒸汽加压」怎么用？</div>
-          <div class="tut-step-body">
-            <strong>☕ 两种核心用法（必拿 +25% 暴击小费！）</strong>
-            <p>1️⃣ <strong>直接萃咖啡</strong>：当客人点单需要<strong>「☕ 深烘意式浓缩」</strong>时，按住左侧大咖啡机即可直接萃出浓缩咖啡底！<br/>2️⃣ <strong>黄金蒸汽加压（所有茶/奶饮品通用）</strong>：<strong>按住左侧大咖啡机不放</strong>，下方压力表指针会左右摆动，等指针走到<strong>中间金色区域 (62%~78%) 时松开左键</strong>，整杯饮品立即获得 <strong><code>✨ +25% 完美黄金风味与高额小费加成</code></strong>！</p>
-          </div>
-        </div>
-
-        <div class="tut-step-card">
-          <div class="tut-step-num">STEP 4 · 按住中央杯子递给对应客人</div>
-          <div class="tut-step-body">
-            <strong>🛎️ 拖拽奉茶 &amp; 🔥 连击 COMBO 狂飙</strong>
-            <p>杯旁容量管注满后，可拿起<strong>拉花钢杯</strong>压印拉花，最后<strong>按住正中央的成品杯直接往上拖给点这杯饮品的客人</strong>！在倒计时耗尽前连续出餐可叠加 <strong><code>🔥 连击 COMBO</code></strong>，获得额外连击赏金！</p>
-          </div>
-        </div>
+      <div class="howto-sections">
+        <section class="howto-section">
+          <h3>做一杯</h3>
+          <ul class="howto-list">
+            <li><b>🧾</b>看客人小票：杯型 + 茶底 + 配料</li>
+            <li><b>🫖</b>按住茶壶 / 配料拖进中央杯子（点一下也能倒）</li>
+            <li><b>🛎️</b>把杯子拖给客人，或点她的「奉茶」</li>
+            <li><b>🗑️</b>做错了点「倒掉重做」</li>
+          </ul>
+        </section>
+        <section class="howto-section">
+          <h3>营业规则</h3>
+          <ul class="howto-list">
+            <li><b>⏳</b>每个时段 3 分钟，营业额达到 🎯 目标就过关</li>
+            <li><b>❤️</b>口碑 3 颗：客人等太久或 1 星出餐扣 1 颗，扣光失败</li>
+            <li><b>💬</b>2~3 星出餐后选个话题：好感 + ¥30 小费</li>
+            <li><b>🔥</b>连续出好餐叠连击，额外赏金</li>
+            <li><b>🆙</b>结算时花营业款升级吧台，解锁新茶底与配料</li>
+            <li><b>⏸️</b>打开弹窗或切到后台时计时暂停</li>
+          </ul>
+        </section>
+        <section class="howto-section">
+          <h3>加分技巧</h3>
+          <ul class="howto-list">
+            <li><b>☕</b>按住咖啡机，指针到金色区（62~78%）松手：+25% 风味</li>
+            <li><b>☕</b>客人点浓缩时，按住咖啡机直接萃取</li>
+            <li><b>🎨</b>拉花缸画拉花，用上客人喜欢的图案更加分</li>
+          </ul>
+        </section>
       </div>
 
-      <div class="tutorial-modal-footer">
+      <div class="tutorial-modal-footer howto-footer">
+        <button type="button" class="mini-wood-btn" id="btn-replay-onboarding" title="重开本时段并重新跟着引导做第一杯">
+          🔁 重新看新手引导
+        </button>
         <button class="primary-wood-cta" data-close-modal="modal-how-to-play">
-          <span>👌 学会了，开始做饮品！</span>
+          <span>知道了</span>
         </button>
       </div>
     </div>
@@ -737,6 +724,6 @@
   </div>
 
   <script src="src/arcade/spine-rig-player.js?v=8"></script>
-  <script src="src/arcade/midnight-cafe.js?v=11"></script>
+  <script src="src/arcade/midnight-cafe.js?v=17"></script>
 </body>
 </html>

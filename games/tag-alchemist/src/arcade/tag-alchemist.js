@@ -1097,6 +1097,7 @@
     dom.btnDiscard = document.getElementById('btnDiscard');
     dom.btnPlayHand = document.getElementById('btnPlayHand');
     dom.btnSuggestBest = document.getElementById('btnSuggestBest');
+    dom.calcBox = document.getElementById('calcBox');
 
     dom.monitorRarityBadge = document.getElementById('monitorRarityBadge');
     dom.crtScreenFrame = document.getElementById('crtScreenFrame');
@@ -1642,6 +1643,7 @@
       bestCombo.forEach((c) => state.selectedInstanceIds.add(c.instanceId));
       sfx.playClick(true);
       renderAll();
+      tutorialEvent('hint');
     }
   }
 
@@ -2262,6 +2264,7 @@
           sfx.playClick(true);
         }
         renderAll();
+        tutorialEvent('select');
       });
 
       dom.holoHandRow.appendChild(cardEl);
@@ -2275,6 +2278,8 @@
       c.isFaceDown = false;
     });
     if (state.hand.length === 0) return 0;
+    // 新手引导期间不盖牌，保证后续「弃牌 / 提示」两步能看清手牌
+    if (tutorial.active) return 0;
 
     const flipCount = cfg.isBoss ? 3 : 2;
     const candidates = shuffleArray(state.hand.slice());
@@ -2388,6 +2393,7 @@
     if (state.isAnimating || state.runOver || selected.length === 0 || state.rendersLeft <= 0) return;
 
     state.isAnimating = true;
+    tutorialEvent('playStart');
     // 出牌瞬间，被盖住的盲牌翻转回正面揭晓真实点数！
     let hadFaceDown = false;
     selected.forEach((c) => {
@@ -2669,6 +2675,7 @@
     renderAll();
 
     checkBlindOutcome();
+    tutorialEvent('playEnd');
   }
 
   // =========================================================================
@@ -2716,6 +2723,7 @@
     drawUpToHandSize();
     sortHandByRankDesc();
     renderAll();
+    tutorialEvent('discard');
   }
 
   function checkBlindOutcome() {
@@ -3179,6 +3187,7 @@
   }
 
   function startNewRun() {
+    if (tutorial.active) stopTutorial(false);
     state.deck = cloneDeckFromBase();
     state.modules = [
       // 默认赠送白色普通品质「星辰罗盘」
@@ -3580,6 +3589,328 @@
     });
   }
 
+  // =========================================================================
+  // 19. 首次进入的「边做边学」新手引导（第 1 关 1-1）
+  //     聚光灯遮罩 + 一句短提示 + 手指动画；只在玩家真的完成操作后才前进。
+  //     公平性：引导期间的出牌/弃牌不计入消耗，结束（或跳过）时返还红心与弃牌次数；
+  //     引导期间魔物反击不盖牌。
+  // =========================================================================
+  const ONBOARDING_KEY = `${STORAGE_KEY}:onboardingDone`;
+
+  const tutorial = {
+    active: false,
+    step: -1,
+    pairIds: [],
+    junkId: null,
+    startHearts: MAX_HEARTS,
+    startRerolls: 3,
+    timer: null,
+    raf: 0,
+    pendingEnd: false,
+    els: null
+  };
+
+  function isOnboardingDone() {
+    try {
+      return localStorage.getItem(ONBOARDING_KEY) === '1';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function setOnboardingDone() {
+    try {
+      localStorage.setItem(ONBOARDING_KEY, '1');
+    } catch (_) {}
+  }
+
+  function cardElById(id) {
+    return id && dom.holoHandRow ? dom.holoHandRow.querySelector(`[data-instance-id="${id}"]`) : null;
+  }
+
+  // 每一步：targets() 返回聚光目标元素；allow() 返回允许点击的元素；kind=action 需真实操作，info 点任意处或自动前进
+  const TUTORIAL_STEPS = [
+    {
+      text: '点两张一样的牌',
+      kind: 'action',
+      targets: () => tutorial.pairIds.map(cardElById),
+      allow: () => tutorial.pairIds.map(cardElById),
+      check: (evt) =>
+        evt === 'select' &&
+        tutorial.pairIds.every((id) => state.selectedInstanceIds.has(id)) &&
+        state.selectedInstanceIds.size === tutorial.pairIds.length
+    },
+    { text: '这是这手的伤害', kind: 'info', auto: 2600, targets: () => [dom.calcBox] },
+    {
+      text: '出牌！',
+      kind: 'action',
+      targets: () => [dom.btnPlayHand],
+      allow: () => [dom.btnPlayHand],
+      check: (evt) => evt === 'playEnd'
+    },
+    { text: '每出一手消耗一颗心', kind: 'info', auto: 2600, targets: () => [dom.heartsLifeRow] },
+    {
+      text: '选一张没用的牌，弃掉',
+      altText: '再点「弃牌」',
+      kind: 'action',
+      targets: () =>
+        state.selectedInstanceIds.has(tutorial.junkId) ? [dom.btnDiscard] : [cardElById(tutorial.junkId)],
+      allow: () => [cardElById(tutorial.junkId), dom.btnDiscard],
+      check: (evt) => evt === 'discard'
+    },
+    {
+      text: '不会选？点提示',
+      kind: 'action',
+      targets: () => [dom.btnSuggestBest],
+      allow: () => [dom.btnSuggestBest],
+      check: (evt) => evt === 'hint'
+    },
+    { text: '每个魔王都有特殊规则', kind: 'info', auto: 3200, targets: () => [dom.blindRuleDesc] }
+  ];
+
+  function buildTutorialDom() {
+    if (tutorial.els) return tutorial.els;
+    const root = document.createElement('div');
+    root.className = 'tut-layer hidden';
+    root.innerHTML = `
+      <div class="tut-spot"></div>
+      <div class="tut-bubble"><span class="tut-text"></span><button type="button" class="tut-skip">跳过教程</button></div>
+      <div class="tut-hand" aria-hidden="true">👆</div>
+    `;
+    document.body.appendChild(root);
+    tutorial.els = {
+      root,
+      spot: root.querySelector('.tut-spot'),
+      bubble: root.querySelector('.tut-bubble'),
+      text: root.querySelector('.tut-text'),
+      hand: root.querySelector('.tut-hand'),
+      skip: root.querySelector('.tut-skip')
+    };
+    tutorial.els.skip.addEventListener('click', (e) => {
+      e.stopPropagation();
+      stopTutorial(true);
+    });
+    return tutorial.els;
+  }
+
+  // 把第一手牌换成「一对 9 + 6 张互不成型的散牌」，保证第一步一定能做成
+  function rigTutorialHand() {
+    const want = [
+      ['spade', 9],
+      ['heart', 9],
+      ['club', 13],
+      ['diamond', 11],
+      ['club', 7],
+      ['diamond', 5],
+      ['spade', 3],
+      ['heart', 2]
+    ];
+    const picked = want
+      .map(([suit, rank]) => state.deck.find((c) => c.pokerSuit === suit && c.rank === rank))
+      .filter(Boolean);
+    if (picked.length !== want.length) return false;
+    const pickedIds = new Set(picked.map((c) => c.instanceId));
+    state.deck.forEach((c) => {
+      c.isFaceDown = false;
+    });
+    state.hand = picked;
+    state.drawPile = shuffleArray(state.deck.filter((c) => !pickedIds.has(c.instanceId)));
+    state.selectedInstanceIds.clear();
+    tutorial.pairIds = [picked[0].instanceId, picked[1].instanceId];
+    sortHandByRankDesc();
+    renderAll();
+    return true;
+  }
+
+  // 「没用的牌」：点数在手里唯一的最小一张（不会拆掉任何对子）
+  function pickJunkCardId() {
+    const counts = {};
+    state.hand.forEach((c) => {
+      counts[c.rank] = (counts[c.rank] || 0) + 1;
+    });
+    const pool = state.hand.filter((c) => !c.isFaceDown);
+    const singles = pool.filter((c) => counts[c.rank] === 1);
+    const list = (singles.length ? singles : pool).slice().sort((a, b) => a.rank - b.rank);
+    return list[0] ? list[0].instanceId : null;
+  }
+
+  function startTutorial() {
+    if (state.stageIndex !== 1 || !rigTutorialHand()) return;
+    buildTutorialDom();
+    tutorial.active = true;
+    tutorial.pendingEnd = false;
+    tutorial.startHearts = state.rendersLeft;
+    tutorial.startRerolls = state.rerollsLeft;
+    closeTapPopovers();
+    document.body.classList.add('tut-running');
+    tutorial.els.root.classList.remove('hidden');
+    gotoTutorialStep(0);
+    if (!tutorial.raf) tutorial.raf = requestAnimationFrame(tutorialFrame);
+  }
+
+  function gotoTutorialStep(i) {
+    clearTimeout(tutorial.timer);
+    tutorial.step = i;
+    if (i >= TUTORIAL_STEPS.length) {
+      stopTutorial(true);
+      return;
+    }
+    const step = TUTORIAL_STEPS[i];
+    if (i === 4) tutorial.junkId = pickJunkCardId();
+    const els = tutorial.els;
+    els.root.classList.remove('tut-waiting');
+    els.root.classList.toggle('is-info', step.kind === 'info');
+    els.text.textContent = step.text;
+    // 目标在横向滚动的手牌行 / 顶栏里时，先滚到可见
+    const first = (step.targets() || []).filter(Boolean)[0];
+    if (first && first.scrollIntoView) {
+      try {
+        first.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      } catch (_) {
+        first.scrollIntoView();
+      }
+    }
+    if (step.kind === 'info' && step.auto) {
+      tutorial.timer = setTimeout(() => {
+        if (tutorial.active && tutorial.step === i) gotoTutorialStep(i + 1);
+      }, step.auto);
+    }
+  }
+
+  function tutorialEvent(evt) {
+    if (!tutorial.active) return;
+    if (evt === 'playStart') {
+      // 出牌动画期间收起聚光，只留「跳过」
+      tutorial.els.root.classList.add('tut-waiting');
+      return;
+    }
+    if (evt === 'playEnd' && tutorial.pendingEnd) {
+      stopTutorial(true);
+      return;
+    }
+    const step = TUTORIAL_STEPS[tutorial.step];
+    if (step && step.kind === 'action' && step.check(evt)) {
+      gotoTutorialStep(tutorial.step + 1);
+    }
+  }
+
+  // completed=true：正常结束或跳过 → 记首次标记并返还引导期间的消耗；false：被新开局打断
+  function stopTutorial(completed) {
+    if (!tutorial.active) return;
+    if (completed && state.isAnimating) {
+      tutorial.pendingEnd = true;
+      if (tutorial.els) tutorial.els.root.classList.add('tut-waiting');
+      return;
+    }
+    clearTimeout(tutorial.timer);
+    tutorial.active = false;
+    tutorial.step = -1;
+    tutorial.pendingEnd = false;
+    cancelAnimationFrame(tutorial.raf);
+    tutorial.raf = 0;
+    document.body.classList.remove('tut-running');
+    if (tutorial.els) tutorial.els.root.classList.add('hidden');
+    setOnboardingDone();
+    if (completed && state.stageIndex === 1 && !state.runOver) {
+      const refunded =
+        tutorial.startHearts - state.rendersLeft > 0 || tutorial.startRerolls - state.rerollsLeft > 0;
+      state.rendersLeft = Math.max(state.rendersLeft, tutorial.startHearts);
+      state.rerollsLeft = Math.max(state.rerollsLeft, tutorial.startRerolls);
+      renderAll();
+      if (refunded) spawnFloatingPopup('🎁 教学消耗已返还 ❤️', 'type-pixels', dom.heroCombatantBox);
+    }
+  }
+
+  // 每帧跟随目标位置（手牌重绘、选中上浮、滚动、窗口缩放都能实时对齐）
+  function tutorialFrame() {
+    tutorial.raf = 0;
+    if (!tutorial.active) return;
+    const step = TUTORIAL_STEPS[tutorial.step];
+    const els = tutorial.els;
+    if (step && !els.root.classList.contains('tut-waiting')) {
+      const targets = (step.targets() || []).filter(Boolean);
+      if (step.altText) {
+        els.text.textContent = targets[0] === dom.btnDiscard ? step.altText : step.text;
+      }
+      let l = Infinity;
+      let t = Infinity;
+      let r = -Infinity;
+      let b = -Infinity;
+      targets.forEach((el) => {
+        const rc = el.getBoundingClientRect();
+        if (rc.width === 0 && rc.height === 0) return;
+        l = Math.min(l, rc.left);
+        t = Math.min(t, rc.top);
+        r = Math.max(r, rc.right);
+        b = Math.max(b, rc.bottom);
+      });
+      if (l !== Infinity) {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const pad = 6;
+        const sl = Math.max(2, l - pad);
+        const st = Math.max(2, t - pad);
+        const sw = Math.min(vw - 2, r + pad) - sl;
+        const sh = Math.min(vh - 2, b + pad) - st;
+        Object.assign(els.spot.style, { left: `${sl}px`, top: `${st}px`, width: `${sw}px`, height: `${sh}px` });
+
+        // 提示气泡：优先放在目标上方，放不下再放下方，左右夹在视口内
+        const bw = els.bubble.offsetWidth;
+        const bh = els.bubble.offsetHeight;
+        const cx = (sl + sl + sw) / 2;
+        const above = st - bh - 16 >= 8;
+        const by = above ? st - bh - 16 : Math.min(vh - bh - 8, st + sh + 16);
+        const bx = Math.max(8, Math.min(vw - bw - 8, cx - bw / 2));
+        els.bubble.style.left = `${bx}px`;
+        els.bubble.style.top = `${by}px`;
+        els.bubble.classList.toggle('below', !above);
+
+        // 手指：指向目标中心偏下，位于气泡的另一侧
+        // 手指略偏右，不挡住按钮/牌面上的文字
+        const hx = Math.max(4, Math.min(vw - 40, cx + Math.min(sw * 0.3, 34) - 8));
+        const hy = above ? Math.min(vh - 44, st + sh * 0.55) : Math.max(4, st + sh * 0.45 - 36);
+        els.hand.style.left = `${hx}px`;
+        els.hand.style.top = `${hy}px`;
+        els.hand.classList.toggle('flip', !above);
+        els.root.classList.add('ready');
+      }
+    }
+    tutorial.raf = requestAnimationFrame(tutorialFrame);
+  }
+
+  // 引导期间：action 步只放行目标元素的点击；info 步点任意处直接进入下一步
+  function tutorialClickGuard(e) {
+    if (!tutorial.active) return;
+    const els = tutorial.els;
+    if (els && els.skip.contains(e.target)) return;
+    const step = TUTORIAL_STEPS[tutorial.step];
+    const waiting = els && els.root.classList.contains('tut-waiting');
+    if (!waiting && step && step.kind === 'action') {
+      const allowed = (step.allow() || []).filter(Boolean);
+      if (allowed.some((el) => el.contains(e.target))) return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    if (!waiting && step && step.kind === 'info') {
+      gotoTutorialStep(tutorial.step + 1);
+    }
+  }
+
+  function openHowtoModal() {
+    const modal = document.getElementById('howtoModal');
+    if (modal) modal.classList.remove('hidden');
+    sfx.playClick(true);
+  }
+
+  function replayTutorial() {
+    if (state.isAnimating) return;
+    if (isRunInProgress() && !window.confirm('重看新手引导会重新开一局，确定吗？')) return;
+    const modal = document.getElementById('howtoModal');
+    if (modal) modal.classList.add('hidden');
+    startNewRun();
+    startTutorial();
+  }
+
   function init() {
     cacheDom();
     arenaVfx.init();
@@ -3612,10 +3943,19 @@
         sfx.playChainDing(2, true);
       });
     }
+    // 新手引导：捕获阶段拦截目标之外的点击
+    window.addEventListener('click', tutorialClickGuard, true);
+    const btnOpenHowto = document.getElementById('btnOpenHowto');
+    if (btnOpenHowto) btnOpenHowto.addEventListener('click', openHowtoModal);
+    const btnReplayTutorial = document.getElementById('btnReplayTutorial');
+    if (btnReplayTutorial) btnReplayTutorial.addEventListener('click', replayTutorial);
+
     startNewRun();
     if (window.location.hash === '#gallery') {
       renderGalleryModal();
       dom.galleryModal.classList.remove('hidden');
+    } else if (!isOnboardingDone()) {
+      startTutorial();
     }
   }
 

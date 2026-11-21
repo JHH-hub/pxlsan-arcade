@@ -2289,3 +2289,361 @@ body.nofail-on .hp-group .bar-label::after {
     object-position: top;
   }
 }
+
+/* ==========================================================================
+   新手练习（舞台内边玩边学）/ 4K 首次提示 / 开始卡精简键位 / 玩法说明速查
+   ========================================================================== */
+.start-keys-mini {
+  margin: 4px 0 14px;
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--pop-ink, #190A28);
+}
+
+.start-keys-mini kbd,
+.howto-list kbd {
+  font-size: 12px;
+  padding: 2px 7px;
+}
+
+.start-mini-links {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 12px;
+}
+
+.start-link-btn {
+  background: none;
+  border: 0;
+  padding: 4px 2px;
+  font-size: 13px;
+  font-weight: 900;
+  color: #6A3F8C;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.start-link-btn:hover {
+  color: #FF1493;
+}
+
+.start-link-btn.is-new {
+  color: #FF1493;
+  animation: nbPracticeNew 1s ease-in-out infinite alternate;
+}
+
+.start-link-btn.is-new::after {
+  content: 'NEW';
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #FF1493;
+  color: #fff;
+  font-size: 10px;
+  vertical-align: 2px;
+}
+
+@keyframes nbPracticeNew {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+
+.practice-layer,
+.mania-hint {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.practice-layer[hidden],
+.mania-hint[hidden],
+.practice-bubble[hidden],
+.practice-key[hidden] {
+  display: none !important;
+}
+
+.practice-bubble {
+  position: absolute;
+  left: 31%;
+  top: 5%;
+  max-width: 60%;
+  padding: 0.45em 1em;
+  border-radius: 999px;
+  background: #fff;
+  color: #190A28;
+  border: 3px solid #190A28;
+  box-shadow: 0 6px 0 #FF1493;
+  font-size: clamp(13px, 1.9vw, 26px);
+  font-weight: 900;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* 气泡小尾巴指向判定圈 */
+.practice-bubble::after {
+  content: '';
+  position: absolute;
+  left: 1.2em;
+  bottom: -11px;
+  border: 8px solid transparent;
+  border-top-color: #190A28;
+  border-bottom: 0;
+}
+
+.practice-bubble.pop {
+  animation: nbBubblePop 0.32s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+.practice-bubble.is-good { background: #D4FFF9; box-shadow: 0 6px 0 #00C9AE; }
+.practice-bubble.is-retry { background: #FFF8C2; box-shadow: 0 6px 0 #FFB800; }
+.practice-bubble.is-done {
+  left: 50%;
+  top: 38%;
+  transform: translateX(-50%);
+  font-size: clamp(18px, 3.4vw, 46px);
+  background: #FFE600;
+}
+.practice-bubble.is-done::after { display: none; }
+.practice-bubble.is-done.pop { animation: nbBubblePopCenter 0.4s cubic-bezier(0.2, 1.6, 0.4, 1); }
+
+@keyframes nbBubblePop {
+  from { transform: scale(0.4); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes nbBubblePopCenter {
+  from { transform: translateX(-50%) scale(0.4); opacity: 0; }
+  to { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+/* 按键提示：键帽贴在对应轨道左侧，上方手指一上一下地点按 */
+.practice-key {
+  position: absolute;
+  left: 2.5%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateY(-50%);
+  font-size: clamp(11px, 1.6vw, 22px);
+}
+
+.practice-key.air { top: 34.8%; }
+.practice-key.gnd { top: 67%; }
+
+.practice-key kbd {
+  min-width: 2.2em;
+  padding: 0.25em 0.5em;
+  border-radius: 0.35em;
+  font-size: 1.5em;
+  text-align: center;
+  background: #fff;
+  color: #190A28;
+  border: 3px solid #190A28;
+  box-shadow: 0 0.28em 0 #190A28;
+  animation: nbKeyPress 0.625s ease-in-out infinite;
+}
+
+.practice-key.air kbd { background: #FFD6EE; }
+.practice-key.gnd kbd { background: #D4FFF9; }
+.practice-key.is-touch kbd { font-size: 1em; padding: 0.45em 0.6em; }
+
+.practice-key .pk-finger {
+  font-size: 1.4em;
+  line-height: 1;
+  margin-bottom: 0.1em;
+  animation: nbFingerTap 0.625s ease-in-out infinite;
+}
+
+.practice-key em {
+  margin-top: 0.45em;
+  font-style: normal;
+  font-weight: 900;
+  color: #FFE600;
+  text-shadow: 0 2px 0 #190A28, 0 0 6px #190A28;
+}
+
+.practice-key em:empty { display: none; }
+
+/* 长按：键帽保持按下；连打：快速抖动 */
+.practice-key.is-hold kbd { animation: none; transform: translateY(0.2em); box-shadow: 0 0.08em 0 #190A28; filter: brightness(1.08); }
+.practice-key.is-hold .pk-finger { animation: none; transform: translateY(0.25em); }
+.practice-key.is-mash kbd,
+.practice-key.is-mash .pk-finger { animation-duration: 0.16s; }
+
+@keyframes nbKeyPress {
+  0%, 60%, 100% { transform: translateY(0); box-shadow: 0 0.28em 0 #190A28; }
+  30% { transform: translateY(0.2em); box-shadow: 0 0.08em 0 #190A28; }
+}
+
+@keyframes nbFingerTap {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(0.3em); }
+}
+
+.practice-dots {
+  position: absolute;
+  left: 50%;
+  bottom: 3.5%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+}
+
+.practice-dots i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  border: 1.5px solid rgba(25, 10, 40, 0.6);
+}
+
+.practice-dots i.done { background: #00F5D4; }
+.practice-dots i.now { background: #FFE600; transform: scale(1.3); }
+
+.practice-skip {
+  position: absolute;
+  right: 1.5%;
+  top: 2.5%;
+  pointer-events: auto;
+  background: rgba(25, 10, 40, 0.55);
+  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  padding: 3px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.practice-skip:hover { color: #fff; background: rgba(25, 10, 40, 0.8); }
+
+/* 触屏：被提示的打击垫发光脉冲 */
+.arcade-pad-btn.practice-pad-hint {
+  animation: nbPadHint 0.625s ease-in-out infinite;
+  outline: 3px solid #FFE600;
+  outline-offset: 2px;
+}
+
+@keyframes nbPadHint {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.45); }
+}
+
+/* 4K 首次提示：一行字 + 四个键帽对准四条轨道 */
+.mania-hint p {
+  position: absolute;
+  left: 63.8%;
+  top: 30%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 0.4em 1em;
+  border-radius: 999px;
+  background: #fff;
+  color: #190A28;
+  border: 3px solid #190A28;
+  box-shadow: 0 6px 0 #FF1493;
+  font-size: clamp(13px, 1.9vw, 26px);
+  font-weight: 900;
+  white-space: nowrap;
+  animation: nbBubblePopCenter 0.35s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+.mania-hint-keys {
+  position: absolute;
+  left: 40.2%;
+  width: 47.2%;
+  top: 66%;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  justify-items: center;
+  font-size: clamp(12px, 1.8vw, 26px);
+}
+
+.mania-hint-keys kbd {
+  font-size: 1.3em;
+  padding: 0.2em 0.6em;
+  background: #fff;
+  color: #190A28;
+  border: 3px solid #190A28;
+  border-radius: 0.3em;
+  animation: nbKeyPress 0.625s ease-in-out infinite;
+}
+
+.mania-hint.is-touch .mania-hint-keys { display: none; }
+
+.howto-card {
+  max-width: 520px !important;
+}
+
+.howto-list {
+  margin: 0;
+  padding-left: 1.2em;
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+@media (max-width: 760px) {
+  .practice-bubble { border-width: 2px; box-shadow: 0 3px 0 #FF1493; top: 3%; }
+  .practice-bubble::after { display: none; }
+  .practice-key kbd { border-width: 2px; }
+  .practice-skip { padding: 2px 8px; font-size: 11px; }
+  .practice-dots i { width: 6px; height: 6px; }
+}
+
+/* 手机窄屏：舞台仅约 175px 高，开始卡压缩为「标题 + 一行键位 + 按钮 + 练习/说明」并允许滚动，保证「新手练习」可点 */
+@media (max-width: 760px) {
+  #stageStartOverlay {
+    padding: 6px;
+    overflow-y: auto;
+    align-items: flex-start;
+  }
+  #stageStartOverlay .start-comic-card {
+    padding: 8px 10px;
+    box-shadow: 4px 4px 0 var(--pop-pink, #FF1493);
+    border-width: 3px;
+  }
+  #stageStartOverlay .start-card-ribbon,
+  #stageStartOverlay .start-card-sub,
+  #stageStartOverlay .start-best-record {
+    display: none;
+  }
+  #stageStartOverlay .start-card-title {
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #stageStartOverlay .start-keys-mini {
+    margin: 2px 0 6px;
+    font-size: 12px;
+  }
+  #stageStartOverlay .start-btn-row {
+    gap: 8px;
+  }
+  #stageStartOverlay .mega-start-btn {
+    font-size: 14px;
+    padding: 7px 12px;
+    border-width: 2.5px;
+    box-shadow: 3px 3px 0 var(--pop-ink, #190A28);
+  }
+  #stageStartOverlay .sub-preview-btn {
+    font-size: 11px;
+    padding: 6px 8px;
+    border-width: 2.5px;
+    box-shadow: 3px 3px 0 var(--pop-ink, #190A28);
+  }
+  #stageStartOverlay .start-mini-links {
+    margin-top: 6px;
+    gap: 14px;
+  }
+  #stageStartOverlay .start-link-btn {
+    font-size: 12px;
+    padding: 2px;
+  }
+}

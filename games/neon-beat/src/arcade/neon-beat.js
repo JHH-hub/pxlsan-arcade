@@ -29,6 +29,50 @@ const MANIA_HIGHWAY = { left: 450, laneWidth: 132, lanes: 4 };
 // 双押重拍：两键必须在该时间窗内先后按下
 const DOUBLE_PRESS_WINDOW_SEC = 0.08;
 
+// 新手练习（首次进入双轨模式时在舞台内边玩边学）与 4K 首次一行提示
+const TUTORIAL_DONE_KEY = 'pxlsan-game:arcade:neonbeat:tutorialDone';
+const MANIA_HINT_KEY = 'pxlsan-game:arcade:neonbeat:maniaHintSeen';
+const PRACTICE_BPM = 96;
+const PRACTICE_SPEED_MULT = 0.8;
+const PRACTICE_TRACK = {
+  id: 'practice',
+  isPractice: true,
+  indexLabel: 'PRACTICE',
+  icon: '🎓',
+  title: '新手练习',
+  enTitle: 'Practice',
+  bpm: PRACTICE_BPM,
+  beatOffsetSec: 0,
+  durationSec: 3600, // 练习按段推进，不以时长结束
+  defaultPartner: 'takagi',
+  diffs: [{ name: '练习', stars: 1, density: 0.3, hazardRate: 0, doubleRate: 0, holdRate: 0 }],
+  synthProfile: { metronome: true }
+};
+// 练习分段：每段一句话 + 按键提示；beats = 音符间隔（拍）；len = 长条/连打时长（拍）
+//   keys：提示的轨道（'air' / 'gnd'）；kb / touch：键盘 / 触屏两套台词（≤ 12 字）
+const PRACTICE_SECTIONS = [
+  { id: 'air', type: 'TAP', lane2: 0, count: 3, beats: 2, keys: ['air'], kb: '上面的音符按 F', touch: '上面的音符点 AIR' },
+  { id: 'gnd', type: 'TAP', lane2: 1, count: 3, beats: 2, keys: ['gnd'], kb: '下面的按 J', touch: '下面的点 GND' },
+  { id: 'dbl', type: 'DOUBLE', lane2: 0, count: 2, beats: 3, keys: ['air', 'gnd'], kb: '两个一起按', touch: '两个一起按' },
+  { id: 'hold', type: 'HOLD', lane2: 1, count: 2, beats: 7, len: 4, keys: ['gnd'], hold: true, kb: '长条按住别松', touch: '长条按住别松' },
+  { id: 'mash', type: 'MASH', lane2: 1, count: 1, beats: 4, len: 4, target: 6, keys: ['air', 'gnd'], mash: true, kb: '狂按！', touch: '狂按！' },
+  { id: 'hazard', type: 'HAZARD', lane2: 1, count: 2, beats: 3, keys: ['air'], jump: true, kb: '红色的别碰！按 F 跳', touch: '红色的别碰！点 AIR 跳' }
+];
+
+function readFlag(key) {
+  try {
+    return localStorage.getItem(key) === '1';
+  } catch (_) {
+    return false;
+  }
+}
+
+function writeFlag(key) {
+  try {
+    localStorage.setItem(key, '1');
+  } catch (_) {}
+}
+
 // 秒数 → 「m:ss」曲长显示
 function formatSongLength(sec) {
   const total = Math.max(0, Math.round(Number(sec) || 0));
@@ -496,6 +540,21 @@ class NeonSynthEngine {
     return 440 * Math.pow(2, (midi - 69) / 12);
   }
 
+  // 练习节拍器：短促柔和的「嘀」（走音乐总线，随练习结束淡出）
+  triggerTick(time, accent = false) {
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(accent ? 1320 : 880, time);
+    gain.gain.setValueAtTime(0.0001, time);
+    gain.gain.exponentialRampToValueAtTime(accent ? 0.22 : 0.14, time + 0.004);
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.07);
+    osc.connect(gain);
+    gain.connect(this.musicGain || this.masterGain);
+    osc.start(time);
+    osc.stop(time + 0.08);
+  }
+
   // 合成 Kick 底鼓
   triggerKick(time) {
     const osc = this.ctx.createOscillator();
@@ -709,6 +768,15 @@ class NeonSynthEngine {
     const prof = this.activeTrack.synthProfile;
     const stepDur = (60 / this.activeTrack.bpm) / 4; // 16分音符时长
     const s16 = stepIndex % 16;
+
+    // 新手练习：只留轻柔节拍器（每拍一下，小节首拍略高），不抢注意力
+    if (prof.metronome) {
+      if (s16 % 4 === 0) {
+        this.triggerTick(time, s16 === 0);
+        if (typeof this.onBeatCallback === 'function') this.onBeatCallback(stepIndex / 4);
+      }
+      return;
+    }
     const barIdx = Math.floor(stepIndex / 16);
 
     if (prof.kickMask[s16]) {
@@ -1689,6 +1757,10 @@ class NeonBeatArcade {
     this.calibrationMs = this.loadCalibrationMs();
     this.noFail = this.loadNoFail();
     this.failTimer = null;
+    // 新手练习运行态（null = 未在练习）与 4K 首次提示计时器
+    this.practice = null;
+    this.maniaHintTimer = null;
+    this.touchUi = false;
     // 本局谱面统计（Boss 血量 / FEVER 充能按总音符数缩放）
     this.chartStats = { hitNotes: 1, bossUnit: 1, feverPerHit: 4.5 };
 
@@ -1930,6 +2002,21 @@ class NeonBeatArcade {
       `${track.enTitle} · 出战搭档：${partner.name}（${partner.badge}）`;
     document.getElementById('hudNowPlayingTitle').textContent =
       `${track.icon} ${track.indexLabel} · 《${track.title}》 (${diff.name})`;
+
+    // 开始卡上只留一行键位（不再放大段说明）；首次未练习时高亮「新手练习」
+    const keysMini = document.getElementById('startKeysMini');
+    if (keysMini) {
+      keysMini.innerHTML =
+        this.gameMode === 'RUN_2L'
+          ? this.isTouchUi()
+            ? '上轨点 AIR · 下轨点 GND'
+            : '<kbd>F</kbd> 上 · <kbd>J</kbd> 下'
+          : this.isTouchUi()
+          ? '四个按键对应四条轨道'
+          : '<kbd>D</kbd> <kbd>F</kbd> <kbd>J</kbd> <kbd>K</kbd>';
+    }
+    const btnPractice = document.getElementById('btnStartPractice');
+    if (btnPractice) btnPractice.classList.toggle('is-new', !this.isTutorialDone());
 
     const bestTextEl = document.getElementById('startBestScoreText');
     if (best) {
@@ -2179,6 +2266,12 @@ class NeonBeatArcade {
 
   async startLive({ preview = false } = {}) {
     if (this.state === 'LOADING') return;
+    if (this.practice) this.teardownPractice();
+    // 首次在双轨模式开打：先进入「新手练习」，练完（或跳过）再自动开始所选曲目
+    if (!preview && !this.autoPlay && this.gameMode === 'RUN_2L' && !this.isTutorialDone()) {
+      this.startPractice({ thenStartSong: true });
+      return;
+    }
     const track = this.getActiveTrack();
     const audioMode = document.getElementById('audioSourceMode').value;
 
@@ -2221,11 +2314,14 @@ class NeonBeatArcade {
       partnerId: partner.id,
       isPreview: !!preview,
       autoUsed: this.autoPlay,
-      noFail: this.noFail,
+      noFail: track.isPractice ? true : this.noFail,
+      isPractice: !!track.isPractice,
       hpDepleted: false
     };
     this.resetPerSongState();
-    this.notes = track.isCustom
+    this.notes = track.isPractice
+      ? [] // 练习谱面由 updatePractice 按段即时排入
+      : track.isCustom
       ? analyzeAudioBufferToChart(track.audioBuffer, this.selectedDiffIdx).notes
       : generateBuiltinChart(track, this.selectedDiffIdx);
     this.computeChartStats();
@@ -2270,6 +2366,263 @@ class NeonBeatArcade {
     this.updateHud();
     this.updateBottomJudge('READY TO ROCK!!', 0, false);
     this.ensurePlayfieldVisible();
+    if (!track.isPractice && !preview && this.gameMode === 'MANIA_4K' && !readFlag(MANIA_HINT_KEY)) {
+      this.showManiaHint();
+    }
+  }
+
+  /* ------------------------------------------------------------------------
+     新手练习（舞台内边玩边学）：一句话气泡 + 按键/打击垫动画提示，按段推进
+       · 每段音符全部结算后：命中数 ≥ need 即进入下一段，否则温和地重来一遍
+       · need = ceil(音符数 × 60%)；同一段失败 2 次后 need 再降 1（至少 1）
+       · 体力冻结、无 FEVER / Cut-in、不记录成绩；可随时「跳过」
+     ------------------------------------------------------------------------ */
+  isTutorialDone() {
+    return !!this.tutorialDoneMem || readFlag(TUTORIAL_DONE_KEY);
+  }
+
+  isTouchUi() {
+    if (this.touchUi) return true;
+    try {
+      return window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  setGameModeUi(mode) {
+    this.gameMode = mode;
+    document.querySelectorAll('.mode-btn').forEach((b) => {
+      b.classList.toggle('active', b.getAttribute('data-mode') === mode);
+    });
+    this.updateStartOverlayInfo();
+    this.renderTrackList();
+  }
+
+  startPractice({ thenStartSong = false } = {}) {
+    const restore = this.practice
+      ? this.practice.restore
+      : { mode: this.gameMode, speed: this.noteSpeedMult };
+    if (this.practice) {
+      this.practice = null; // 重新练习：保留最初的模式/流速以便结束时还原
+    }
+    if (this.state !== 'IDLE') this.stopLiveToIdle();
+    this.hideManiaHint();
+    if (this.gameMode !== 'RUN_2L') this.setGameModeUi('RUN_2L');
+    this.noteSpeedMult = PRACTICE_SPEED_MULT;
+    this.setAutoPlay(false);
+    document.getElementById('howToPlayModal').hidden = true;
+
+    this.practice = {
+      restore,
+      thenStartSong: !!thenStartSong,
+      idx: 0,
+      attempt: 0,
+      need: 1,
+      phase: 'intro',
+      nextAt: 0.5,
+      curNotes: [],
+      nextId: 9000
+    };
+    this.beginLive(PRACTICE_TRACK, 'synth', null, false);
+    this.chartStats.bossUnit = 4;
+    if (this.synth.musicGain) this.synth.musicGain.gain.value = 0.85;
+    document.getElementById('hudNowPlayingTitle').textContent = '🎓 新手练习';
+    document.getElementById('practiceLayer').hidden = false;
+    this.setPracticeBubble('');
+    this.setPracticeKeys(null);
+    this.renderPracticeDots();
+    this.updateBottomJudge('PRACTICE', 0, false);
+  }
+
+  // 练习结束 / 跳过 / 中途退出的公共清理（由 stopLiveToIdle 调用）
+  teardownPractice({ markDone = true } = {}) {
+    const p = this.practice;
+    if (!p) return;
+    this.practice = null;
+    if (markDone) {
+      this.tutorialDoneMem = true; // localStorage 不可用时也不会反复进入练习
+      writeFlag(TUTORIAL_DONE_KEY);
+    }
+    this.notes = [];
+    this.noteSpeedMult = p.restore.speed;
+    const layer = document.getElementById('practiceLayer');
+    if (layer) layer.hidden = true;
+    this.setPracticeKeys(null);
+    if (p.restore.mode !== this.gameMode) this.setGameModeUi(p.restore.mode);
+    else this.updateStartOverlayInfo();
+  }
+
+  skipPractice() {
+    const then = !!(this.practice && this.practice.thenStartSong);
+    this.stopLiveToIdle();
+    if (then) this.startLive();
+  }
+
+  finishPractice() {
+    const then = !!(this.practice && this.practice.thenStartSong);
+    this.stopLiveToIdle();
+    if (then) this.startLive();
+    else this.showToast('🎉 练习完成！选首歌开打吧', 2400);
+  }
+
+  setPracticeBubble(text, tone = '') {
+    const el = document.getElementById('practiceBubble');
+    if (!el) return;
+    el.textContent = text;
+    el.hidden = !text;
+    el.className = `practice-bubble${tone ? ` is-${tone}` : ''}`;
+    // 重新触发弹出动画
+    void el.offsetWidth;
+    el.classList.add('pop');
+  }
+
+  setPracticeKeys(sec) {
+    const touch = this.isTouchUi();
+    const lanes = { air: { key: 'F', pad: 1 }, gnd: { key: 'J', pad: 2 } };
+    document.querySelectorAll('.arcade-pad-btn').forEach((b) => b.classList.remove('practice-pad-hint'));
+    Object.keys(lanes).forEach((name) => {
+      const el = document.getElementById(name === 'air' ? 'practiceKeyAir' : 'practiceKeyGnd');
+      if (!el) return;
+      const on = !!(sec && sec.keys.includes(name));
+      el.hidden = !on;
+      if (!on) return;
+      el.className = `practice-key ${name}${sec.hold ? ' is-hold' : ''}${sec.mash ? ' is-mash' : ''}${touch ? ' is-touch' : ''}`;
+      el.querySelector('kbd').textContent = touch ? (name === 'air' ? 'AIR' : 'GND') : lanes[name].key;
+      el.querySelector('em').textContent = sec.hold ? '按住' : sec.mash ? '连打' : sec.jump ? '跳' : '';
+      el.querySelector('.pk-finger').textContent = touch ? '👆' : '👇';
+      if (touch) {
+        const pad = document.querySelector(`.arcade-pad-btn[data-lane="${lanes[name].pad}"]`);
+        if (pad) pad.classList.add('practice-pad-hint');
+      }
+    });
+  }
+
+  renderPracticeDots() {
+    const wrap = document.getElementById('practiceDots');
+    if (!wrap || !this.practice) return;
+    wrap.innerHTML = PRACTICE_SECTIONS.map((s, i) => {
+      const cls = i < this.practice.idx ? 'done' : i === this.practice.idx ? 'now' : '';
+      return `<i class="${cls}"></i>`;
+    }).join('');
+  }
+
+  isPracticeNoteResolved(n) {
+    if (n.type === 'HOLD' || n.type === 'MASH') return n.missed || n.holdCompleted;
+    if (n.type === 'HAZARD') return n.hit;
+    return n.hit || n.missed;
+  }
+
+  isPracticeNoteSuccess(n) {
+    if (n.type === 'HOLD') return n.hit && n.holdCompleted && !n.holdBroken && !n.missed;
+    if (n.type === 'MASH') return (n.mashHits || 0) >= (n.targetHits || 6);
+    if (n.type === 'HAZARD') return !!n.dodged;
+    return n.hit && !n.missed;
+  }
+
+  startPracticeSection(songTime) {
+    const p = this.practice;
+    const sec = PRACTICE_SECTIONS[p.idx];
+    const beat = 60 / PRACTICE_BPM;
+    const firstT = Math.ceil((songTime + 2.3) / beat) * beat;
+    const notes = [];
+    for (let i = 0; i < sec.count; i++) {
+      const t = firstT + i * sec.beats * beat;
+      const id = p.nextId++;
+      if (sec.type === 'TAP') {
+        notes.push(makeChartNote(id, t, 'TAP', sec.lane2 === 0 ? 1 : 2, { lane2: sec.lane2, entryStyle: 'LINEAR' }));
+      } else if (sec.type === 'DOUBLE') {
+        notes.push(makeChartNote(id, t, 'DOUBLE', 1, { lane2: 0, lane4Pair: 2, entryStyle: 'LINEAR' }));
+      } else if (sec.type === 'HOLD') {
+        notes.push(makeChartNote(id, t, 'HOLD', 2, { lane2: 1, endTime: t + sec.len * beat, entryStyle: 'WAVE' }));
+      } else if (sec.type === 'MASH') {
+        notes.push(
+          makeChartNote(id, t, 'MASH', 1, {
+            lane2: 1,
+            endTime: t + sec.len * beat,
+            mashHits: 0,
+            targetHits: sec.target,
+            warningTriggered: true, // 练习不放 16:9 魔王巨图预警，直接冲脸
+            entryStyle: 'BOSS_CHARGE'
+          })
+        );
+      } else if (sec.type === 'HAZARD') {
+        notes.push(makeChartNote(id, t, 'HAZARD', 3, { lane2: 1, entryStyle: 'SNIPER' }));
+      }
+    }
+    this.notes = notes;
+    p.curNotes = notes;
+    p.lastEnd = Math.max(...notes.map((n) => n.endTime || n.time));
+    const base = Math.max(1, Math.ceil(sec.count * 0.6));
+    p.need = Math.max(1, base - (p.attempt >= 2 ? 1 : 0));
+    p.phase = 'play';
+    const touch = this.isTouchUi();
+    this.setPracticeBubble(touch ? sec.touch : sec.kb);
+    this.setPracticeKeys(sec);
+    this.renderPracticeDots();
+  }
+
+  updatePractice(songTime) {
+    const p = this.practice;
+    if (!p) return;
+    if (p.phase === 'play') {
+      const allDone = p.curNotes.every((n) => this.isPracticeNoteResolved(n)) || songTime > p.lastEnd + 1.5;
+      if (!allDone) return;
+      const hits = p.curNotes.filter((n) => this.isPracticeNoteSuccess(n)).length;
+      p.lastResult = { idx: p.idx, hits, need: p.need, total: p.curNotes.length };
+      this.setPracticeKeys(null);
+      if (hits >= p.need) {
+        p.idx += 1;
+        p.attempt = 0;
+        this.synth.playHitSfx('DODGE');
+        if (p.idx >= PRACTICE_SECTIONS.length) {
+          p.phase = 'done';
+          p.nextAt = songTime + 1.8;
+          this.setPracticeBubble('完成！🎉', 'done');
+          this.spawnPopup('PRACTICE CLEAR!!', '#FFE600', '', 540, 170);
+        } else {
+          p.phase = 'feedback';
+          p.nextAt = songTime + 1.0;
+          this.setPracticeBubble('👍 好！', 'good');
+        }
+        this.renderPracticeDots();
+      } else {
+        p.attempt += 1;
+        p.phase = 'feedback';
+        p.nextAt = songTime + 1.2;
+        this.setPracticeBubble('再来一次～', 'retry');
+      }
+      return;
+    }
+    if (songTime < p.nextAt) return;
+    if (p.phase === 'done') this.finishPractice();
+    else this.startPracticeSection(songTime);
+  }
+
+  // 4K 首次开打：3 秒一行提示，四个键帽对准四条轨道（不打断歌曲）
+  showManiaHint() {
+    writeFlag(MANIA_HINT_KEY);
+    const el = document.getElementById('maniaHint');
+    if (!el) return;
+    const touch = this.isTouchUi();
+    document.getElementById('maniaHintText').textContent = touch ? '四个按键对应四条轨道' : 'D F J K 对应四条轨道';
+    el.classList.toggle('is-touch', touch);
+    el.hidden = false;
+    if (touch) document.querySelectorAll('.arcade-pad-btn').forEach((b) => b.classList.add('practice-pad-hint'));
+    if (this.maniaHintTimer) clearTimeout(this.maniaHintTimer);
+    this.maniaHintTimer = setTimeout(() => this.hideManiaHint(), 3000);
+  }
+
+  hideManiaHint() {
+    if (this.maniaHintTimer) {
+      clearTimeout(this.maniaHintTimer);
+      this.maniaHintTimer = null;
+    }
+    const el = document.getElementById('maniaHint');
+    if (el && !el.hidden) {
+      el.hidden = true;
+      if (!this.practice) document.querySelectorAll('.arcade-pad-btn').forEach((b) => b.classList.remove('practice-pad-hint'));
+    }
   }
 
   // 按全曲音符总量缩放 Boss 伤害与 FEVER 充能，保证 3 分钟长谱面的节奏感：
@@ -2339,6 +2692,8 @@ class NeonBeatArcade {
   }
 
   stopLiveToIdle() {
+    if (this.practice) this.teardownPractice();
+    this.hideManiaHint();
     this.clearFailTimer();
     this.loadToken += 1; // 取消进行中的加载
     this.setLoadingBadge(false);
@@ -2684,7 +3039,8 @@ class NeonBeatArcade {
       this.combo = 0;
       const rule = this.chartStats.hpRule || HP_RULES[0];
       const dmg = note && note.type === 'HAZARD' ? rule.hazard : rule.miss;
-      this.hp = Math.max(0, this.hp - dmg);
+      // 新手练习：体力冻结（只显示 MISS 反馈，不扣血、不会失败）
+      if (!(this.liveSession && this.liveSession.isPractice)) this.hp = Math.max(0, this.hp - dmg);
       this.synth.playHitSfx('MISS');
       this.spawnPopup('MISS...', '#FF2E4C', '');
       this.updateBottomJudge('MISS...', 0, true);
@@ -2744,8 +3100,10 @@ class NeonBeatArcade {
       this.spawnPopup('DEVIL SHIELD +HP!!', '#FFE600', '长瀞护盾充能！');
     }
 
-    // FEVER 能量积累（喜多川海梦充能加速 +25%，持续时间 +50%）
-    if (!this.isFever) {
+    const inPractice = !!(this.liveSession && this.liveSession.isPractice);
+
+    // FEVER 能量积累（喜多川海梦充能加速 +25%，持续时间 +50%）；练习中不触发 FEVER / Cut-in，避免遮挡教学
+    if (!this.isFever && !inPractice) {
       const feverGain =
         this.chartStats.feverPerHit * (judge === 'PERFECT' ? 1.0 : 0.62) * (partner.id === 'marin' ? 1.25 : 1.0);
       this.feverGauge = Math.min(100, this.feverGauge + feverGain);
@@ -2755,7 +3113,7 @@ class NeonBeatArcade {
     }
 
     // 达成 25 / 50 / 100 / 150 连击触发全屏斜切漫画 SKILL CUT-IN
-    if (this.combo === 25 || this.combo === 50 || this.combo === 150 || (this.combo > 0 && this.combo % 100 === 0)) {
+    if (!inPractice && (this.combo === 25 || this.combo === 50 || this.combo === 150 || (this.combo > 0 && this.combo % 100 === 0))) {
       this.triggerMangaCutIn(`${this.combo} COMBO BURST!!`);
     }
 
@@ -3008,8 +3366,10 @@ class NeonBeatArcade {
     const songTime = this.synth.getElapsedSec();
     const judgeTime = songTime - this.calibrationMs / 1000;
 
-    // 进度条更新
-    const pct = Math.min(100, (songTime / track.durationSec) * 100);
+    // 进度条更新（练习：按段数显示）
+    const pct = this.practice
+      ? (this.practice.idx / PRACTICE_SECTIONS.length) * 100
+      : Math.min(100, (songTime / track.durationSec) * 100);
     document.getElementById('hudSongProgress').style.width = `${pct.toFixed(1)}%`;
 
     // FEVER 持续倒计时
@@ -3187,6 +3547,11 @@ class NeonBeatArcade {
     }
 
     if (this.state !== 'PLAYING') return;
+
+    if (this.practice) {
+      this.updatePractice(songTime);
+      return;
+    }
 
     // 音乐真实结束（durationSec = 离线测得的曲尾）→ 收尾淡出 → 弹出街机结算画面
     if (songTime >= track.durationSec && !this.songEnding) {
@@ -5134,6 +5499,10 @@ class NeonBeatArcade {
     // 暂停面板：继续 / 重来 / 退出
     document.getElementById('btnPauseContinue').addEventListener('click', () => this.resumeLive());
     document.getElementById('btnPauseRestart').addEventListener('click', () => {
+      if (this.practice) {
+        this.startPractice({ thenStartSong: this.practice.thenStartSong });
+        return;
+      }
       const preview = !!(this.liveSession && this.liveSession.isPreview);
       this.startLive({ preview });
     });
@@ -5171,7 +5540,7 @@ class NeonBeatArcade {
       if (e.code in keyMap) {
         e.preventDefault();
         this.handleLaneInput(keyMap[e.code], true);
-      } else if (e.code === 'Space' && this.state === 'PLAYING') {
+      } else if (e.code === 'Space' && this.state === 'PLAYING' && !this.practice) {
         e.preventDefault();
         this.triggerMangaCutIn('⚡ MANUAL FEVER CUT-IN!!');
       }
@@ -5266,6 +5635,22 @@ class NeonBeatArcade {
         this.handleCustomAudioFile(e.dataTransfer.files[0]);
       }
     });
+
+    // 新手练习 / 玩法说明 / 跳过
+    document.getElementById('btnStartPractice').addEventListener('click', () => this.startPractice());
+    document.getElementById('btnStartHowTo').addEventListener('click', () => {
+      document.getElementById('howToPlayModal').hidden = false;
+    });
+    document.getElementById('btnHowToReplay').addEventListener('click', () => this.startPractice());
+    document.getElementById('btnPracticeSkip').addEventListener('click', () => this.skipPractice());
+    // 触屏操作过一次即切换为「打击垫」提示
+    window.addEventListener(
+      'pointerdown',
+      (e) => {
+        if (e.pointerType === 'touch') this.touchUi = true;
+      },
+      { capture: true, passive: true }
+    );
 
     // 11. 高分榜与街机说明弹窗控制
     document.getElementById('btnOpenLeaderboard').addEventListener('click', () => {

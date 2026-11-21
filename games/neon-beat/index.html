@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>次元节拍：糖果风暴 (Pxlsan Neon Beat) · 高饱和糖果波普音游街机</title>
   <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
-  <link rel="stylesheet" href="src/arcade/neon-beat.css?v=20261121d" />
+  <link rel="stylesheet" href="src/arcade/neon-beat.css?v=20261121f" />
 </head>
 <body class="c1-pop-theme">
   <!-- 动态波普网点与斜切漫画速度线背景层 -->
@@ -54,7 +54,7 @@
         🏆 高分榜
       </button>
       <button type="button" class="pop-action-btn" id="btnOpenHowToPlay" title="查看按键与玩法说明">
-        📖 街机说明
+        📖 玩法说明
       </button>
     </div>
   </header>
@@ -239,20 +239,7 @@
               <strong id="startBestScoreText">尚无纪录 · 等你首通！</strong>
             </div>
 
-            <div class="start-controls-guide" id="startControlsGuide">
-              <div class="guide-chip pink">
-                <strong>空中轨道 (AIR)</strong>
-                <span>按 <kbd>F</kbd> / <kbd>D</kbd> / <kbd>↑</kbd> 或点击上半屏（躲避地面齿轮！）</span>
-              </div>
-              <div class="guide-chip cyan">
-                <strong>地面轨道 (GROUND)</strong>
-                <span>按 <kbd>J</kbd> / <kbd>K</kbd> / <kbd>↓</kbd> 或点击下半屏（俯身躲避高空齿轮！）</span>
-              </div>
-              <div class="guide-chip yellow">
-                <strong>双押重拍 &amp; 4K 街机</strong>
-                <span>双押同时按 <kbd>F+J</kbd>；4K 模式使用 <kbd>D</kbd> <kbd>F</kbd> <kbd>J</kbd> <kbd>K</kbd></span>
-              </div>
-            </div>
+            <div class="start-keys-mini" id="startKeysMini" aria-label="键位"><kbd>F</kbd> 上 · <kbd>J</kbd> 下</div>
 
             <div class="start-btn-row">
               <button type="button" class="mega-start-btn" id="btnStartSong">
@@ -262,7 +249,26 @@
                 🎧 试听电音律动
               </button>
             </div>
+            <div class="start-mini-links">
+              <button type="button" class="start-link-btn" id="btnStartPractice">🎓 新手练习</button>
+              <button type="button" class="start-link-btn" id="btnStartHowTo">📖 玩法说明</button>
+            </div>
           </div>
+        </div>
+
+        <!-- 新手练习：舞台内一句话气泡 + 按键/手指提示（不挡判定区，点击穿透到舞台） -->
+        <div class="practice-layer" id="practiceLayer" hidden>
+          <div class="practice-dots" id="practiceDots" aria-hidden="true"></div>
+          <div class="practice-bubble" id="practiceBubble" role="status" aria-live="polite" hidden></div>
+          <div class="practice-key air" id="practiceKeyAir" hidden><span class="pk-finger">👇</span><kbd>F</kbd><em></em></div>
+          <div class="practice-key gnd" id="practiceKeyGnd" hidden><span class="pk-finger">👇</span><kbd>J</kbd><em></em></div>
+          <button type="button" class="practice-skip" id="btnPracticeSkip">跳过</button>
+        </div>
+
+        <!-- 4K 首次开打：3 秒一行提示 -->
+        <div class="mania-hint" id="maniaHint" hidden>
+          <p id="maniaHintText">D F J K 对应四条轨道</p>
+          <div class="mania-hint-keys" aria-hidden="true"><kbd>D</kbd><kbd>F</kbd><kbd>J</kbd><kbd>K</kbd></div>
         </div>
 
         <!-- 暂停覆盖层 (Pause Overlay) -->
@@ -401,48 +407,32 @@
     </div>
   </div>
 
-  <!-- 弹窗 2：玩法与按键说明 Modal -->
+  <!-- 弹窗 2：玩法说明（精简速查，不自动弹出） -->
   <div class="comic-modal-backdrop" id="howToPlayModal" hidden>
-    <div class="comic-modal-card">
+    <div class="comic-modal-card howto-card">
       <div class="modal-header">
-        <h3>📖 《次元节拍：糖果风暴》街机操作手册</h3>
+        <h3>📖 玩法说明</h3>
         <button type="button" class="modal-close-btn" data-close-modal="howToPlayModal">✕</button>
       </div>
-      <div class="modal-body rules-grid">
-        <div class="rule-block">
-          <h4>🏃‍♀️ 模式一：横版双轨跑酷闪避（Muse Dash 风）</h4>
-          <ul>
-            <li><strong>空中糖果音符 (上轨)</strong>：按 <kbd>F</kbd> / <kbd>D</kbd> / <kbd>↑</kbd> / <kbd>W</kbd> 或点击舞台上半屏跃起击碎！</li>
-            <li><strong>地面节拍怪 (下轨)</strong>：按 <kbd>J</kbd> / <kbd>K</kbd> / <kbd>↓</kbd> / <kbd>S</kbd> 或点击舞台下半屏俯身重击！</li>
-            <li><strong>双押重拍 (DOUBLE)</strong>：上下轨电光相连时，同时按下 <kbd>F + J</kbd> 触发双押暴击！</li>
-            <li><strong>长按彩虹糖带 (HOLD)</strong>：按住对应轨道键不放，持续收割连击与糖果粒子！</li>
-            <li><strong>尖刺齿轮弹幕 (HAZARD)</strong>：地面飞来齿轮时按上轨键跃起闪避；空中飞来齿轮时按下轨键俯身闪避！</li>
-          </ul>
-        </div>
-        <div class="rule-block">
-          <h4>🎹 模式二：经典 4 键下落式街机（4K Mania 风）</h4>
-          <ul>
-            <li>使用键盘 <kbd>D</kbd> <kbd>F</kbd> <kbd>J</kbd> <kbd>K</kbd> 对应第 1～4 条霓虹糖果轨道。</li>
-            <li>音符重合至底部判定圈时精准敲击，实时显示毫秒级 <code>±ms FAST / LATE</code> 偏差条！</li>
-            <li>完美判定窗口：<code>PERFECT (±42ms)</code>、<code>GREAT (±85ms)</code>、<code>GOOD (±130ms)</code>。</li>
-          </ul>
-        </div>
-        <div class="rule-block">
-          <h4>⚡ 看板娘 SKILL CUT-IN 与 FEVER 狂热</h4>
-          <ul>
-            <li><strong>体力 (HP)</strong>：MISS 或撞上齿轮会扣血，命中回血；体力归零即 <strong>STAGE FAILED</strong>。开启顶部 <strong>🛡️ 不死模式</strong> 可保证打完全曲（不计入高分榜）。</li>
-            <li>每达成 <strong>25 / 50 / 100 连击</strong> 或 <strong>FEVER 能量满 100%</strong> 时，全屏斜切进入巨幅漫画分镜！</li>
-            <li><strong>FEVER 状态</strong>下全屏波普速度线狂飙，所有音符得分额外 <strong>×1.5 倍</strong>！</li>
-            <li>5 位搭档看板娘各具独特被动技能，可在左侧随时切换搭档出战。</li>
-          </ul>
-        </div>
+      <div class="modal-body">
+        <ul class="howto-list">
+          <li>上轨 <kbd>F</kbd>（<kbd>↑</kbd> <kbd>W</kbd>），下轨 <kbd>J</kbd>（<kbd>↓</kbd> <kbd>S</kbd>）；手机点上/下半屏</li>
+          <li>双押：<kbd>F</kbd>+<kbd>J</kbd> 一起按</li>
+          <li>长条：按住到尾，提前松 = HOLD BREAK</li>
+          <li>魔王冲脸：狂按任意键</li>
+          <li>红色齿轮别碰：地面齿轮按 <kbd>F</kbd> 跳过</li>
+          <li>4K 模式：<kbd>D</kbd> <kbd>F</kbd> <kbd>J</kbd> <kbd>K</kbd> 对应四条轨道</li>
+          <li>体力归零 = 失败；🛡️ 不死模式不会失败（不计榜）</li>
+          <li><kbd>Esc</kbd> / <kbd>P</kbd> 暂停；总按晚就调「判定校准」</li>
+        </ul>
       </div>
       <div class="modal-footer">
-        <button type="button" class="pop-mini-btn" data-close-modal="howToPlayModal">明白，开打！</button>
+        <button type="button" class="pop-mini-btn" id="btnHowToReplay">🎓 重新练习</button>
+        <button type="button" class="pop-mini-btn" data-close-modal="howToPlayModal">知道了</button>
       </div>
     </div>
   </div>
 
-  <script src="src/arcade/neon-beat.js?v=20261121d"></script>
+  <script src="src/arcade/neon-beat.js?v=20261121g"></script>
 </body>
 </html>
